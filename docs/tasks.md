@@ -51,7 +51,7 @@
 
 ## Phase 4 — 마무리
 
-- [ ] `@agent-reviewer` 전체 코드 리뷰
-- [ ] `docs/progress.md` MVP 완료로 업데이트
-- [ ] Vercel 배포 설정
-- [ ] Railway 크롤러 배포 설정
+- [x] `@agent-reviewer` 전체 코드 리뷰
+- [x] `docs/progress.md` MVP 완료로 업데이트
+- [x] Vercel 배포 설정
+- [x] GitHub Actions 크롤러 배포 설정 (Railway 대체)
