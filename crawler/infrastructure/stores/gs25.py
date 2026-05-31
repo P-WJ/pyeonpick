@@ -27,11 +27,19 @@ AJAX_URL = "http://gs25.gsretail.com/gscvs/ko/products/event-goods-search"
 REFERER_URL = "http://gs25.gsretail.com/gscvs/ko/products/event-goods"
 PAGE_SIZE = 10000  # 서버 응답 전체를 한 번에 수집 (실제 상품 수: ~1800개)
 
-# GS25 API eventGbn1 파라미터 값
+# GS25 eventTypeSp.code 값 → 행사 유형 레이블 매핑
+# 실제 확인된 코드: ONE_TO_ONE, TWO_TO_ONE, GIFT
+# eventGbn1 파라미터는 서버에서 실제로 필터링하지 않으므로,
+# 전체를 한 번에 가져와 eventTypeSp.code로 직접 분류한다.
 EVENT_TYPE_CODE_MAP: dict[str, str] = {
     "ONE_TO_ONE": "1+1",
     "TWO_TO_ONE": "2+1",
+    "GIFT": "증정",
 }
+
+# 수집 대상 행사 유형 (할인·기타 제외)
+COLLECTED_EVENT_TYPES: frozenset[str] = frozenset({"1+1", "2+1", "증정"})
+
 
 def _parse_response_json(raw_text: str) -> dict:
     """GS25 API 응답은 이중 직렬화된 JSON 문자열이다.
@@ -44,13 +52,19 @@ def _parse_response_json(raw_text: str) -> dict:
     return inner
 
 
+def _resolve_event_type(item: dict) -> str:
+    """상품 항목의 eventTypeSp.code를 행사 유형 레이블로 변환한다."""
+    event_type_sp = item.get("eventTypeSp", {}) or {}
+    code = event_type_sp.get("code", "")
+    return EVENT_TYPE_CODE_MAP.get(code, "")
+
+
 def _parse_products_from_json(
     data: dict,
-    event_type: str,
     valid_from: date,
     valid_to: date,
 ) -> list[Product]:
-    """GS25 JSON 응답에서 상품 목록을 파싱해 반환한다.
+    """GS25 JSON 응답에서 수집 대상 행사 상품 목록을 파싱해 반환한다.
 
     GS25 JSON 필드:
       goodsNm     : 상품명
@@ -65,8 +79,12 @@ def _parse_products_from_json(
         product_name = item.get("goodsNm", "").strip()
         price = int(item.get("price", 0))
         image_url = item.get("attFileNm", "")
+        event_type = _resolve_event_type(item)
 
         if not product_name:
+            continue
+
+        if event_type not in COLLECTED_EVENT_TYPES:
             continue
 
         products.append(
@@ -85,19 +103,15 @@ def _parse_products_from_json(
     return products
 
 
-async def _fetch_all_event_products(
-    client: httpx.AsyncClient,
-    event_type_code: str,
-) -> dict:
-    """GS25 AJAX 엔드포인트에 단일 GET 요청으로 해당 행사 유형 전체 상품을 반환한다.
+async def _fetch_all_products(client: httpx.AsyncClient) -> dict:
+    """GS25 AJAX 엔드포인트에 단일 GET 요청으로 전체 상품을 반환한다.
 
-    GS25 서버는 pageNo 파라미터를 무시하고 항상 첫 번째 페이지를 응답한다.
-    pageSize를 충분히 크게 지정해 전체 상품을 한 번에 수집한다.
+    GS25 서버는 eventGbn1 파라미터를 실제로 필터링하지 않으므로
+    파라미터 없이 전체를 한 번에 가져온 뒤 eventTypeSp.code로 분류한다.
     """
     params = {
         "pageNo": "1",
         "pageSize": str(PAGE_SIZE),
-        "eventGbn1": event_type_code,
     }
     request_headers = {
         "Referer": REFERER_URL,
@@ -109,55 +123,40 @@ async def _fetch_all_event_products(
     return _parse_response_json(response.text)
 
 
-async def _collect_event_type_products(
-    client: httpx.AsyncClient,
-    event_type_code: str,
-    event_type_label: str,
-    valid_from: date,
-    valid_to: date,
-) -> list[Product]:
-    """특정 행사 유형의 전체 상품을 단일 요청으로 수집한다."""
-    logger.info("GS25 행사유형=%s 전체 상품 요청 중 (pageSize=%d)", event_type_code, PAGE_SIZE)
-    try:
-        data = await _fetch_all_event_products(client, event_type_code)
-    except httpx.HTTPError as error:
-        logger.error("GS25 행사유형=%s 요청 실패: %s", event_type_code, error)
-        return []
-
-    total_results = data.get("pagination", {}).get("totalNumberOfResults", 0)
-    products = _parse_products_from_json(data, event_type_label, valid_from, valid_to)
-    logger.info(
-        "GS25 행사유형=%s 수집 완료: %d개 (서버 전체 %d개)",
-        event_type_code,
-        len(products),
-        total_results,
-    )
-    return products
-
-
 async def fetch_products() -> list[Product]:
     """GS25 행사 상품 목록을 크롤링해 반환한다."""
     valid_from = date.today()
     valid_to = valid_from + timedelta(days=6)
 
     request_headers = {"User-Agent": USER_AGENT}
-    all_products: list[Product] = []
 
     try:
         async with httpx.AsyncClient(headers=request_headers, timeout=30.0, follow_redirects=False) as client:
-            for event_type_code, event_type_label in EVENT_TYPE_CODE_MAP.items():
-                products = await _collect_event_type_products(
-                    client, event_type_code, event_type_label, valid_from, valid_to
-                )
-                all_products.extend(products)
-                logger.info("GS25 행사유형=%s 수집 완료: %d개", event_type_code, len(products))
-                await asyncio.sleep(random.uniform(SLEEP_MIN, SLEEP_MAX))
+            logger.info("GS25 전체 상품 단일 요청 중 (pageSize=%d)", PAGE_SIZE)
+            try:
+                data = await _fetch_all_products(client)
+            except httpx.HTTPError as error:
+                logger.error("GS25 전체 상품 요청 실패: %s", error)
+                return []
+
+            total_results = data.get("pagination", {}).get("totalNumberOfResults", 0)
+            products = _parse_products_from_json(data, valid_from, valid_to)
+
+            # 행사 유형별 통계 로깅
+            type_counts: dict[str, int] = {}
+            for product in products:
+                type_counts[product.event_type] = type_counts.get(product.event_type, 0) + 1
+            logger.info(
+                "GS25 수집 완료: 서버 전체 %d개, 행사상품 %d개 (유형별: %s)",
+                total_results,
+                len(products),
+                type_counts,
+            )
+            return products
 
     except Exception as error:
         logger.error("GS25 크롤링 중 예기치 않은 오류: %s", error, exc_info=True)
-
-    logger.info("GS25 전체 수집 완료: %d개", len(all_products))
-    return all_products
+        return []
 
 
 if __name__ == "__main__":

@@ -28,8 +28,11 @@ def _parse_event_type(badge_element: BeautifulSoup | None) -> str:
 
     CU HTML 구조:
       <div class="badge">
+        <!-- [D] .badge > span .plus2 : 2+1 / .plus1 : 1+1 -->
         <span class="plus1">1+1</span>  <!-- 또는 plus2 -->
       </div>
+
+    실제 확인된 클래스: plus1(1+1), plus2(2+1).
     """
     if badge_element is None:
         return "할인"

@@ -24,10 +24,12 @@ BASE_URL = "https://www.7-eleven.co.kr/product/presentList.asp"
 # 더보기 AJAX 엔드포인트
 MORE_AJAX_URL = "https://www.7-eleven.co.kr/product/listMoreAjax.asp"
 
-# pTab 값: 1=1+1, 2=2+1
+# pTab 값: 1=1+1, 2=2+1, 3=증정행사, 4=할인행사
 P_TAB_MAP: dict[str, str] = {
     "1": "1+1",
     "2": "2+1",
+    "3": "증정",
+    "4": "할인",
 }
 
 MORE_LOAD_SIZE = 10  # 더보기 1회당 로드 개수
@@ -44,6 +46,8 @@ def _parse_event_type_from_tag(tag_list_element: BeautifulSoup | None) -> str:
         return "1+1"
     if "2+1" in text:
         return "2+1"
+    if "증정" in text:
+        return "증정"
     return "할인"
 
 

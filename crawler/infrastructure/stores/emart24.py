@@ -27,11 +27,15 @@ PAGE_SIZE = 20  # 이마트24 페이지당 상품 수
 # 이마트24 행사 유형 클래스명 매핑
 # <span class="onepl floatR">1 + 1</span>
 # <span class="twopl floatR">2 + 1</span>
+# <span class="tripl floatR">3 + 1</span>
 # <span class="gola floatR">할인</span>
+# <span class="sale floatR">세일</span>
 EVENT_CLASS_MAP: dict[str, str] = {
     "onepl": "1+1",
     "twopl": "2+1",
+    "tripl": "3+1",
     "gola": "할인",
+    "sale": "세일",
 }
 
 
@@ -63,7 +67,7 @@ def _has_items_on_page(html: str) -> bool:
 
 
 def _parse_products_from_html(html: str, valid_from: date, valid_to: date) -> list[Product]:
-    """이마트24 HTML에서 1+1·2+1 행사 상품만 파싱해 반환한다.
+    """이마트24 HTML에서 1+1·2+1·3+1 행사 상품만 파싱해 반환한다.
 
     이마트24 HTML 구조:
       <div class="itemWrap">
@@ -112,7 +116,7 @@ def _parse_products_from_html(html: str, valid_from: date, valid_to: date) -> li
         if not product_name:
             continue
 
-        if event_type not in ("1+1", "2+1"):
+        if event_type not in ("1+1", "2+1", "3+1"):
             continue
 
         products.append(
@@ -225,7 +229,7 @@ async def fetch_products() -> list[Product]:
 
                 page_products = _parse_products_from_html(html, valid_from, valid_to)
                 all_products.extend(page_products)
-                logger.info("이마트24 페이지 %d: %d개 파싱 (1+1·2+1 기준)", page_index, len(page_products))
+                logger.info("이마트24 페이지 %d: %d개 파싱 (1+1·2+1·3+1 기준)", page_index, len(page_products))
 
     except Exception as error:
         logger.error("이마트24 크롤링 중 예기치 않은 오류: %s", error, exc_info=True)

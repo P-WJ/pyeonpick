@@ -23,9 +23,11 @@ BASE_URL = "https://www.cspace.co.kr"
 PRODUCT_PAGE_PATH = "/service/product.html"
 
 # 씨스페이스 카테고리 코드 → 행사 유형 매핑
+# 00030000: 1+1상품, 00040000: 2+1상품, 00050000: 증정(현재 상품 없음), 00060000: 할인
 EVENT_CATEGORY_MAP: dict[str, str] = {
     "00030000000000000000": "1+1",
     "00040000000000000000": "2+1",
+    "00060000000000000000": "할인",
 }
 
 def _get_total_pages(soup: BeautifulSoup) -> int:
