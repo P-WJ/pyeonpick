@@ -3,7 +3,7 @@ import type { Product, Store, EventType, Category } from "@/domain/entities/prod
 import { PRODUCTS_FETCH_LIMIT } from "@/lib/constants";
 
 const VALID_STORES = new Set<string>(["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"]);
-const VALID_EVENT_TYPES = new Set<string>(["1+1", "2+1", "할인"]);
+const VALID_EVENT_TYPES = new Set<string>(["1+1", "2+1", "3+1", "할인", "증정"]);
 const VALID_CATEGORIES = new Set<string>(["음료", "과자", "간편식사", "아이스크림", "생활용품", "기타"]);
 
 export interface ProductFilters {
@@ -23,7 +23,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Product
     .from("products")
     .select("*")
     .gte("valid_to", todayDateString())
-    .in("event_type", ["1+1", "2+1"])
+    .in("event_type", ["1+1", "2+1", "3+1", "할인", "증정"])
     .limit(PRODUCTS_FETCH_LIMIT);
 
   if (filters.store) query = query.eq("store", filters.store);
