@@ -86,9 +86,6 @@ def _parse_products_from_html(html: str, valid_from: date, valid_to: date) -> li
         if not product_name:
             continue
 
-        if event_type not in ("1+1", "2+1"):
-            continue
-
         products.append(
             Product(
                 store=STORE_NAME,

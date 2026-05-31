@@ -35,7 +35,7 @@ EVENT_CLASS_MAP: dict[str, str] = {
     "twopl": "2+1",
     "tripl": "3+1",
     "gola": "할인",
-    "sale": "세일",
+    "sale": "할인",
 }
 
 
@@ -114,9 +114,6 @@ def _parse_products_from_html(html: str, valid_from: date, valid_to: date) -> li
         image_url = img.get("src", "") if img else ""
 
         if not product_name:
-            continue
-
-        if event_type not in ("1+1", "2+1", "3+1"):
             continue
 
         products.append(
