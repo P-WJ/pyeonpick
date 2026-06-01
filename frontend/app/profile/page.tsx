@@ -534,10 +534,26 @@ export default function ProfilePage() {
             )}
 
             {!isLoadingRecentlyViewed && !recentlyViewedError && recentlyViewedProducts.length > 0 && (
-              <div className="grid grid-cols-2 gap-4">
-                {recentlyViewedProducts.map((product) => (
-                  <RecentlyViewedProductCard key={product.id} product={product} />
-                ))}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">{recentlyViewedProducts.length}개</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem(RECENTLY_VIEWED_KEY);
+                      setRecentlyViewedIds([]);
+                      setRecentlyViewedProducts([]);
+                    }}
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    전체 삭제
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {recentlyViewedProducts.map((product) => (
+                    <RecentlyViewedProductCard key={product.id} product={product} />
+                  ))}
+                </div>
               </div>
             )}
           </section>
