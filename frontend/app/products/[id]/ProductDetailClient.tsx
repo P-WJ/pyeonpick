@@ -172,34 +172,21 @@ export function ProductDetailClient({
 
   return (
     <>
-      {/* 헤더 */}
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="flex items-center gap-3 px-4 py-3 max-w-2xl mx-auto">
+      <main className="max-w-2xl mx-auto pb-28">
+        {/* 뒤로가기 */}
+        <div className="flex items-center gap-3 px-4 py-3">
           <button
             type="button"
             onClick={() => router.back()}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors flex-shrink-0"
             aria-label="뒤로가기"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
           <span className="text-base font-semibold text-gray-900">상품 상세</span>
         </div>
-      </header>
-
-      <main className="max-w-2xl mx-auto pb-28">
         {/* 이미지 영역 */}
         <div className="relative w-full max-h-72 bg-gray-50 flex items-center justify-center overflow-hidden">
           <div className="relative w-full h-72">
