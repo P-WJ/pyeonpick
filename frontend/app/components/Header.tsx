@@ -3,16 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useCart } from "@/app/contexts/cart-context";
 
-interface HeaderProps {
-  onSubscribeOpen: () => void;
-  onCartOpen: () => void;
-  cartCount: number;
-}
-
-export function Header({ onSubscribeOpen, onCartOpen, cartCount }: HeaderProps) {
+export function Header() {
   const { data: session } = useSession();
   const user = session?.user;
+  const { cartCount, setIsCartOpen, setIsSubscribeOpen } = useCart();
 
   return (
     <header className="sticky top-0 z-30 bg-white shadow-sm">
@@ -38,7 +34,7 @@ export function Header({ onSubscribeOpen, onCartOpen, cartCount }: HeaderProps) 
           {/* 알림 구독 버튼 */}
           <button
             type="button"
-            onClick={onSubscribeOpen}
+            onClick={() => setIsSubscribeOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
             aria-label="알림 구독"
           >
@@ -88,7 +84,7 @@ export function Header({ onSubscribeOpen, onCartOpen, cartCount }: HeaderProps) 
           {/* 장바구니 버튼 */}
           <button
             type="button"
-            onClick={onCartOpen}
+            onClick={() => setIsCartOpen(true)}
             className="relative flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

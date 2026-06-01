@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { PostCategory } from "@/domain/entities/post";
-import { BoardHeader } from "@/app/board/components/BoardHeader";
+
 
 const CATEGORY_OPTIONS: PostCategory[] = ["자유", "조합공유", "질문"];
 const TITLE_MAX_LENGTH = 100;
@@ -77,7 +77,7 @@ export default function WritePage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-      <BoardHeader />
+       
 
       <main className="mx-auto max-w-3xl px-4 py-6">
         <div className="mb-4 flex items-center gap-3">

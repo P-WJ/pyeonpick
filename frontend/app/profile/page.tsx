@@ -9,7 +9,7 @@ import type { Product } from "@/domain/entities/product";
 import type { Post } from "@/domain/entities/post";
 import { EventBadge } from "@/app/components/EventBadge";
 import { STORE_COLORS } from "@/lib/constants";
-import { ProfileHeader } from "@/app/profile/components/ProfileHeader";
+
 
 const WISHLIST_STORAGE_KEY = "cvs-wishlist-v1";
 const RECENTLY_VIEWED_KEY = "cvs-recently-viewed-v1";
@@ -338,7 +338,7 @@ export default function ProfilePage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-[#F8FAFC]">
-        <ProfileHeader />
+         
         <div className="flex items-center justify-center py-32">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
         </div>
@@ -349,7 +349,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#F8FAFC]">
-        <ProfileHeader />
+         
         <main className="mx-auto max-w-lg px-4 py-24 text-center">
           <div className="mb-6 text-6xl">🔐</div>
           <h1 className="text-xl font-bold text-gray-900">
@@ -377,7 +377,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-      <ProfileHeader />
+       
 
       <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
         {/* 프로필 카드 */}

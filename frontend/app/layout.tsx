@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SessionProvider } from "./components/SessionProvider";
+import { CartProvider } from "./contexts/cart-context";
+import { GlobalShell } from "./components/GlobalShell";
 
 export const metadata: Metadata = {
   title: "편픽 — 편의점 행사 비교",
@@ -15,7 +17,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body suppressHydrationWarning>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <CartProvider>
+            <GlobalShell>{children}</GlobalShell>
+          </CartProvider>
+        </SessionProvider>
       </body>
     </html>
   );

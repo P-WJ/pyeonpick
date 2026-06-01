@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import type { Post, Comment } from "@/domain/entities/post";
-import { BoardHeader } from "@/app/board/components/BoardHeader";
+
 
 const COMMENT_MAX_LENGTH = 1000;
 
@@ -144,7 +144,7 @@ export default function PostDetailPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-      <BoardHeader />
+       
 
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
         {/* 뒤로가기 */}

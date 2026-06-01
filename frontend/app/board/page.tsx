@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Post, PostCategory } from "@/domain/entities/post";
-import { BoardHeader } from "@/app/board/components/BoardHeader";
+
 
 type CategoryTab = "전체" | PostCategory;
 
@@ -146,7 +146,7 @@ export default function BoardPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-      <BoardHeader />
+       
 
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
         {/* 헤더 영역 */}
