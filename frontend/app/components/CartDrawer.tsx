@@ -1,8 +1,9 @@
 "use client";
 
 import type { CartItem } from "@/domain/entities/cart";
-import { MAX_QUANTITY, STORE_COLORS, EVENT_TYPE_BADGES } from "@/lib/constants";
+import { MAX_QUANTITY, STORE_COLORS } from "@/lib/constants";
 import { SavingsBadge } from "./SavingsBadge";
+import { EventBadge } from "./EventBadge";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -81,7 +82,6 @@ export function CartDrawer({
           )}
           {items.map(({ product, quantity }) => {
             const storeColors = STORE_COLORS[product.store];
-            const eventBadge = EVENT_TYPE_BADGES[product.eventType];
             return (
               <div
                 key={product.id}
@@ -98,15 +98,7 @@ export function CartDrawer({
                     >
                       {product.store}
                     </span>
-                    <span
-                      className="inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold"
-                      style={{
-                        backgroundColor: eventBadge.backgroundColor,
-                        color: eventBadge.textColor,
-                      }}
-                    >
-                      {eventBadge.label}
-                    </span>
+                    <EventBadge eventType={product.eventType} />
                   </div>
                   <p className="truncate text-sm font-medium text-gray-900">
                     {product.name}

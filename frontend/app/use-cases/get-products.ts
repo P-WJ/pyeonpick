@@ -1,11 +1,15 @@
 import {
   getProducts as fetchFromRepository,
   type ProductFilters,
+  type PaginationOptions,
+  type PaginatedProducts,
 } from "@/infrastructure/repositories/product-repository";
-import type { Product } from "@/domain/entities/product";
 
-export type { ProductFilters };
+export type { ProductFilters, PaginationOptions, PaginatedProducts };
 
-export async function getProducts(filters: ProductFilters): Promise<Product[]> {
-  return fetchFromRepository(filters);
+export async function getProducts(
+  filters: ProductFilters,
+  pagination?: PaginationOptions
+): Promise<PaginatedProducts> {
+  return fetchFromRepository(filters, pagination);
 }

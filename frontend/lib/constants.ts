@@ -47,38 +47,38 @@ export const STORE_COLORS: Record<Store, StoreColorConfig> = {
 };
 
 export interface EventTypeBadgeConfig {
-  backgroundColor: string;
-  textColor: string;
+  gradient: string;
   label: string;
+  prefix?: string;
+  extraClassName?: string;
 }
 
 export const EVENT_TYPE_BADGES: Record<EventType, EventTypeBadgeConfig> = {
   "1+1": {
-    backgroundColor: "#EF4444",
-    textColor: "#FFFFFF",
+    gradient: "linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)",
     label: "1+1",
   },
   "2+1": {
-    backgroundColor: "#F97316",
-    textColor: "#FFFFFF",
+    gradient: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
     label: "2+1",
   },
   "3+1": {
-    backgroundColor: "#EAB308",
-    textColor: "#FFFFFF",
+    gradient: "linear-gradient(135deg, #EAB308 0%, #F97316 100%)",
     label: "3+1",
+    extraClassName: "ring-2 ring-yellow-300",
   },
   "할인": {
-    backgroundColor: "#3B82F6",
-    textColor: "#FFFFFF",
+    gradient: "linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%)",
     label: "할인",
+    prefix: "%",
   },
   "증정": {
-    backgroundColor: "#22C55E",
-    textColor: "#FFFFFF",
+    gradient: "linear-gradient(135deg, #22C55E 0%, #059669 100%)",
     label: "증정",
+    prefix: "🎁",
   },
 };
 
 export const MAX_QUANTITY = 10;
-export const PRODUCTS_FETCH_LIMIT = 10000;
+export const PRODUCTS_PAGE_LIMIT = 24;
+export const RELATED_PRODUCTS_LIMIT = 6;

@@ -2,34 +2,30 @@
 
 import Image from "next/image";
 import type { Product } from "@/domain/entities/product";
-import { STORE_COLORS, EVENT_TYPE_BADGES } from "@/lib/constants";
+import { STORE_COLORS } from "@/lib/constants";
+import { EventBadge } from "./EventBadge";
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  onClick?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onAddToCart }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, onClick }: ProductCardProps) {
   const storeColors = STORE_COLORS[product.store];
-  const eventBadge = EVENT_TYPE_BADGES[product.eventType];
 
   return (
     <div
-      className="relative flex flex-col rounded-xl bg-white shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 overflow-hidden"
+      className="relative flex flex-col rounded-xl bg-white shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer"
       style={{ borderTop: `3px solid ${storeColors.primary}` }}
+      onClick={() => onClick?.(product)}
     >
       {/* 행사 뱃지 */}
-      <span
-        className="absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-xs font-bold"
-        style={{
-          backgroundColor: eventBadge.backgroundColor,
-          color: eventBadge.textColor,
-        }}
-      >
-        {eventBadge.label}
-      </span>
+      <div className="absolute left-2 top-2 z-10">
+        <EventBadge eventType={product.eventType} />
+      </div>
 
       {/* 이미지 */}
       <div className="relative mx-auto mt-4 h-32 w-32">
@@ -60,7 +56,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
 
         <button
           type="button"
-          onClick={() => onAddToCart(product)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onAddToCart(product);
+          }}
           className="mt-3 w-full rounded-lg py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 active:opacity-75"
           style={{ backgroundColor: storeColors.primary }}
         >

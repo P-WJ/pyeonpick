@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Product } from "@/domain/entities/product";
 import type { CartItem } from "@/domain/entities/cart";
 import { buildShareUrl, calculateSavings } from "@/domain/use-cases/cart";
@@ -14,6 +14,8 @@ import { FilterBar, type ActiveFilters } from "./components/FilterBar";
 import { ProductCard } from "./components/ProductCard";
 import { CartDrawer } from "./components/CartDrawer";
 import { AiBanner } from "./components/AiBanner";
+import { ProductDetailModal } from "./components/ProductDetailModal";
+import { PRODUCTS_PAGE_LIMIT } from "@/lib/constants";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
 const SKELETON_COUNT = 10;
@@ -26,24 +28,37 @@ const INITIAL_FILTERS: ActiveFilters = {
   search: "",
 };
 
-function buildSearchParams(filters: ActiveFilters): URLSearchParams {
+function buildSearchParams(
+  filters: ActiveFilters,
+  page: number
+): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.store) params.set("store", filters.store);
   if (filters.eventType) params.set("eventType", filters.eventType);
   if (filters.category) params.set("category", filters.category);
   if (filters.search) params.set("search", filters.search);
+  params.set("page", String(page));
+  params.set("limit", String(PRODUCTS_PAGE_LIMIT));
   return params;
 }
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ActiveFilters>(INITIAL_FILTERS);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
+
+  // 장바구니 로컬스토리지 복원
   useEffect(() => {
     try {
       const stored = localStorage.getItem(CART_STORAGE_KEY);
@@ -57,30 +72,81 @@ export default function HomePage() {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const fetchProducts = useCallback(async () => {
-    setIsLoadingProducts(true);
-    setFetchError(null);
-    try {
-      const params = buildSearchParams(filters);
-      const response = await fetch(`/api/products?${params.toString()}`);
-      const json = (await response.json()) as {
-        data: Product[] | null;
-        error: string | null;
-      };
-      if (json.error) throw new Error(json.error);
-      setProducts(json.data ?? []);
-    } catch (error) {
-      setFetchError(
-        error instanceof Error ? error.message : "상품을 불러오지 못했습니다."
-      );
-    } finally {
-      setIsLoadingProducts(false);
-    }
-  }, [filters]);
+  // 초기 & 추가 페이지 로드
+  const fetchPage = useCallback(
+    async (targetPage: number, isInitialLoad: boolean) => {
+      if (isLoadingRef.current) return;
+      isLoadingRef.current = true;
 
+      if (isInitialLoad) {
+        setIsLoadingInitial(true);
+      } else {
+        setIsLoadingMore(true);
+      }
+      setFetchError(null);
+
+      try {
+        const params = buildSearchParams(filters, targetPage);
+        const response = await fetch(`/api/products?${params.toString()}`);
+        const json = (await response.json()) as {
+          data: Product[] | null;
+          error: string | null;
+          meta: { hasMore: boolean } | null;
+        };
+        if (json.error) throw new Error(json.error);
+
+        const newProducts = json.data ?? [];
+        const nextHasMore = json.meta?.hasMore ?? false;
+
+        if (isInitialLoad) {
+          setProducts(newProducts);
+        } else {
+          setProducts((prev) => [...prev, ...newProducts]);
+        }
+        setHasMore(nextHasMore);
+        setPage(targetPage);
+      } catch (error) {
+        setFetchError(
+          error instanceof Error ? error.message : "상품을 불러오지 못했습니다."
+        );
+      } finally {
+        if (isInitialLoad) {
+          setIsLoadingInitial(false);
+        } else {
+          setIsLoadingMore(false);
+        }
+        isLoadingRef.current = false;
+      }
+    },
+    [filters]
+  );
+
+  // 필터 변경 시 초기화 후 1페이지 재조회
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    setProducts([]);
+    setPage(1);
+    setHasMore(true);
+    fetchPage(1, true);
+  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Intersection Observer — sentinel 감지 시 다음 페이지 로드
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting && hasMore && !isLoadingRef.current) {
+          fetchPage(page + 1, false);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, page, fetchPage]);
 
   function showToast(message: string) {
     setToastMessage(message);
@@ -89,6 +155,7 @@ export default function HomePage() {
 
   function handleAddToCart(product: Product) {
     setCartItems((prev) => addToCart(prev, product));
+    showToast(`${product.name}을(를) 담았습니다.`);
   }
 
   function handleUpdateQuantity(productId: number, quantity: number) {
@@ -106,9 +173,16 @@ export default function HomePage() {
       .then(() => showToast("공유 링크가 복사됐습니다."));
   }
 
+  function handleFilterChange(nextFilters: ActiveFilters) {
+    setFilters(nextFilters);
+  }
+
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = calculateTotalPrice(cartItems);
   const totalSavings = calculateSavings(cartItems);
+
+  const showEmptyState =
+    !isLoadingInitial && !fetchError && products.length === 0;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
@@ -182,13 +256,13 @@ export default function HomePage() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 space-y-4">
         {/* 필터 */}
-        <FilterBar filters={filters} onFilterChange={setFilters} />
+        <FilterBar filters={filters} onFilterChange={handleFilterChange} />
 
         {/* AI 추천 배너 — v1.2 자리 확보 */}
         <AiBanner onToast={showToast} />
 
-        {/* 로딩 스켈레톤 */}
-        {isLoadingProducts && (
+        {/* 초기 로딩 스켈레톤 */}
+        {isLoadingInitial && (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
               <div
@@ -207,27 +281,54 @@ export default function HomePage() {
         )}
 
         {/* 빈 결과 */}
-        {!isLoadingProducts && !fetchError && products.length === 0 && (
+        {showEmptyState && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="mb-3 text-5xl">🔍</div>
-            <p className="text-sm font-medium text-gray-500">조건에 맞는 상품이 없습니다.</p>
+            <div className="mb-3 text-5xl">검색 결과 없음</div>
+            <p className="text-sm font-medium text-gray-500">
+              조건에 맞는 상품이 없습니다.
+            </p>
             <p className="mt-1 text-xs text-gray-400">필터를 변경해보세요.</p>
           </div>
         )}
 
         {/* 상품 목록 */}
-        {!isLoadingProducts && products.length > 0 && (
+        {!isLoadingInitial && products.length > 0 && (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {products.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
                 onAddToCart={handleAddToCart}
+                onClick={setSelectedProduct}
               />
             ))}
           </div>
         )}
+
+        {/* 추가 로딩 스피너 */}
+        {isLoadingMore && (
+          <div className="flex justify-center py-6">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+          </div>
+        )}
+
+        {/* 더 이상 상품 없음 표시 */}
+        {!isLoadingInitial && !hasMore && products.length > 0 && (
+          <p className="text-center text-xs text-gray-400 py-4">
+            모든 상품을 불러왔습니다.
+          </p>
+        )}
+
+        {/* Intersection Observer sentinel */}
+        <div ref={sentinelRef} className="h-1" />
       </main>
+
+      {/* 상품 상세 모달 */}
+      <ProductDetailModal
+        product={selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        onAddToCart={handleAddToCart}
+      />
 
       {/* 장바구니 드로어 */}
       <CartDrawer

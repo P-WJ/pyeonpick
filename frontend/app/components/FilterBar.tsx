@@ -102,14 +102,14 @@ export function FilterBar({ filters, onFilterChange }: FilterBarProps) {
               style={
                 isActive
                   ? {
-                      backgroundColor: badge.backgroundColor,
-                      color: badge.textColor,
-                      borderColor: badge.backgroundColor,
+                      background: badge.gradient,
+                      color: "#FFFFFF",
+                      borderColor: "transparent",
                     }
                   : {
                       backgroundColor: "#FFFFFF",
-                      color: badge.backgroundColor,
-                      borderColor: badge.backgroundColor,
+                      color: "#374151",
+                      borderColor: "#D1D5DB",
                     }
               }
             >
