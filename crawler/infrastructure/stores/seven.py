@@ -7,7 +7,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from crawler.domain.entities import Product
-from crawler.infrastructure.common import infer_category, parse_price
+from crawler.infrastructure.common import parse_price
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ def _parse_items_from_html(
                 name=product_name,
                 price=price,
                 event_type=event_type,
-                category=infer_category(product_name),
+                category="기타",
                 image_url=image_url,
                 valid_from=valid_from,
                 valid_to=valid_to,

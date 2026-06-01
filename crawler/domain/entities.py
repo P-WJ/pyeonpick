@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 
 
@@ -12,6 +12,20 @@ class Product:
     image_url: str
     valid_from: date
     valid_to: date
+    nutrition: dict | None = field(default=None)
+    # 영양성분 딕셔너리 형식 (없는 항목은 포함하지 않음):
+    # {
+    #   "calories": 250,           # kcal
+    #   "protein": 5.0,            # g
+    #   "fat": 8.0,                # g
+    #   "carbohydrates": 35.0,     # g
+    #   "sugars": 10.0,            # g
+    #   "sodium": 400,             # mg
+    #   "saturated_fat": 2.5,      # g
+    #   "trans_fat": 0,            # g
+    #   "cholesterol": 15,         # mg
+    #   "serving_size": "1개(120g)",  # 1회 제공량
+    # }
 
 
 @dataclass

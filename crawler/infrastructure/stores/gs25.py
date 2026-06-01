@@ -7,7 +7,6 @@ from datetime import date, timedelta
 import httpx
 
 from crawler.domain.entities import Product
-from crawler.infrastructure.common import infer_category
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +92,7 @@ def _parse_products_from_json(
                 name=product_name,
                 price=price,
                 event_type=event_type,
-                category=infer_category(product_name),
+                category="기타",
                 image_url=image_url,
                 valid_from=valid_from,
                 valid_to=valid_to,
