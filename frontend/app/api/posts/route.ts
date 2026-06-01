@@ -29,8 +29,23 @@ export async function GET(request: NextRequest) {
     Number(searchParams.get("limit") ?? DEFAULT_LIMIT)
   );
 
+  const authorEmail = searchParams.get("authorEmail") ?? undefined;
+
+  let authorUserId: string | undefined;
+  if (authorEmail) {
+    const session = await auth();
+    if (!session?.user?.kakaoId || (session.user.email ?? "") !== authorEmail) {
+      return NextResponse.json(
+        { data: null, error: "본인의 게시글만 조회할 수 있습니다.", meta: null },
+        { status: 403 }
+      );
+    }
+    authorUserId =
+      (await getUserIdByKakaoId(session.user.kakaoId)) ?? undefined;
+  }
+
   try {
-    const { posts, hasMore } = await getPosts({ category, page, limit });
+    const { posts, hasMore } = await getPosts({ category, page, limit, authorUserId });
     return NextResponse.json({
       data: posts,
       error: null,

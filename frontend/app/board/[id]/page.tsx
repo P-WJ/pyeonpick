@@ -319,7 +319,7 @@ export default function PostDetailPage() {
                 <p className="text-sm text-gray-500">
                   댓글을 작성하려면{" "}
                   <Link
-                    href="/board"
+                    href="/api/auth/signin"
                     className="text-blue-600 font-medium underline"
                   >
                     로그인

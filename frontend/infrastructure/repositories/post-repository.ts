@@ -8,6 +8,7 @@ export interface GetPostsOptions {
   category?: PostCategory;
   page: number;
   limit?: number;
+  authorUserId?: string;
 }
 
 export interface PaginatedPosts {
@@ -19,6 +20,7 @@ export async function getPosts({
   category,
   page,
   limit = DEFAULT_POSTS_LIMIT,
+  authorUserId,
 }: GetPostsOptions): Promise<PaginatedPosts> {
   const supabase = createSupabaseServerClient();
   const offset = (page - 1) * limit;
@@ -35,6 +37,10 @@ export async function getPosts({
 
   if (category) {
     query = query.eq("category", category);
+  }
+
+  if (authorUserId) {
+    query = query.eq("user_id", authorUserId);
   }
 
   const { data, error } = await query;

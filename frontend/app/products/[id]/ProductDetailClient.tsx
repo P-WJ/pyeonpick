@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,6 +11,8 @@ import { EventBadge } from "@/app/components/EventBadge";
 import { calculatePriceBenefit } from "@/domain/use-cases/price";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
+const RECENTLY_VIEWED_KEY = "cvs-recently-viewed-v1";
+const RECENTLY_VIEWED_MAX_COUNT = 20;
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
 const NUTRITION_LABELS: Record<keyof Omit<Nutrition, "serving_size" | "calories">, string> = {
@@ -149,6 +152,19 @@ export function ProductDetailClient({
   const storeColors = STORE_COLORS[product.store];
   const benefit = calculatePriceBenefit(product.price, product.eventType);
 
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem(RECENTLY_VIEWED_KEY) ?? "[]"
+      ) as number[];
+      const filtered = stored.filter((id) => id !== product.id);
+      const updated = [product.id, ...filtered].slice(0, RECENTLY_VIEWED_MAX_COUNT);
+      localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+    } catch {
+      // 손상된 데이터는 무시
+    }
+  }, [product.id]);
+
   function handleAddToCart() {
     addProductToCart(product);
     router.push("/");
@@ -159,8 +175,9 @@ export function ProductDetailClient({
       {/* 헤더 */}
       <header className="sticky top-0 z-30 bg-white shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3 max-w-2xl mx-auto">
-          <Link
-            href="/"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors flex-shrink-0"
             aria-label="뒤로가기"
           >
@@ -177,7 +194,7 @@ export function ProductDetailClient({
             >
               <polyline points="15 18 9 12 15 6" />
             </svg>
-          </Link>
+          </button>
           <span className="text-base font-semibold text-gray-900">상품 상세</span>
         </div>
       </header>
