@@ -137,6 +137,76 @@ export async function createComment(
   return parseCommentRow(data as unknown as CommentRow);
 }
 
+export async function updatePost(
+  postId: number,
+  userId: string,
+  title: string,
+  content: string
+): Promise<Post> {
+  const supabase = createSupabaseServerClient();
+
+  const { data: updatedData, error: updateError } = await supabase
+    .from("posts")
+    .update({ title, content, updated_at: new Date().toISOString() })
+    .eq("id", postId)
+    .eq("user_id", userId)
+    .select("id");
+
+  if (updateError) throw new Error(`게시글 수정 실패: ${updateError.message}`);
+
+  const rows = updatedData as { id: number }[] | null;
+  if (!rows || rows.length === 0) {
+    throw new Error("권한이 없거나 존재하지 않는 게시글입니다.");
+  }
+
+  const post = await getPostById(postId);
+  if (!post) throw new Error("게시글 수정 후 조회에 실패했습니다.");
+
+  return post;
+}
+
+export async function deletePost(
+  postId: number,
+  userId: string
+): Promise<void> {
+  const supabase = createSupabaseServerClient();
+
+  const { data: deletedData, error: deleteError } = await supabase
+    .from("posts")
+    .delete()
+    .eq("id", postId)
+    .eq("user_id", userId)
+    .select("id");
+
+  if (deleteError) throw new Error(`게시글 삭제 실패: ${deleteError.message}`);
+
+  const rows = deletedData as { id: number }[] | null;
+  if (!rows || rows.length === 0) {
+    throw new Error("권한이 없거나 존재하지 않는 게시글입니다.");
+  }
+}
+
+export async function deleteComment(
+  commentId: number,
+  userId: string
+): Promise<void> {
+  const supabase = createSupabaseServerClient();
+
+  const { data: deletedData, error: deleteError } = await supabase
+    .from("comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("user_id", userId)
+    .select("id");
+
+  if (deleteError) throw new Error(`댓글 삭제 실패: ${deleteError.message}`);
+
+  const rows = deletedData as { id: number }[] | null;
+  if (!rows || rows.length === 0) {
+    throw new Error("권한이 없거나 존재하지 않는 댓글입니다.");
+  }
+}
+
 export async function getUserIdByKakaoId(
   kakaoId: string
 ): Promise<string | null> {

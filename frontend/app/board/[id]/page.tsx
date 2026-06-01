@@ -7,8 +7,9 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import type { Post, Comment } from "@/domain/entities/post";
 
-
 const COMMENT_MAX_LENGTH = 1000;
+const POST_TITLE_MAX_LENGTH = 100;
+const POST_CONTENT_MAX_LENGTH = 10000;
 
 function formatRelativeTime(dateString: string): string {
   const now = new Date();
@@ -43,9 +44,29 @@ export default function PostDetailPage() {
   const [isLoadingPost, setIsLoadingPost] = useState(true);
   const [isLoadingComments, setIsLoadingComments] = useState(true);
   const [postError, setPostError] = useState<string | null>(null);
+
+  // 댓글 작성 상태
   const [commentText, setCommentText] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+
+  // 게시글 수정 상태
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [isSavingPost, setIsSavingPost] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  // 게시글 삭제 상태
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
+
+  // 댓글 삭제 진행 중인 commentId 목록
+  const [deletingCommentIds, setDeletingCommentIds] = useState<Set<number>>(new Set());
+
+  const isPostAuthor =
+    post !== null &&
+    session?.user?.nickname !== undefined &&
+    post.authorNickname === session.user.nickname;
 
   const fetchPost = useCallback(async () => {
     setIsLoadingPost(true);
@@ -101,6 +122,124 @@ export default function PostDetailPage() {
     fetchComments();
   }, [postId, fetchPost, fetchComments]);
 
+  function enterEditMode() {
+    if (!post) return;
+    setEditTitle(post.title);
+    setEditContent(post.content);
+    setEditError(null);
+    setIsEditMode(true);
+  }
+
+  function cancelEditMode() {
+    setIsEditMode(false);
+    setEditError(null);
+  }
+
+  async function handleSavePost() {
+    if (editTitle.trim().length === 0) {
+      setEditError("제목을 입력해주세요.");
+      return;
+    }
+    if (editContent.trim().length === 0) {
+      setEditError("내용을 입력해주세요.");
+      return;
+    }
+
+    setIsSavingPost(true);
+    setEditError(null);
+
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: editTitle.trim(), content: editContent.trim() }),
+      });
+
+      const json = (await response.json()) as {
+        data: Post | null;
+        error: string | null;
+      };
+
+      if (json.error || !json.data) {
+        throw new Error(json.error ?? "게시글 수정에 실패했습니다.");
+      }
+
+      setPost(json.data);
+      setIsEditMode(false);
+    } catch (error) {
+      setEditError(
+        error instanceof Error ? error.message : "게시글 수정에 실패했습니다."
+      );
+    } finally {
+      setIsSavingPost(false);
+    }
+  }
+
+  async function handleDeletePost() {
+    const confirmed = window.confirm("정말 삭제하시겠습니까?");
+    if (!confirmed) return;
+
+    setIsDeletingPost(true);
+
+    try {
+      const response = await fetch(`/api/posts/${postId}`, {
+        method: "DELETE",
+      });
+
+      const json = (await response.json()) as {
+        data: { success: boolean } | null;
+        error: string | null;
+      };
+
+      if (json.error) {
+        throw new Error(json.error);
+      }
+
+      router.push("/board");
+    } catch (error) {
+      alert(
+        error instanceof Error ? error.message : "게시글 삭제에 실패했습니다."
+      );
+    } finally {
+      setIsDeletingPost(false);
+    }
+  }
+
+  async function handleDeleteComment(commentId: number) {
+    setDeletingCommentIds((prev) => new Set(prev).add(commentId));
+
+    try {
+      const response = await fetch(
+        `/api/posts/${postId}/comments/${commentId}`,
+        { method: "DELETE" }
+      );
+
+      const json = (await response.json()) as {
+        data: { success: boolean } | null;
+        error: string | null;
+      };
+
+      if (json.error) {
+        throw new Error(json.error);
+      }
+
+      setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+      setPost((prev) =>
+        prev ? { ...prev, commentCount: Math.max(0, prev.commentCount - 1) } : prev
+      );
+    } catch (error) {
+      alert(
+        error instanceof Error ? error.message : "댓글 삭제에 실패했습니다."
+      );
+    } finally {
+      setDeletingCommentIds((prev) => {
+        const next = new Set(prev);
+        next.delete(commentId);
+        return next;
+      });
+    }
+  }
+
   async function handleSubmitComment(event: React.FormEvent) {
     event.preventDefault();
     setCommentError(null);
@@ -144,8 +283,6 @@ export default function PostDetailPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-       
-
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
         {/* 뒤로가기 */}
         <Link
@@ -194,7 +331,8 @@ export default function PostDetailPage() {
         {/* 게시글 본문 */}
         {!isLoadingPost && post && (
           <article className="rounded-2xl bg-white shadow-sm p-6 space-y-4">
-            <div className="flex items-center gap-2">
+            {/* 카테고리 배지 + 수정/삭제 버튼 */}
+            <div className="flex items-center justify-between">
               <span
                 className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   CATEGORY_BADGE_COLORS[post.category] ?? "bg-gray-100 text-gray-600"
@@ -202,31 +340,113 @@ export default function PostDetailPage() {
               >
                 {post.category}
               </span>
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">{post.title}</h1>
-            <div className="flex items-center gap-2 text-xs text-gray-400 pb-4 border-b border-gray-100">
-              {post.authorProfileImage ? (
-                <Image
-                  src={post.authorProfileImage}
-                  alt={post.authorNickname}
-                  width={20}
-                  height={20}
-                  className="rounded-full"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
-                  {post.authorNickname[0] ?? "?"}
+
+              {isPostAuthor && !isEditMode && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={enterEditMode}
+                    className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                  >
+                    수정
+                  </button>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    type="button"
+                    onClick={handleDeletePost}
+                    disabled={isDeletingPost}
+                    className="text-xs text-gray-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeletingPost ? "삭제 중..." : "삭제"}
+                  </button>
                 </div>
               )}
-              <span className="font-medium text-gray-600">
-                {post.authorNickname}
-              </span>
-              <span>·</span>
-              <span>{formatRelativeTime(post.createdAt)}</span>
             </div>
-            <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-              {post.content}
-            </div>
+
+            {/* 수정 모드 */}
+            {isEditMode ? (
+              <div className="space-y-3">
+                <div>
+                  <label
+                    htmlFor="edit-title"
+                    className="block text-xs font-medium text-gray-500 mb-1"
+                  >
+                    제목
+                  </label>
+                  <input
+                    id="edit-title"
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    maxLength={POST_TITLE_MAX_LENGTH}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-base font-bold text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="edit-content"
+                    className="block text-xs font-medium text-gray-500 mb-1"
+                  >
+                    내용
+                  </label>
+                  <textarea
+                    id="edit-content"
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    maxLength={POST_CONTENT_MAX_LENGTH}
+                    rows={8}
+                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+                {editError && (
+                  <p className="text-xs text-red-500">{editError}</p>
+                )}
+                <div className="flex items-center gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={cancelEditMode}
+                    className="rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSavePost}
+                    disabled={isSavingPost}
+                    className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isSavingPost ? "저장 중..." : "저장"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-xl font-bold text-gray-900">{post.title}</h1>
+                <div className="flex items-center gap-2 text-xs text-gray-400 pb-4 border-b border-gray-100">
+                  {post.authorProfileImage ? (
+                    <Image
+                      src={post.authorProfileImage}
+                      alt={post.authorNickname}
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
+                      {post.authorNickname[0] ?? "?"}
+                    </div>
+                  )}
+                  <span className="font-medium text-gray-600">
+                    {post.authorNickname}
+                  </span>
+                  <span>·</span>
+                  <span>{formatRelativeTime(post.createdAt)}</span>
+                </div>
+                <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                  {post.content}
+                </div>
+              </>
+            )}
           </article>
         )}
 
@@ -253,34 +473,53 @@ export default function PostDetailPage() {
               </p>
             ) : (
               <ul className="space-y-4 divide-y divide-gray-100">
-                {comments.map((comment) => (
-                  <li key={comment.id} className="pt-4 first:pt-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      {comment.authorProfileImage ? (
-                        <Image
-                          src={comment.authorProfileImage}
-                          alt={comment.authorNickname}
-                          width={20}
-                          height={20}
-                          className="rounded-full"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
-                          {comment.authorNickname[0] ?? "?"}
+                {comments.map((comment) => {
+                  const isCommentAuthor =
+                    session?.user?.nickname !== undefined &&
+                    comment.authorNickname === session.user.nickname;
+                  const isDeletingThisComment = deletingCommentIds.has(comment.id);
+
+                  return (
+                    <li key={comment.id} className="pt-4 first:pt-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          {comment.authorProfileImage ? (
+                            <Image
+                              src={comment.authorProfileImage}
+                              alt={comment.authorNickname}
+                              width={20}
+                              height={20}
+                              className="rounded-full"
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
+                              {comment.authorNickname[0] ?? "?"}
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-gray-700">
+                            {comment.authorNickname}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {formatRelativeTime(comment.createdAt)}
+                          </span>
                         </div>
-                      )}
-                      <span className="text-sm font-medium text-gray-700">
-                        {comment.authorNickname}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {formatRelativeTime(comment.createdAt)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap pl-7">
-                      {comment.content}
-                    </p>
-                  </li>
-                ))}
+                        {isCommentAuthor && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            disabled={isDeletingThisComment}
+                            className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isDeletingThisComment ? "삭제 중..." : "삭제"}
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap pl-7">
+                        {comment.content}
+                      </p>
+                    </li>
+                  );
+                })}
               </ul>
             )}
 
