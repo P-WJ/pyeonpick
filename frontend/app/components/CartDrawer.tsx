@@ -195,7 +195,7 @@ export function CartDrawer({
             disabled={items.length === 0}
             className="w-full rounded-xl border-2 border-blue-600 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            공유 링크 복사
+            🔗 이 조합 친구에게 공유
           </button>
         </div>
       </aside>

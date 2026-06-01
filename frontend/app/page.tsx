@@ -37,9 +37,11 @@ function HomePageContent() {
   const {
     wishlistIds,
     setCartItems,
+    setIsCartOpen,
     handleAddToCart,
     handleAddMultipleToCart,
     handleToggleWishlist,
+    showToast,
   } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -75,7 +77,12 @@ function HomePageContent() {
           const newItems = json
             .data!.filter((p) => !existingIds.has(p.id))
             .map((p) => ({ product: p, quantity: 1 }));
-          return newItems.length > 0 ? [...prev, ...newItems] : prev;
+          if (newItems.length > 0) {
+            showToast(`🛒 공유된 조합 ${newItems.length}개가 장바구니에 담겼어요!`);
+            setIsCartOpen(true);
+            return [...prev, ...newItems];
+          }
+          return prev;
         });
         const cleanParams = new URLSearchParams(searchParams.toString());
         cleanParams.delete("cart");
