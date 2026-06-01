@@ -10,10 +10,12 @@ import {
   removeItem,
   calculateTotalPrice,
 } from "@/app/use-cases/cart-manager";
+import Link from "next/link";
 import { FilterBar, type ActiveFilters } from "./components/FilterBar";
 import { ProductCard } from "./components/ProductCard";
 import { CartDrawer } from "./components/CartDrawer";
 import { AiBanner } from "./components/AiBanner";
+import { SubscribeForm } from "./components/SubscribeForm";
 import { PRODUCTS_PAGE_LIMIT } from "@/lib/constants";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
@@ -52,6 +54,7 @@ export default function HomePage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -201,12 +204,12 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* 알림 버튼 — v1.1 자리 확보 */}
+            {/* 알림 구독 버튼 */}
             <button
               type="button"
-              onClick={() => showToast("알림 구독은 준비 중이에요!")}
+              onClick={() => setIsSubscribeOpen(true)}
               className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-              aria-label="알림 설정"
+              aria-label="알림 구독"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -339,6 +342,21 @@ export default function HomePage() {
         onRemoveItem={handleRemoveItem}
         onShare={copyShareUrl}
       />
+
+      {/* 알림 구독 모달 */}
+      {isSubscribeOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          onClick={() => setIsSubscribeOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SubscribeForm />
+          </div>
+        </div>
+      )}
 
       {/* 토스트 */}
       {toastMessage && (

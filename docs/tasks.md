@@ -55,3 +55,18 @@
 - [x] `docs/progress.md` MVP 완료로 업데이트
 - [x] Vercel 배포 설정
 - [x] GitHub Actions 크롤러 배포 설정 (Railway 대체)
+
+---
+
+## v1.1 — 알림 구독
+
+- [x] `crawler/domain/entities.py` 에 Subscription dataclass 추가
+- [x] `crawler/infrastructure/repository.py` 에 구독 관련 쿼리 추가
+- [x] `crawler/infrastructure/email/resend_client.py` 생성
+- [x] `crawler/use_cases/notify.py` 생성 (키워드 매칭 + 발송)
+- [x] Supabase `subscriptions`, `notifications_sent` 테이블 마이그레이션 SQL
+- [x] `frontend/infrastructure/repositories/subscription-repository.ts` 생성
+- [x] `frontend/app/api/subscriptions/route.ts` 생성 (POST, DELETE)
+- [x] `frontend/app/components/SubscribeForm.tsx` 생성
+- [x] `@agent-reviewer` 리뷰
+- [x] `docs/progress.md` v1.1 완료로 업데이트
