@@ -1,10 +1,10 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase";
-import type { Product, Store, EventType, Category } from "@/domain/entities/product";
+import type { Product, Store, EventType, Category, Nutrition } from "@/domain/entities/product";
 import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT } from "@/lib/constants";
 
 const VALID_STORES = new Set<string>(["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"]);
 const VALID_EVENT_TYPES = new Set<string>(["1+1", "2+1", "3+1", "할인", "증정"]);
-const VALID_CATEGORIES = new Set<string>(["음료", "과자", "간편식사", "아이스크림", "생활용품", "기타"]);
+const VALID_CATEGORIES = new Set<string>(["음료", "과자", "식품", "아이스크림", "생활용품"]);
 
 const EVENT_TYPE_SORT_ORDER: Record<string, number> = {
   "1+1": 1,
@@ -120,6 +120,24 @@ export async function getRelatedProducts(
     .slice(0, limit);
 }
 
+export async function getProductsByIds(ids: number[]): Promise<Product[]> {
+  if (ids.length === 0) return [];
+
+  const supabase = createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .in("id", ids);
+
+  if (error) throw new Error(`상품 일괄 조회 실패: ${error.message}`);
+
+  return (data ?? []).flatMap((row) => {
+    const product = parseProductRow(row);
+    return product ? [product] : [];
+  });
+}
+
 function parseProductRow(row: Record<string, unknown>): Product | null {
   const id = typeof row.id === "number" ? row.id : Number(row.id);
   const store = String(row.store ?? "");
@@ -136,6 +154,11 @@ function parseProductRow(row: Record<string, unknown>): Product | null {
   if (!VALID_CATEGORIES.has(category)) return null;
   if (!name || isNaN(id) || isNaN(price)) return null;
 
+  const nutrition =
+    row.nutrition != null && typeof row.nutrition === "object"
+      ? (row.nutrition as Nutrition)
+      : null;
+
   return {
     id,
     store: store as Store,
@@ -146,5 +169,6 @@ function parseProductRow(row: Record<string, unknown>): Product | null {
     imageUrl,
     validFrom,
     validTo,
+    nutrition,
   };
 }

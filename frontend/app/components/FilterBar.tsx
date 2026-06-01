@@ -153,11 +153,11 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 편의점 필터 */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
         <button
           type="button"
           onClick={() => handlePillFilterChange("store", "")}
-          className="rounded-full border px-3 py-1 text-sm font-medium transition-colors"
+          className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
           style={
             filters.store === ""
               ? { backgroundColor: "#1F2937", color: "#FFFFFF", borderColor: "#1F2937" }
@@ -174,7 +174,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               key={store}
               type="button"
               onClick={() => handlePillFilterChange("store", isActive ? "" : store)}
-              className="rounded-full border px-3 py-1 text-sm font-medium transition-colors"
+              className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
               style={
                 isActive
                   ? {
@@ -196,11 +196,11 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 행사 유형 필터 */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
         <button
           type="button"
           onClick={() => handlePillFilterChange("eventType", "")}
-          className="rounded-full border px-3 py-1 text-sm font-medium transition-colors"
+          className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
           style={
             filters.eventType === ""
               ? { backgroundColor: "#1F2937", color: "#FFFFFF", borderColor: "#1F2937" }
@@ -217,7 +217,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               key={eventType}
               type="button"
               onClick={() => handlePillFilterChange("eventType", isActive ? "" : eventType)}
-              className="rounded-full border px-3 py-1 text-sm font-medium transition-colors"
+              className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
               style={
                 isActive
                   ? {

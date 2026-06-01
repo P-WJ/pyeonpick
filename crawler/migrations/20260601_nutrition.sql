@@ -1,0 +1,16 @@
+-- 영양성분 컬럼 추가
+-- nutrition JSONB: 편의점 상품 상세 페이지에서 수집한 영양성분 정보
+-- 없는 상품은 NULL, 있는 상품은 아래 형식의 JSON:
+-- {
+--   "calories": 250,
+--   "protein": 5.0,
+--   "fat": 8.0,
+--   "carbohydrates": 35.0,
+--   "sugars": 10.0,
+--   "sodium": 400,
+--   "saturated_fat": 2.5,
+--   "trans_fat": 0,
+--   "cholesterol": 15,
+--   "serving_size": "1개(120g)"
+-- }
+ALTER TABLE products ADD COLUMN IF NOT EXISTS nutrition JSONB;

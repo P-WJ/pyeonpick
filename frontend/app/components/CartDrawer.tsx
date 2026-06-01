@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import type { CartItem } from "@/domain/entities/cart";
 import { MAX_QUANTITY, STORE_COLORS } from "@/lib/constants";
 import { SavingsBadge } from "./SavingsBadge";
 import { EventBadge } from "./EventBadge";
+
+const HIGHLIGHT_DURATION_MS = 500;
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -26,6 +29,30 @@ export function CartDrawer({
   onRemoveItem,
   onShare,
 }: CartDrawerProps) {
+  const [changedItemId, setChangedItemId] = useState<number | null>(null);
+  const [deletedItemToast, setDeletedItemToast] = useState<string | null>(null);
+
+  const triggerHighlight = useCallback((productId: number) => {
+    setChangedItemId(productId);
+    setTimeout(() => setChangedItemId(null), HIGHLIGHT_DURATION_MS);
+  }, []);
+
+  function handleDecrement(productId: number, productName: string, quantity: number) {
+    if (quantity > 1) {
+      onUpdateQuantity(productId, quantity - 1);
+      triggerHighlight(productId);
+    } else {
+      onRemoveItem(productId);
+      setDeletedItemToast(`${productName}이(가) 삭제되었습니다.`);
+      setTimeout(() => setDeletedItemToast(null), 2000);
+    }
+  }
+
+  function handleIncrement(productId: number, quantity: number) {
+    onUpdateQuantity(productId, Math.min(quantity + 1, MAX_QUANTITY));
+    triggerHighlight(productId);
+  }
+
   if (!isOpen) return null;
 
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -37,6 +64,11 @@ export function CartDrawer({
         onClick={onClose}
         aria-hidden="true"
       />
+      {deletedItemToast && (
+        <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-lg">
+          {deletedItemToast}
+        </div>
+      )}
       <aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-white shadow-xl">
         {/* 헤더 */}
         <div className="flex items-center justify-between border-b px-5 py-4">
@@ -82,10 +114,13 @@ export function CartDrawer({
           )}
           {items.map(({ product, quantity }) => {
             const storeColors = STORE_COLORS[product.store];
+            const isHighlighted = changedItemId === product.id;
             return (
               <div
                 key={product.id}
-                className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3"
+                className={`flex items-center gap-3 rounded-xl border border-gray-100 p-3 transition-colors duration-300 ${
+                  isHighlighted ? "bg-yellow-50" : "bg-gray-50"
+                }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
@@ -118,11 +153,7 @@ export function CartDrawer({
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() =>
-                        quantity > 1
-                          ? onUpdateQuantity(product.id, quantity - 1)
-                          : onRemoveItem(product.id)
-                      }
+                      onClick={() => handleDecrement(product.id, product.name, quantity)}
                       className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                     >
                       −
@@ -132,9 +163,7 @@ export function CartDrawer({
                     </span>
                     <button
                       type="button"
-                      onClick={() =>
-                        onUpdateQuantity(product.id, Math.min(quantity + 1, MAX_QUANTITY))
-                      }
+                      onClick={() => handleIncrement(product.id, quantity)}
                       className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                     >
                       +

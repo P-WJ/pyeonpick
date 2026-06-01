@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/domain/entities/product";
 import type { CartItem } from "@/domain/entities/cart";
 import { buildShareUrl, calculateSavings } from "@/domain/use-cases/cart";
@@ -10,15 +11,17 @@ import {
   removeItem,
   calculateTotalPrice,
 } from "@/app/use-cases/cart-manager";
-import Link from "next/link";
 import { FilterBar, type ActiveFilters } from "./components/FilterBar";
+import { Header } from "./components/Header";
 import { ProductCard } from "./components/ProductCard";
 import { CartDrawer } from "./components/CartDrawer";
 import { AiBanner } from "./components/AiBanner";
+import { AiRecommendModal } from "./components/AiRecommendModal";
 import { SubscribeForm } from "./components/SubscribeForm";
 import { PRODUCTS_PAGE_LIMIT } from "@/lib/constants";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
+const WISHLIST_STORAGE_KEY = "cvs-wishlist-v1";
 const SKELETON_COUNT = 10;
 const TOAST_DURATION_MS = 2500;
 
@@ -44,6 +47,9 @@ function buildSearchParams(
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -52,9 +58,11 @@ export default function HomePage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ActiveFilters>(INITIAL_FILTERS);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [wishlistIds, setWishlistIds] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -69,9 +77,59 @@ export default function HomePage() {
     }
   }, []);
 
+  // 찜하기 로컬스토리지 복원
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
+      if (stored) setWishlistIds(JSON.parse(stored) as number[]);
+    } catch {
+      // 손상된 데이터는 무시
+    }
+  }, []);
+
+  // 공유 링크 자동 불러오기 (?cart=id1,id2,id3)
+  useEffect(() => {
+    const cartParam = searchParams.get("cart");
+    if (!cartParam || cartParam.trim() === "") return;
+
+    const sharedIds = cartParam
+      .split(",")
+      .map((segment: string) => Number(segment.trim()))
+      .filter((id: number) => !isNaN(id) && id > 0);
+
+    if (sharedIds.length === 0) return;
+
+    fetch(`/api/products/by-ids?ids=${sharedIds.join(",")}`)
+      .then((response) => response.json())
+      .then((json: { data: Product[] | null; error: string | null }) => {
+        if (json.error || !json.data) return;
+
+        setCartItems((prev) => {
+          const existingIds = new Set(prev.map((item) => item.product.id));
+          const newItems: CartItem[] = json.data!
+            .filter((product) => !existingIds.has(product.id))
+            .map((product) => ({ product, quantity: 1 }));
+          return newItems.length > 0 ? [...prev, ...newItems] : prev;
+        });
+
+        // URL에서 ?cart= 파라미터 제거
+        const cleanParams = new URLSearchParams(searchParams.toString());
+        cleanParams.delete("cart");
+        const cleanQuery = cleanParams.toString();
+        router.replace(cleanQuery ? `/?${cleanQuery}` : "/");
+      })
+      .catch(() => {
+        // 공유 링크 로드 실패는 조용히 무시
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
   }, [cartItems]);
+
+  useEffect(() => {
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistIds));
+  }, [wishlistIds]);
 
   // 초기 & 추가 페이지 로드
   const fetchPage = useCallback(
@@ -159,6 +217,17 @@ export default function HomePage() {
     showToast(`${product.name}을(를) 담았습니다.`);
   }
 
+  function handleAddMultipleToCart(productsToAdd: Product[]) {
+    setCartItems((prev) => {
+      let updatedCart = prev;
+      for (const product of productsToAdd) {
+        updatedCart = addToCart(updatedCart, product);
+      }
+      return updatedCart;
+    });
+    showToast(`${productsToAdd.length}개 상품을 장바구니에 담았습니다.`);
+  }
+
   function handleUpdateQuantity(productId: number, quantity: number) {
     setCartItems((prev) => updateQuantity(prev, productId, quantity));
   }
@@ -174,6 +243,15 @@ export default function HomePage() {
       .then(() => showToast("공유 링크가 복사됐습니다."));
   }
 
+  function handleToggleWishlist(product: Product) {
+    setWishlistIds((prev) => {
+      if (prev.includes(product.id)) {
+        return prev.filter((id) => id !== product.id);
+      }
+      return [...prev, product.id];
+    });
+  }
+
   function handleFilterChange(nextFilters: ActiveFilters) {
     setFilters(nextFilters);
   }
@@ -185,79 +263,16 @@ export default function HomePage() {
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = calculateTotalPrice(cartItems);
   const totalSavings = calculateSavings(cartItems);
-
   const showEmptyState =
     !isLoadingInitial && !fetchError && products.length === 0;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-      {/* 헤더 */}
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <div>
-            <span className="text-xl font-extrabold text-blue-700 tracking-tight">
-              편픽
-            </span>
-            <span className="ml-2 text-xs text-gray-400 font-medium hidden sm:inline">
-              편의점 행사 비교
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* 알림 구독 버튼 */}
-            <button
-              type="button"
-              onClick={() => setIsSubscribeOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-              aria-label="알림 구독"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </button>
-
-            {/* 장바구니 버튼 */}
-            <button
-              type="button"
-              onClick={() => setIsCartOpen(true)}
-              className="relative flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="9" cy="21" r="1" />
-                <circle cx="20" cy="21" r="1" />
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-              </svg>
-              <span className="hidden sm:inline">장바구니</span>
-              {totalCartCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                  {totalCartCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header
+        onSubscribeOpen={() => setIsSubscribeOpen(true)}
+        onCartOpen={() => setIsCartOpen(true)}
+        cartCount={totalCartCount}
+      />
 
       <main className="mx-auto max-w-7xl px-4 py-6 space-y-4">
         {/* 필터 */}
@@ -267,8 +282,10 @@ export default function HomePage() {
           onSearch={handleSearch}
         />
 
-        {/* AI 추천 배너 — v1.2 자리 확보 */}
-        <AiBanner onToast={showToast} />
+        {/* AI 추천 배너 — NEXT_PUBLIC_ENABLE_AI_RECOMMEND 플래그가 있을 때만 노출 */}
+        {process.env.NEXT_PUBLIC_ENABLE_AI_RECOMMEND === "true" && (
+          <AiBanner onOpenModal={() => setIsAiModalOpen(true)} />
+        )}
 
         {/* 초기 로딩 스켈레톤 */}
         {isLoadingInitial && (
@@ -292,11 +309,20 @@ export default function HomePage() {
         {/* 빈 결과 */}
         {showEmptyState && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="mb-3 text-5xl">검색 결과 없음</div>
-            <p className="text-sm font-medium text-gray-500">
-              조건에 맞는 상품이 없습니다.
+            <div className="mb-4 text-5xl">🔍</div>
+            <p className="text-base font-semibold text-gray-700">
+              검색 결과가 없습니다
             </p>
-            <p className="mt-1 text-xs text-gray-400">필터를 변경해보세요.</p>
+            <p className="mt-1 text-sm text-gray-400">
+              조건에 맞는 상품이 없습니다. 필터를 변경해보세요.
+            </p>
+            <button
+              type="button"
+              onClick={() => setFilters(INITIAL_FILTERS)}
+              className="mt-5 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            >
+              필터 초기화
+            </button>
           </div>
         )}
 
@@ -308,6 +334,8 @@ export default function HomePage() {
                 key={product.id}
                 product={product}
                 onAddToCart={handleAddToCart}
+                isWishlisted={wishlistIds.includes(product.id)}
+                onToggleWishlist={handleToggleWishlist}
               />
             ))}
           </div>
@@ -342,6 +370,15 @@ export default function HomePage() {
         onRemoveItem={handleRemoveItem}
         onShare={copyShareUrl}
       />
+
+      {/* AI 추천 모달 — NEXT_PUBLIC_ENABLE_AI_RECOMMEND 플래그가 있을 때만 노출 */}
+      {process.env.NEXT_PUBLIC_ENABLE_AI_RECOMMEND === "true" && isAiModalOpen && (
+        <AiRecommendModal
+          allProducts={products}
+          onClose={() => setIsAiModalOpen(false)}
+          onAddToCart={handleAddMultipleToCart}
+        />
+      )}
 
       {/* 알림 구독 모달 */}
       {isSubscribeOpen && (

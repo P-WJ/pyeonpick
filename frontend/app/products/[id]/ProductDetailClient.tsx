@@ -3,13 +3,86 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import type { Product } from "@/domain/entities/product";
+import type { Product, Nutrition } from "@/domain/entities/product";
 import type { CartItem } from "@/domain/entities/cart";
 import { STORE_COLORS } from "@/lib/constants";
 import { EventBadge } from "@/app/components/EventBadge";
+import { calculatePriceBenefit } from "@/domain/use-cases/price";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
 const PLACEHOLDER_IMAGE = "/placeholder.png";
+
+const NUTRITION_LABELS: Record<keyof Omit<Nutrition, "serving_size" | "calories">, string> = {
+  protein: "단백질",
+  fat: "지방",
+  carbohydrates: "탄수화물",
+  sugars: "당류",
+  sodium: "나트륨",
+  saturated_fat: "포화지방",
+  trans_fat: "트랜스지방",
+  cholesterol: "콜레스테롤",
+};
+
+const NUTRITION_UNITS: Record<keyof Omit<Nutrition, "serving_size" | "calories">, string> = {
+  protein: "g",
+  fat: "g",
+  carbohydrates: "g",
+  sugars: "g",
+  sodium: "mg",
+  saturated_fat: "g",
+  trans_fat: "g",
+  cholesterol: "mg",
+};
+
+function NutritionTable({ nutrition }: { nutrition: Nutrition }) {
+  const nutrientKeys = Object.keys(NUTRITION_LABELS) as Array<
+    keyof Omit<Nutrition, "serving_size" | "calories">
+  >;
+  const availableNutrients = nutrientKeys.filter(
+    (key) => nutrition[key] !== undefined && nutrition[key] !== null
+  );
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+        <p className="text-sm font-bold text-gray-800">영양성분</p>
+        {nutrition.serving_size && (
+          <p className="text-xs text-gray-500 mt-0.5">
+            1회 제공량: {nutrition.serving_size}
+          </p>
+        )}
+      </div>
+
+      {nutrition.calories !== undefined && (
+        <div className="px-4 py-4 border-b border-gray-100 flex items-baseline justify-between">
+          <span className="text-base font-semibold text-gray-700">열량</span>
+          <span className="text-3xl font-black text-gray-900">
+            {nutrition.calories}
+            <span className="text-sm font-normal text-gray-500 ml-1">kcal</span>
+          </span>
+        </div>
+      )}
+
+      {availableNutrients.length > 0 && (
+        <table className="w-full text-sm">
+          <tbody>
+            {availableNutrients.map((key) => (
+              <tr key={key} className="border-b border-gray-50 last:border-0">
+                <td className="px-4 py-2.5 text-gray-600">
+                  {NUTRITION_LABELS[key]}
+                </td>
+                <td className="px-4 py-2.5 text-right font-medium text-gray-900">
+                  {nutrition[key]}
+                  {NUTRITION_UNITS[key]}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
 
 interface ProductDetailClientProps {
   product: Product;
@@ -74,6 +147,7 @@ export function ProductDetailClient({
 }: ProductDetailClientProps) {
   const router = useRouter();
   const storeColors = STORE_COLORS[product.store];
+  const benefit = calculatePriceBenefit(product.price, product.eventType);
 
   function handleAddToCart() {
     addProductToCart(product);
@@ -141,35 +215,75 @@ export function ProductDetailClient({
             {product.name}
           </h1>
 
-          {/* 가격 */}
-          <p
-            className="text-3xl font-black"
-            style={{ color: storeColors.primary }}
-          >
-            {product.price.toLocaleString("ko-KR")}
-            <span className="text-lg font-semibold text-gray-500">원</span>
-          </p>
+          {/* 가격 혜택 카드 */}
+          <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: storeColors.primary + "33", backgroundColor: storeColors.primary + "08" }}>
+            {/* 표시 가격 + 절약률 */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-xs text-gray-400 mb-0.5">표시 가격</p>
+                <p className="text-3xl font-black" style={{ color: storeColors.primary }}>
+                  {product.price.toLocaleString("ko-KR")}
+                  <span className="text-lg font-semibold text-gray-500">원</span>
+                </p>
+              </div>
+              {benefit.savingsRate > 0 && (
+                <span className="rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white">
+                  {benefit.savingsRate}% 절약
+                </span>
+              )}
+            </div>
 
-          {/* 유효기간 */}
-          <p className="text-sm text-gray-400">
-            {product.validFrom} ~ {product.validTo}
-          </p>
+            {/* 행사 혜택 상세 */}
+            {benefit.savings > 0 ? (
+              <div className="rounded-xl bg-white p-3 space-y-2">
+                <p className="text-xs font-semibold text-gray-500">{benefit.benefitDescription}</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg bg-gray-50 py-2">
+                    <p className="text-[10px] text-gray-400">최소 구매</p>
+                    <p className="text-base font-bold text-gray-800">{benefit.requiredQuantity}개</p>
+                  </div>
+                  <div className="rounded-lg py-2" style={{ backgroundColor: storeColors.primary + "15" }}>
+                    <p className="text-[10px] text-gray-400">개당 단가</p>
+                    <p className="text-base font-bold" style={{ color: storeColors.primary }}>
+                      {benefit.unitPrice.toLocaleString("ko-KR")}원
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-red-50 py-2">
+                    <p className="text-[10px] text-gray-400">절약 금액</p>
+                    <p className="text-base font-bold text-red-500">
+                      {benefit.savings.toLocaleString("ko-KR")}원
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">{benefit.benefitDescription}</p>
+            )}
+          </div>
 
-          {/* 카테고리 pill */}
-          <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-            {product.category}
-          </span>
-        </div>
-
-        {/* 영양성분 섹션 */}
-        <div className="px-4">
-          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
-            <p className="text-sm font-bold text-amber-800 mb-1">영양성분</p>
-            <p className="text-xs text-amber-600">
-              영양성분 정보는 준비 중입니다. 빠른 시일 내 제공될 예정이에요.
-            </p>
+          {/* 유효기간 + 카테고리 */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+              {product.category}
+            </span>
+            <span className="text-xs text-gray-400">
+              행사기간: {product.validFrom} ~ {product.validTo}
+            </span>
           </div>
         </div>
+
+        {/* 영양성분 섹션 — 식품류만 표시 */}
+        {product.category !== "생활용품" && (
+          <div className="px-4">
+            {product.nutrition ? (
+              <NutritionTable nutrition={product.nutrition} />
+            ) : (
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+                <p className="text-xs text-amber-600">영양성분 정보를 준비 중이에요.</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 관련 상품 섹션 */}
         <div className="px-4 mt-6">
@@ -178,7 +292,16 @@ export function ProductDetailClient({
           </p>
 
           {relatedProducts.length === 0 ? (
-            <p className="text-xs text-gray-400">관련 상품이 없습니다.</p>
+            <div>
+              <p className="text-xs text-gray-400">관련 상품이 없습니다.</p>
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="mt-3 px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-medium"
+              >
+                다른 상품 보러가기
+              </button>
+            </div>
           ) : (
             <div
               className="flex gap-3 overflow-x-auto pb-2"
