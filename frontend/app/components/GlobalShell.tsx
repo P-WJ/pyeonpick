@@ -18,6 +18,7 @@ export function GlobalShell({ children }: { children: ReactNode }) {
     setIsSubscribeOpen,
     handleUpdateQuantity,
     handleRemoveItem,
+    clearCart,
     copyShareUrl,
   } = useCart();
 
@@ -34,6 +35,7 @@ export function GlobalShell({ children }: { children: ReactNode }) {
         onClose={() => setIsCartOpen(false)}
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveItem}
+        onClearCart={clearCart}
         onShare={copyShareUrl}
       />
 

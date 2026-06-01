@@ -39,6 +39,7 @@ interface CartContextValue {
   handleUpdateQuantity: (productId: number, quantity: number) => void;
   handleRemoveItem: (productId: number) => void;
   handleToggleWishlist: (product: Product) => void;
+  clearCart: () => void;
   copyShareUrl: () => void;
   showToast: (message: string) => void;
 }
@@ -119,6 +120,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  function clearCart() {
+    setCartItems([]);
+  }
+
   function copyShareUrl() {
     const url = buildShareUrl(cartItems);
     navigator.clipboard
@@ -149,6 +154,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         handleUpdateQuantity,
         handleRemoveItem,
         handleToggleWishlist,
+        clearCart,
         copyShareUrl,
         showToast,
       }}

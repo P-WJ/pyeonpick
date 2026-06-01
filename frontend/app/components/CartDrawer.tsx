@@ -16,6 +16,7 @@ interface CartDrawerProps {
   onClose: () => void;
   onUpdateQuantity: (productId: number, quantity: number) => void;
   onRemoveItem: (productId: number) => void;
+  onClearCart: () => void;
   onShare: () => void;
 }
 
@@ -27,6 +28,7 @@ export function CartDrawer({
   onClose,
   onUpdateQuantity,
   onRemoveItem,
+  onClearCart,
   onShare,
 }: CartDrawerProps) {
   const [changedItemId, setChangedItemId] = useState<number | null>(null);
@@ -37,7 +39,11 @@ export function CartDrawer({
     setTimeout(() => setChangedItemId(null), HIGHLIGHT_DURATION_MS);
   }, []);
 
-  function handleDecrement(productId: number, productName: string, quantity: number) {
+  function handleDecrement(
+    productId: number,
+    productName: string,
+    quantity: number,
+  ) {
     if (quantity > 1) {
       onUpdateQuantity(productId, quantity - 1);
       triggerHighlight(productId);
@@ -79,6 +85,15 @@ export function CartDrawer({
                 {totalItemCount}
               </span>
             )}
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={onClearCart}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1"
+              >
+                비우기
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -108,8 +123,12 @@ export function CartDrawer({
           {items.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="mb-3 text-5xl">🛒</div>
-              <p className="text-sm font-medium text-gray-500">장바구니가 비어있어요</p>
-              <p className="mt-1 text-xs text-gray-400">행사 상품을 담아보세요!</p>
+              <p className="text-sm font-medium text-gray-500">
+                장바구니가 비어있어요
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                행사 상품을 담아보세요!
+              </p>
             </div>
           )}
           {items.map(({ product, quantity }) => {
@@ -153,7 +172,9 @@ export function CartDrawer({
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => handleDecrement(product.id, product.name, quantity)}
+                      onClick={() =>
+                        handleDecrement(product.id, product.name, quantity)
+                      }
                       className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
                     >
                       −
@@ -195,7 +216,7 @@ export function CartDrawer({
             disabled={items.length === 0}
             className="w-full rounded-xl border-2 border-blue-600 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
-            🔗 이 조합 친구에게 공유
+            🔗 이 상품 친구에게 공유
           </button>
         </div>
       </aside>
