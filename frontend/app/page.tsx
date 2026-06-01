@@ -175,6 +175,10 @@ export default function HomePage() {
     setFilters(nextFilters);
   }
 
+  function handleSearch(searchText: string) {
+    setFilters((prev) => ({ ...prev, search: searchText }));
+  }
+
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = calculateTotalPrice(cartItems);
   const totalSavings = calculateSavings(cartItems);
@@ -254,7 +258,11 @@ export default function HomePage() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 space-y-4">
         {/* 필터 */}
-        <FilterBar filters={filters} onFilterChange={handleFilterChange} />
+        <FilterBar
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onSearch={handleSearch}
+        />
 
         {/* AI 추천 배너 — v1.2 자리 확보 */}
         <AiBanner onToast={showToast} />
