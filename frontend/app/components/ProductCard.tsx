@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import type { Product, EventType } from "@/domain/entities/product";
 import { STORE_COLORS } from "@/lib/constants";
 import { EventBadge } from "./EventBadge";
+import { useCart } from "@/app/contexts/cart-context";
 
 const EVENT_BENEFIT_TEXT: Record<EventType, string | null> = {
   "1+1": "1개 가격에 2개",
@@ -34,6 +36,8 @@ export function ProductCard({
   onToggleWishlist,
 }: ProductCardProps) {
   const storeColors = STORE_COLORS[product.store];
+  const { data: session } = useSession();
+  const { showToast } = useCart();
 
   return (
     <Link
@@ -53,6 +57,10 @@ export function ProductCard({
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
+            if (!session?.user) {
+              showToast("찜하기는 로그인 후 이용할 수 있습니다.");
+              return;
+            }
             onToggleWishlist(product);
           }}
           aria-label={isWishlisted ? "찜하기 해제" : "찜하기"}
