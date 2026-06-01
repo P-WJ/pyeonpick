@@ -77,7 +77,7 @@ export function parseRecommendationResponse(rawText: string): RecommendationResu
     return parsed;
   } catch (error) {
     throw new Error(
-      `Gemini 응답 파싱 실패: JSON 형식이 아님 — ${error instanceof Error ? error.message : String(error)}`
+      `AI 응답 파싱 실패: JSON 형식이 아님 — ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

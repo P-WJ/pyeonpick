@@ -72,9 +72,14 @@
 - **최근 본 상품**: 상세 페이지 접속 시 로컬스토리지 기록, 메인 하단 노출
 - **프로필 페이지** (`/profile`): 찜한 상품, 작성 글 모아보기
 
-## v1.2 — 진행 예정
+## v1.2 — 완료 (2026-06-02)
 
-- AI 조합 추천 (Gemini API 백엔드 구현)
+### 완료 항목
+- AI 조합 추천 백엔드 구현 (Groq llama-3.3-70b-versatile)
+- Gemini API quota 문제로 Groq으로 교체 (`infrastructure/gemini.ts` 내부 교체)
+- `/api/ai/recommend` POST 엔드포인트 + 5분 캐시
+- UI: AiBanner, AiRecommendModal (기존 완성)
+- 활성화: Vercel 환경변수 `NEXT_PUBLIC_ENABLE_AI_RECOMMEND=true` 필요
 - UI는 완성 상태 (`AiBanner`, `AiRecommendModal`), API Route만 구현하면 됨
 
 ## v1.3 — 진행 예정
