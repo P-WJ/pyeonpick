@@ -14,7 +14,6 @@ import { FilterBar, type ActiveFilters } from "./components/FilterBar";
 import { ProductCard } from "./components/ProductCard";
 import { CartDrawer } from "./components/CartDrawer";
 import { AiBanner } from "./components/AiBanner";
-import { ProductDetailModal } from "./components/ProductDetailModal";
 import { PRODUCTS_PAGE_LIMIT } from "@/lib/constants";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
@@ -53,7 +52,6 @@ export default function HomePage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -299,7 +297,6 @@ export default function HomePage() {
                 key={product.id}
                 product={product}
                 onAddToCart={handleAddToCart}
-                onClick={setSelectedProduct}
               />
             ))}
           </div>
@@ -322,13 +319,6 @@ export default function HomePage() {
         {/* Intersection Observer sentinel */}
         <div ref={sentinelRef} className="h-1" />
       </main>
-
-      {/* 상품 상세 모달 */}
-      <ProductDetailModal
-        product={selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-      />
 
       {/* 장바구니 드로어 */}
       <CartDrawer

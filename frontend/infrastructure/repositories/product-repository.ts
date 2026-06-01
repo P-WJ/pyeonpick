@@ -72,6 +72,20 @@ export async function getProducts(
   return { products, hasMore };
 }
 
+export async function getProductById(id: number): Promise<Product | null> {
+  const supabase = createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) return null;
+
+  return parseProductRow(data as Record<string, unknown>);
+}
+
 export async function getRelatedProducts(
   productId: number,
   category: string,

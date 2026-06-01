@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import type { Product } from "@/domain/entities/product";
 import { STORE_COLORS } from "@/lib/constants";
@@ -10,17 +11,16 @@ const PLACEHOLDER_IMAGE = "/placeholder.png";
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
-  onClick?: (product: Product) => void;
 }
 
-export function ProductCard({ product, onAddToCart, onClick }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const storeColors = STORE_COLORS[product.store];
 
   return (
-    <div
-      className="relative flex flex-col rounded-xl bg-white shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer"
+    <Link
+      href={`/products/${product.id}`}
+      className="relative flex flex-col rounded-xl bg-white shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 overflow-hidden"
       style={{ borderTop: `3px solid ${storeColors.primary}` }}
-      onClick={() => onClick?.(product)}
     >
       {/* 행사 뱃지 */}
       <div className="absolute left-2 top-2 z-10">
@@ -57,6 +57,7 @@ export function ProductCard({ product, onAddToCart, onClick }: ProductCardProps)
         <button
           type="button"
           onClick={(event) => {
+            event.preventDefault();
             event.stopPropagation();
             onAddToCart(product);
           }}
@@ -66,6 +67,6 @@ export function ProductCard({ product, onAddToCart, onClick }: ProductCardProps)
           담기
         </button>
       </div>
-    </div>
+    </Link>
   );
 }
