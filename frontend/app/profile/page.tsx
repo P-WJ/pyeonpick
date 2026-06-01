@@ -90,40 +90,54 @@ function WishlistProductCard({ product, onRemoveWishlist }: WishlistProductCardP
   );
 }
 
-function RecentlyViewedProductCard({ product }: { product: Product }) {
+function RecentlyViewedProductCard({
+  product,
+  onRemove,
+}: {
+  product: Product;
+  onRemove: (productId: number) => void;
+}) {
   const storeColor = STORE_COLORS[product.store];
 
   return (
-    <Link
-      href={`/products/${product.id}`}
-      className="relative flex flex-col rounded-xl bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+    <div className="relative flex flex-col rounded-xl bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow"
       style={{ borderTop: `3px solid ${storeColor.primary}` }}
     >
       <div className="absolute left-2 top-2 z-10">
         <EventBadge eventType={product.eventType} />
       </div>
-      <div className="relative mx-auto mt-4 h-28 w-28">
-        <Image
-          src={product.imageUrl || PLACEHOLDER_IMAGE}
-          alt={product.name}
-          fill
-          className="object-contain"
-          unoptimized={!product.imageUrl}
-        />
-      </div>
-      <div className="flex flex-1 flex-col p-3">
-        <p className="text-xs font-semibold" style={{ color: storeColor.primary }}>
-          {product.store}
-        </p>
-        <h3 className="mt-1 line-clamp-2 text-sm font-medium text-gray-900 leading-snug">
-          {product.name}
-        </h3>
-        <p className="mt-1.5 text-base font-bold text-gray-900">
-          {product.price.toLocaleString("ko-KR")}
-          <span className="text-xs font-normal text-gray-500">원</span>
-        </p>
-      </div>
-    </Link>
+      <button
+        type="button"
+        onClick={() => onRemove(product.id)}
+        aria-label="삭제"
+        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 shadow-sm hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors text-xs font-bold"
+      >
+        ✕
+      </button>
+      <Link href={`/products/${product.id}`} className="flex flex-col flex-1">
+        <div className="relative mx-auto mt-4 h-28 w-28">
+          <Image
+            src={product.imageUrl || PLACEHOLDER_IMAGE}
+            alt={product.name}
+            fill
+            className="object-contain"
+            unoptimized={!product.imageUrl}
+          />
+        </div>
+        <div className="flex flex-1 flex-col p-3">
+          <p className="text-xs font-semibold" style={{ color: storeColor.primary }}>
+            {product.store}
+          </p>
+          <h3 className="mt-1 line-clamp-2 text-sm font-medium text-gray-900 leading-snug">
+            {product.name}
+          </h3>
+          <p className="mt-1.5 text-base font-bold text-gray-900">
+            {product.price.toLocaleString("ko-KR")}
+            <span className="text-xs font-normal text-gray-500">원</span>
+          </p>
+        </div>
+      </Link>
+    </div>
   );
 }
 
@@ -551,7 +565,16 @@ export default function ProfilePage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {recentlyViewedProducts.map((product) => (
-                    <RecentlyViewedProductCard key={product.id} product={product} />
+                    <RecentlyViewedProductCard
+                      key={product.id}
+                      product={product}
+                      onRemove={(id) => {
+                        const updated = recentlyViewedIds.filter((v) => v !== id);
+                        localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(updated));
+                        setRecentlyViewedIds(updated);
+                        setRecentlyViewedProducts((prev) => prev.filter((p) => p.id !== id));
+                      }}
+                    />
                   ))}
                 </div>
               </div>
