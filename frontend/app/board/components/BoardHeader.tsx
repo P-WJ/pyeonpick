@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export function BoardHeader() {
   const { data: session } = useSession();
   const user = session?.user;
+  const router = useRouter();
 
   return (
     <header className="sticky top-0 z-30 bg-white shadow-sm">
@@ -30,7 +32,11 @@ export function BoardHeader() {
         <div className="flex items-center gap-2">
           {user ? (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 rounded-full border border-gray-200 pl-1 pr-3 py-1 text-sm text-gray-700">
+              <button
+                type="button"
+                onClick={() => router.push("/profile")}
+                className="flex items-center gap-2 rounded-full border border-gray-200 pl-1 pr-3 py-1 text-sm text-gray-700 hover:border-gray-400 transition-colors"
+              >
                 {user.image ? (
                   <Image
                     src={user.image}
@@ -47,7 +53,7 @@ export function BoardHeader() {
                 <span className="hidden sm:inline font-medium text-sm">
                   {user.name}
                 </span>
-              </div>
+              </button>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/board" })}

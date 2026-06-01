@@ -300,15 +300,13 @@ export default function ProfilePage() {
 
   // 내가 쓴 글 탭 선택 시 API 호출 (최초 1회)
   useEffect(() => {
-    if (activeTab !== "posts" || hasFetchedPosts || !user?.email) return;
+    if (activeTab !== "posts" || hasFetchedPosts) return;
 
     const fetchMyPosts = async () => {
       setIsLoadingPosts(true);
       setPostsError(null);
       try {
-        const response = await fetch(
-          `/api/posts?authorEmail=${encodeURIComponent(user.email ?? "")}&limit=50`
-        );
+        const response = await fetch(`/api/posts?myPosts=true&limit=50`);
         const json = (await response.json()) as {
           data: Post[] | null;
           error: string | null;

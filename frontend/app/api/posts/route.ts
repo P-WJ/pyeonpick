@@ -29,15 +29,15 @@ export async function GET(request: NextRequest) {
     Number(searchParams.get("limit") ?? DEFAULT_LIMIT)
   );
 
-  const authorEmail = searchParams.get("authorEmail") ?? undefined;
+  const myPosts = searchParams.get("myPosts") === "true";
 
   let authorUserId: string | undefined;
-  if (authorEmail) {
+  if (myPosts) {
     const session = await auth();
-    if (!session?.user?.kakaoId || (session.user.email ?? "") !== authorEmail) {
+    if (!session?.user?.kakaoId) {
       return NextResponse.json(
-        { data: null, error: "본인의 게시글만 조회할 수 있습니다.", meta: null },
-        { status: 403 }
+        { data: null, error: "로그인이 필요합니다.", meta: null },
+        { status: 401 }
       );
     }
     authorUserId =
