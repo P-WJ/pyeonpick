@@ -46,7 +46,11 @@ def _deduplicate(products: list[Product]) -> list[Product]:
 
 
 async def upsert_products(products: list[Product]) -> int:
-    """products를 DB에 upsert하고 처리된 행 수를 반환한다."""
+    """products를 DB에 upsert하고 처리된 행 수를 반환한다.
+
+    upsert 후 DB가 부여한 id를 각 Product 엔티티에 채워 넣는다.
+    이 id는 알림 중복 발송 방지(notifications_sent 테이블)에 사용된다.
+    """
     if not products:
         return 0
 
@@ -62,8 +66,20 @@ async def upsert_products(products: list[Product]) -> int:
             .upsert(rows, on_conflict="store,name,valid_from")
             .execute()
         )
-        count = len(result.data) if result.data else 0
+        returned_rows: list[dict] = result.data or []
+        count = len(returned_rows)
         total += count
+
+        # upsert 결과에서 id를 Product 엔티티에 역주입한다
+        id_by_key: dict[tuple[str, str, str], int] = {
+            (row["store"], row["name"], row["valid_from"]): row["id"]
+            for row in returned_rows
+            if "id" in row
+        }
+        for product in batch:
+            key = (product.store, product.name, product.valid_from.isoformat())
+            if key in id_by_key:
+                product.id = id_by_key[key]
 
     logger.info("%d개 상품 upsert 완료", total)
     return total

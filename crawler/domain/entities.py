@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, datetime
 
 
 @dataclass
@@ -26,6 +26,7 @@ class Product:
     #   "cholesterol": 15,         # mg
     #   "serving_size": "1개(120g)",  # 1회 제공량
     # }
+    id: int | None = field(default=None)  # DB upsert 후 채워짐
 
 
 @dataclass
@@ -37,3 +38,21 @@ class CrawlResult:
     @property
     def succeeded(self) -> bool:
         return self.error is None
+
+
+@dataclass
+class Subscription:
+    id: str                      # uuid
+    email: str
+    keywords: list[str]          # 빈 리스트면 전체 상품 알림
+    stores: list[str]            # 빈 리스트면 전체 편의점
+    created_at: datetime
+
+
+@dataclass
+class NotifyResult:
+    total_subscriptions: int
+    sent_count: int
+    skipped_count: int           # 매칭 상품 없어서 건너뜀
+    failed_count: int
+    errors: list[str]
