@@ -20,63 +20,44 @@ export interface StoreColorConfig {
 
 export const STORE_COLORS: Record<Store, StoreColorConfig> = {
   CU: {
-    primary: "#0051D4",
-    secondary: "#E8F0FD",
-    text: "#0051D4",
+    primary: "#4F46E5",
+    secondary: "#EEEFFE",
+    text: "#4F46E5",
   },
   GS25: {
-    primary: "#003DA5",
-    secondary: "#FFA500",
-    text: "#003DA5",
+    primary: "#1D4ED8",
+    secondary: "#EFF6FF",
+    text: "#1D4ED8",
   },
   세븐일레븐: {
-    primary: "#007A3D",
-    secondary: "#E8000D",
-    text: "#007A3D",
+    primary: "#16A34A",
+    secondary: "#F0FDF4",
+    text: "#16A34A",
   },
   이마트24: {
-    primary: "#E60012",
-    secondary: "#FFE8EA",
-    text: "#E60012",
+    primary: "#DC2626",
+    secondary: "#FEF2F2",
+    text: "#DC2626",
   },
   씨스페이스: {
-    primary: "#6B21A8",
-    secondary: "#F3E8FF",
-    text: "#6B21A8",
+    primary: "#7C3AED",
+    secondary: "#F5F3FF",
+    text: "#7C3AED",
   },
 };
 
 export interface EventTypeBadgeConfig {
-  gradient: string;
+  bg: string;
+  color: string;
   label: string;
-  prefix?: string;
-  extraClassName?: string;
 }
 
 export const EVENT_TYPE_BADGES: Record<EventType, EventTypeBadgeConfig> = {
-  "1+1": {
-    gradient: "linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)",
-    label: "1+1",
-  },
-  "2+1": {
-    gradient: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
-    label: "2+1",
-  },
-  "3+1": {
-    gradient: "linear-gradient(135deg, #EAB308 0%, #F97316 100%)",
-    label: "3+1",
-    extraClassName: "ring-2 ring-yellow-300",
-  },
-  "할인": {
-    gradient: "linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%)",
-    label: "할인",
-    prefix: "%",
-  },
-  "증정": {
-    gradient: "linear-gradient(135deg, #22C55E 0%, #059669 100%)",
-    label: "증정",
-    prefix: "🎁",
-  },
+  "1+1": { bg: "#FEE2E2", color: "#B91C1C", label: "1+1" },
+  "2+1": { bg: "#FFEDD5", color: "#C2410C", label: "2+1" },
+  "3+1": { bg: "#FEF9C3", color: "#A16207", label: "3+1" },
+  "할인": { bg: "#DBEAFE", color: "#1D4ED8", label: "할인" },
+  "증정": { bg: "#DCFCE7", color: "#15803D", label: "증정" },
 };
 
 export const EVENT_BENEFIT_TEXT: Record<string, string | null> = {

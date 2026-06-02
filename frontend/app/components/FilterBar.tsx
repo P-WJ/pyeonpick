@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { STORES, EVENT_TYPES, CATEGORIES, STORE_COLORS, EVENT_TYPE_BADGES } from "@/lib/constants";
+import { STORES, EVENT_TYPES, CATEGORIES, EVENT_TYPE_BADGES } from "@/lib/constants";
 import type { Store, EventType, Category } from "@/domain/entities/product";
 
 export interface ActiveFilters {
@@ -110,36 +110,57 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
   }
 
   return (
-    <div className="rounded-2xl bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] space-y-3">
-      {/* 검색 */}
+    <div className="space-y-2.5">
+      {/* 검색바 */}
       <div ref={searchContainerRef} className="relative">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="상품명 검색..."
-              value={inputValue}
-              onChange={(e) => {
-                setInputValue(e.target.value);
-                setActiveSuggestionIndex(-1);
-              }}
-              onKeyDown={handleKeyDown}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-400 focus:bg-white transition-all duration-150"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() => submitSearch(inputValue)}
-            className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 shrink-0"
+        <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-gray-400 shrink-0"
           >
-            검색
-          </button>
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="상품명으로 검색"
+            value={inputValue}
+            onChange={(e) => {
+              setInputValue(e.target.value);
+              setActiveSuggestionIndex(-1);
+            }}
+            onKeyDown={handleKeyDown}
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            className="flex-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
+          />
+          {inputValue && (
+            <button
+              type="button"
+              onClick={() => {
+                setInputValue("");
+                submitSearch("");
+              }}
+              className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+              aria-label="검색어 지우기"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* 자동완성 드롭다운 */}
         {showSuggestions && suggestions.length > 0 && (
-          <ul className="absolute left-0 right-0 top-full z-50 mt-1.5 rounded-xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+          <ul className="absolute left-0 right-0 top-full z-50 mt-1.5 rounded-xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] overflow-hidden">
             {suggestions.map((suggestion, index) => (
               <li
                 key={suggestion}
@@ -162,37 +183,26 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
         <button
           type="button"
           onClick={() => handlePillFilterChange("store", "")}
-          className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
-          style={
+          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
             filters.store === ""
-              ? { backgroundColor: "#111827", color: "#FFFFFF", borderColor: "#111827" }
-              : { backgroundColor: "#F9FAFB", color: "#6B7280", borderColor: "#E5E7EB" }
-          }
+              ? "bg-gray-900 border-gray-900 text-white"
+              : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+          }`}
         >
           전체
         </button>
         {STORES.map((store) => {
           const isActive = filters.store === store;
-          const colors = STORE_COLORS[store];
           return (
             <button
               key={store}
               type="button"
               onClick={() => handlePillFilterChange("store", isActive ? "" : store)}
-              className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
-              style={
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
                 isActive
-                  ? {
-                      backgroundColor: colors.primary,
-                      color: "#FFFFFF",
-                      borderColor: colors.primary,
-                    }
-                  : {
-                      backgroundColor: colors.secondary,
-                      color: colors.primary,
-                      borderColor: "transparent",
-                    }
-              }
+                  ? "bg-gray-900 border-gray-900 text-white"
+                  : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+              }`}
             >
               {store}
             </button>
@@ -205,12 +215,11 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
         <button
           type="button"
           onClick={() => handlePillFilterChange("eventType", "")}
-          className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
-          style={
+          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
             filters.eventType === ""
-              ? { backgroundColor: "#111827", color: "#FFFFFF", borderColor: "#111827" }
-              : { backgroundColor: "#F9FAFB", color: "#6B7280", borderColor: "#E5E7EB" }
-          }
+              ? "bg-gray-900 border-gray-900 text-white"
+              : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+          }`}
         >
           전체 행사
         </button>
@@ -222,19 +231,11 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               key={eventType}
               type="button"
               onClick={() => handlePillFilterChange("eventType", isActive ? "" : eventType)}
-              className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
+              className="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
               style={
                 isActive
-                  ? {
-                      background: badge.gradient,
-                      color: "#FFFFFF",
-                      borderColor: "transparent",
-                    }
-                  : {
-                      backgroundColor: "#F9FAFB",
-                      color: "#374151",
-                      borderColor: "#E5E7EB",
-                    }
+                  ? { backgroundColor: badge.bg, color: badge.color, borderColor: badge.bg }
+                  : { backgroundColor: "#FFFFFF", color: "#4B5563", borderColor: "#E5E7EB" }
               }
             >
               {eventType}
@@ -244,19 +245,35 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 카테고리 필터 */}
-      <div>
-        <select
-          value={filters.category}
-          onChange={(e) => handlePillFilterChange("category", e.target.value)}
-          className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-gray-400 focus:bg-white transition-all duration-150"
+      <div className="flex overflow-x-auto scrollbar-hide gap-1.5 pb-0.5">
+        <button
+          type="button"
+          onClick={() => handlePillFilterChange("category", "")}
+          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+            filters.category === ""
+              ? "bg-gray-900 border-gray-900 text-white"
+              : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+          }`}
         >
-          <option value="">전체 카테고리</option>
-          {CATEGORIES.map((category) => (
-            <option key={category} value={category}>
+          전체 카테고리
+        </button>
+        {CATEGORIES.map((category) => {
+          const isActive = filters.category === category;
+          return (
+            <button
+              key={category}
+              type="button"
+              onClick={() => handlePillFilterChange("category", isActive ? "" : category)}
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+                isActive
+                  ? "bg-gray-900 border-gray-900 text-white"
+                  : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+              }`}
+            >
               {category}
-            </option>
-          ))}
-        </select>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

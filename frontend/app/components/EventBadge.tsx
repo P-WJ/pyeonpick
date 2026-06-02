@@ -11,27 +11,12 @@ interface EventBadgeProps {
 export function EventBadge({ eventType, className = "" }: EventBadgeProps) {
   const badge = EVENT_TYPE_BADGES[eventType];
 
-  const baseClassName =
-    "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-black tracking-wide text-white shadow-sm select-none";
-
-  const combinedClassName = [
-    baseClassName,
-    badge.extraClassName ?? "",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const displayLabel = badge.prefix
-    ? `${badge.prefix} ${badge.label}`
-    : badge.label;
-
   return (
     <span
-      className={combinedClassName}
-      style={{ background: badge.gradient }}
+      className={`inline-flex items-center rounded-full text-[11px] font-bold px-2 py-0.5 select-none ${className}`}
+      style={{ backgroundColor: badge.bg, color: badge.color }}
     >
-      {displayLabel}
+      {badge.label}
     </span>
   );
 }
