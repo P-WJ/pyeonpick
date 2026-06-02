@@ -55,11 +55,16 @@ def _parse_response(content: str, count: int) -> dict[int, str]:
         for m in re.finditer(r'["\']?(\d+)["\']?\s*:\s*["\']?([^,"}\s]+)["\']?', content):
             result_raw[m.group(1)] = m.group(2)
 
-    return {
-        int(k): v
-        for k, v in result_raw.items()
-        if int(k) < count and v in VALID_CATEGORIES
-    }
+    result: dict[int, str] = {}
+    for k, v in result_raw.items():
+        try:
+            index = int(k)
+        except (ValueError, TypeError):
+            logger.warning("AI 분류 응답 인덱스 파싱 실패: %s", k)
+            continue
+        if 0 <= index < count and v in VALID_CATEGORIES:
+            result[index] = v
+    return result
 
 
 def _classify_batch(names: list[str], api_key: str) -> dict[int, str]:

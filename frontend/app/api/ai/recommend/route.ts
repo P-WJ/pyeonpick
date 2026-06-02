@@ -10,7 +10,9 @@ const MAX_PRODUCTS_FOR_AI = 50;
 const MIN_BUDGET = 1000;
 const MAX_BUDGET = 10_000_000;
 const MAX_USER_PROMPT_LENGTH = 200;
-const CACHE_REVALIDATE_SECONDS = 5 * 60; // 5분
+const CACHE_REVALIDATE_SECONDS = 5 * 60;
+
+const VALID_STORES = new Set<string>(["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"]);
 
 function buildCacheKey(budget: number, stores: Store[], userPrompt: string): string {
   const sortedStores = [...stores].sort().join(",");
@@ -67,9 +69,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const requestedStores: Store[] = Array.isArray(body.stores) && body.stores.length > 0
-      ? (body.stores as Store[])
-      : [];
+    const requestedStores = (Array.isArray(body.stores) ? body.stores : []).filter(
+      (s): s is Store => typeof s === "string" && VALID_STORES.has(s)
+    );
 
     const userPrompt = typeof body.userPrompt === "string"
       ? body.userPrompt.trim().slice(0, MAX_USER_PROMPT_LENGTH)
