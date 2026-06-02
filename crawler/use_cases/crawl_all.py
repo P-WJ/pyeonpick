@@ -6,6 +6,7 @@ from crawler.infrastructure.repository import upsert_products
 from crawler.infrastructure.ai_classifier import classify_products
 from crawler.infrastructure.stores import cu, cspace, emart24, gs25, seven
 from crawler.use_cases.notify_subscribers import notify_subscribers
+from crawler.infrastructure.web_push_notifier import send_web_push_notifications
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,7 @@ async def crawl_all_stores() -> list[CrawlResult]:
             notify_result.skipped_count,
             notify_result.failed_count,
         )
+        send_web_push_notifications(all_products)
     else:
         logger.warning("수집된 상품이 없어 구독자 알림 발송을 건너뜁니다.")
 

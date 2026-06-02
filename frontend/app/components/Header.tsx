@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useCart } from "@/app/contexts/cart-context";
+import { PushNotificationBell } from "@/app/components/PushNotificationBell";
 
 export function Header() {
   const { data: session } = useSession();
@@ -31,18 +32,21 @@ export function Header() {
             게시판
           </Link>
 
-          {/* 알림 구독 버튼 */}
+          {/* 이메일 알림 구독 버튼 */}
           <button
             type="button"
             onClick={() => setIsSubscribeOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-            aria-label="알림 구독"
+            aria-label="이메일 알림 구독"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
           </button>
+
+          {/* 웹 푸시 알림 구독 버튼 */}
+          <PushNotificationBell />
 
           {/* 로그인/프로필 */}
           {user ? (
