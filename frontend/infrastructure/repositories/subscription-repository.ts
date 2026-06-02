@@ -41,6 +41,30 @@ export async function createSubscription(
   return parseRow(data as Record<string, unknown>);
 }
 
+export async function upsertSubscription(
+  input: CreateSubscriptionInput
+): Promise<Subscription> {
+  const supabase = createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .upsert(
+      {
+        email: input.email.toLowerCase(),
+        keywords: input.keywords,
+        stores: input.stores,
+        is_active: true,
+      },
+      { onConflict: "email" }
+    )
+    .select()
+    .single();
+
+  if (error) throw new Error(`알림 설정 저장 실패: ${error.message}`);
+
+  return parseRow(data as Record<string, unknown>);
+}
+
 export async function updateSubscription(
   email: string,
   input: Omit<CreateSubscriptionInput, "email">

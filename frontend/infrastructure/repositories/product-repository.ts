@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase";
 import type { Product, Store, EventType, Category, Nutrition } from "@/domain/entities/product";
-import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT } from "@/lib/constants";
+import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT, EVENT_TYPES } from "@/lib/constants";
 
 const VALID_STORES = new Set<string>(["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"]);
 const VALID_EVENT_TYPES = new Set<string>(["1+1", "2+1", "3+1", "할인", "증정"]);
@@ -46,7 +46,7 @@ export async function getProducts(
     .from("products")
     .select("*")
     .gte("valid_to", todayDateString())
-    .in("event_type", ["1+1", "2+1", "3+1", "할인", "증정"]);
+    .in("event_type", EVENT_TYPES);
 
   if (filters.store) query = query.eq("store", filters.store);
   if (filters.eventType) query = query.eq("event_type", filters.eventType);
@@ -99,7 +99,7 @@ export async function getRelatedProducts(
     .eq("category", category)
     .neq("id", productId)
     .gte("valid_to", todayDateString())
-    .in("event_type", ["1+1", "2+1", "3+1", "할인", "증정"])
+    .in("event_type", EVENT_TYPES)
     .order("name")
     .limit(limit * 2); // fetch extra to allow client-side event type sort
 

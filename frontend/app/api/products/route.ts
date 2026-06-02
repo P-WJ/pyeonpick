@@ -1,17 +1,34 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getProducts } from "@/app/use-cases/get-products";
 import type { Store, EventType, Category } from "@/domain/entities/product";
-import { PRODUCTS_PAGE_LIMIT } from "@/lib/constants";
+import { PRODUCTS_PAGE_LIMIT, STORES, EVENT_TYPES, CATEGORIES } from "@/lib/constants";
 
 const DEFAULT_PAGE = 1;
+const VALID_STORES = new Set<string>(STORES);
+const VALID_EVENT_TYPES = new Set<string>(EVENT_TYPES);
+const VALID_CATEGORIES = new Set<string>(CATEGORIES);
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
 
+  const storeParam = searchParams.get("store") || undefined;
+  const eventTypeParam = searchParams.get("eventType") || undefined;
+  const categoryParam = searchParams.get("category") || undefined;
+
+  if (storeParam && !VALID_STORES.has(storeParam)) {
+    return NextResponse.json({ data: null, error: "유효하지 않은 편의점 값입니다.", meta: null }, { status: 400 });
+  }
+  if (eventTypeParam && !VALID_EVENT_TYPES.has(eventTypeParam)) {
+    return NextResponse.json({ data: null, error: "유효하지 않은 행사 유형 값입니다.", meta: null }, { status: 400 });
+  }
+  if (categoryParam && !VALID_CATEGORIES.has(categoryParam)) {
+    return NextResponse.json({ data: null, error: "유효하지 않은 카테고리 값입니다.", meta: null }, { status: 400 });
+  }
+
   const filters = {
-    store: (searchParams.get("store") as Store) || undefined,
-    eventType: (searchParams.get("eventType") as EventType) || undefined,
-    category: (searchParams.get("category") as Category) || undefined,
+    store: storeParam as Store | undefined,
+    eventType: eventTypeParam as EventType | undefined,
+    category: categoryParam as Category | undefined,
     search: searchParams.get("search") || undefined,
   };
 

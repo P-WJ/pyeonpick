@@ -49,13 +49,18 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       return;
     }
     const timer = setTimeout(async () => {
-      const response = await fetch(
-        `/api/products/suggestions?q=${encodeURIComponent(inputValue)}`
-      );
-      const json = (await response.json()) as { data: string[]; error: string | null };
-      const fetchedSuggestions = json.data ?? [];
-      setSuggestions(fetchedSuggestions);
-      setShowSuggestions(fetchedSuggestions.length > 0);
+      try {
+        const response = await fetch(
+          `/api/products/suggestions?q=${encodeURIComponent(inputValue)}`
+        );
+        const json = (await response.json()) as { data: string[]; error: string | null };
+        const fetchedSuggestions = json.data ?? [];
+        setSuggestions(fetchedSuggestions);
+        setShowSuggestions(fetchedSuggestions.length > 0);
+      } catch {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
     }, DEBOUNCE_DELAY_MS);
     return () => clearTimeout(timer);
   }, [inputValue]);

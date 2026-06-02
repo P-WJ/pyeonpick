@@ -79,6 +79,14 @@ export const EVENT_TYPE_BADGES: Record<EventType, EventTypeBadgeConfig> = {
   },
 };
 
+export const EVENT_BENEFIT_TEXT: Record<string, string | null> = {
+  "1+1": "1개 가격에 2개",
+  "2+1": "3개 구매 시 1개 무료",
+  "3+1": "4개 구매 시 1개 무료",
+  "할인": null,
+  "증정": "증정품 제공",
+};
+
 export const MAX_QUANTITY = 10;
 export const PRODUCTS_PAGE_LIMIT = 24;
 export const RELATED_PRODUCTS_LIMIT = 6;

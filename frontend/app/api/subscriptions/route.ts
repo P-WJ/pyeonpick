@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  createSubscription,
-  updateSubscription,
+  upsertSubscription,
   deactivateSubscription,
   getSubscriptionByEmail,
 } from "@/infrastructure/repositories/subscription-repository";
@@ -73,11 +72,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // 기존 구독이 있으면 수정, 없으면 신규 등록
-    const existing = await getSubscriptionByEmail(email);
-    const subscription = existing
-      ? await updateSubscription(email, { keywords: validatedKeywords, stores: validatedStores })
-      : await createSubscription({ email, keywords: validatedKeywords, stores: validatedStores });
+    const subscription = await upsertSubscription({
+      email,
+      keywords: validatedKeywords,
+      stores: validatedStores,
+    });
 
     return NextResponse.json({ data: subscription, error: null }, { status: 200 });
   } catch (err) {

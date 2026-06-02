@@ -36,13 +36,17 @@ Respond ONLY with JSON like: {"0":"음료","1":"식품","2":"생활용품"}
 No explanation. No other text. Just the JSON object."""
 
 
+def _strip_code_block(content: str) -> str:
+    """LLM 응답에서 마크다운 코드블록을 제거한다."""
+    if "```" not in content:
+        return content
+    inner = content.split("```")[1]
+    return inner[4:] if inner.startswith("json") else inner
+
+
 def _parse_response(content: str, count: int) -> dict[int, str]:
     """모델 응답에서 {인덱스: 카테고리} 매핑을 추출한다."""
-    if "```" in content:
-        content = content.split("```")[1]
-        if content.startswith("json"):
-            content = content[4:]
-
+    content = _strip_code_block(content)
     fixed = re.sub(r"(\w+)\s*:\s*([^\s,}]+)", r'"\1":"\2"', content.strip())
     try:
         result_raw = json.loads(fixed)

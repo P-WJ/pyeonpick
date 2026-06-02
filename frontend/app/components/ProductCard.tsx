@@ -4,21 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import type { Product, EventType } from "@/domain/entities/product";
-import { STORE_COLORS } from "@/lib/constants";
+import { STORE_COLORS, EVENT_BENEFIT_TEXT } from "@/lib/constants";
 import { EventBadge } from "./EventBadge";
 import { useCart } from "@/app/contexts/cart-context";
 
-const EVENT_BENEFIT_TEXT: Record<EventType, string | null> = {
-  "1+1": "1개 가격에 2개",
-  "2+1": "3개 구매 시 1개 무료",
-  "3+1": "4개 구매 시 1개 무료",
-  "할인": null,
-  "증정": "증정품 제공",
-};
-
-function resolveBenefitText(eventType: EventType): string | null {
-  return EVENT_BENEFIT_TEXT[eventType];
-}
 
 const PLACEHOLDER_IMAGE = "/placeholder.png";
 
@@ -98,9 +87,9 @@ export function ProductCard({
           {product.price.toLocaleString("ko-KR")}
           <span className="text-xs font-normal text-gray-500">원</span>
         </p>
-        {resolveBenefitText(product.eventType) && (
+        {EVENT_BENEFIT_TEXT[product.eventType] && (
           <p className="mt-0.5 text-xs text-gray-400">
-            {resolveBenefitText(product.eventType)}
+            {EVENT_BENEFIT_TEXT[product.eventType]}
           </p>
         )}
 

@@ -1,6 +1,8 @@
 // Groq API를 사용한 AI 텍스트 생성 (Gemini 대체)
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
+const MAX_RETRIES = 3;
+const RETRY_DELAY_BASE_MS = 1000;
 
 interface GroqMessage {
   role: "system" | "user" | "assistant";
@@ -27,35 +29,49 @@ export async function generateTextFromPrompt(prompt: string): Promise<string> {
     { role: "user", content: prompt },
   ];
 
-  const response = await fetch(GROQ_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: GROQ_MODEL,
-      messages,
-      temperature: 0.7,
-      max_tokens: 2048,
-    }),
-  });
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const response = await fetch(GROQ_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2048,
+      }),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Groq API 요청 실패 (HTTP ${response.status}): ${errorText}`);
+    if (response.status === 429) {
+      if (attempt < MAX_RETRIES - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, RETRY_DELAY_BASE_MS * (attempt + 1))
+        );
+        continue;
+      }
+      throw new Error("Groq API 요청 한도 초과. 잠시 후 다시 시도해주세요.");
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Groq API 요청 실패 (HTTP ${response.status}): ${errorText}`);
+    }
+
+    const body = (await response.json()) as GroqResponseBody;
+
+    if (body.error) {
+      throw new Error(`Groq API 오류: ${body.error.message}`);
+    }
+
+    const text = body.choices?.[0]?.message?.content;
+    if (!text) {
+      throw new Error("Groq API 응답에서 텍스트를 찾을 수 없습니다.");
+    }
+
+    return text;
   }
 
-  const body = (await response.json()) as GroqResponseBody;
-
-  if (body.error) {
-    throw new Error(`Groq API 오류: ${body.error.message}`);
-  }
-
-  const text = body.choices?.[0]?.message?.content;
-  if (!text) {
-    throw new Error("Groq API 응답에서 텍스트를 찾을 수 없습니다.");
-  }
-
-  return text;
+  throw new Error("Groq API 최대 재시도 초과");
 }
