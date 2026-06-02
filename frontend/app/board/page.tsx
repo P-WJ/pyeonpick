@@ -30,8 +30,8 @@ function formatRelativeTime(dateString: string): string {
 
 const CATEGORY_BADGE_COLORS: Record<PostCategory, string> = {
   자유: "bg-gray-100 text-gray-600",
-  조합공유: "bg-blue-100 text-blue-700",
-  질문: "bg-green-100 text-green-700",
+  조합공유: "bg-gray-100 text-gray-600",
+  질문: "bg-gray-100 text-gray-600",
 };
 
 const TOAST_DURATION_MS = 2500;
@@ -221,11 +221,11 @@ export default function BoardPage() {
               <Link
                 key={post.id}
                 href={`/board/${post.id}`}
-                className="block rounded-2xl bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.99]"
+                className="block rounded-2xl bg-white px-4 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.99]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1.5">
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
                           CATEGORY_BADGE_COLORS[post.category]
@@ -233,7 +233,7 @@ export default function BoardPage() {
                       >
                         {post.category}
                       </span>
-                      <h2 className="text-sm font-medium text-gray-900 truncate">
+                      <h2 className="text-sm font-semibold text-gray-900 truncate">
                         {post.title}
                       </h2>
                     </div>

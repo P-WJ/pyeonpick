@@ -28,8 +28,8 @@ function formatRelativeTime(dateString: string): string {
 
 const CATEGORY_BADGE_COLORS: Record<string, string> = {
   자유: "bg-gray-100 text-gray-600",
-  조합공유: "bg-blue-100 text-blue-700",
-  질문: "bg-green-100 text-green-700",
+  조합공유: "bg-gray-100 text-gray-600",
+  질문: "bg-gray-100 text-gray-600",
 };
 
 export default function PostDetailPage() {
@@ -59,6 +59,7 @@ export default function PostDetailPage() {
 
   // 게시글 삭제 상태
   const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   // 댓글 삭제 진행 중인 commentId 목록
   const [deletingCommentIds, setDeletingCommentIds] = useState<Set<number>>(new Set());
@@ -175,10 +176,13 @@ export default function PostDetailPage() {
     }
   }
 
-  async function handleDeletePost() {
-    const confirmed = window.confirm("정말 삭제하시겠습니까?");
-    if (!confirmed) return;
+  function requestDeletePost() {
+    setIsConfirmingDelete(true);
+    setTimeout(() => setIsConfirmingDelete(false), 3000);
+  }
 
+  async function handleDeletePost() {
+    setIsConfirmingDelete(false);
     setIsDeletingPost(true);
 
     try {
@@ -343,22 +347,46 @@ export default function PostDetailPage() {
 
               {isPostAuthor && !isEditMode && (
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={enterEditMode}
-                    className="text-xs text-gray-400 hover:text-gray-700 transition-colors duration-150"
-                  >
-                    수정
-                  </button>
-                  <span className="text-gray-200">|</span>
-                  <button
-                    type="button"
-                    onClick={handleDeletePost}
-                    disabled={isDeletingPost}
-                    className="text-xs text-gray-400 hover:text-red-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isDeletingPost ? "삭제 중..." : "삭제"}
-                  </button>
+                  {isConfirmingDelete ? (
+                    <div className="flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-xl px-3 py-1.5">
+                      <span className="text-xs text-red-600 font-medium">정말 삭제할까요?</span>
+                      <button
+                        type="button"
+                        onClick={handleDeletePost}
+                        disabled={isDeletingPost}
+                        className="text-xs font-bold text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                      >
+                        {isDeletingPost ? "삭제 중..." : "삭제"}
+                      </button>
+                      <span className="text-red-200">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsConfirmingDelete(false)}
+                        className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={enterEditMode}
+                        className="text-xs text-gray-400 hover:text-gray-700 transition-colors duration-150 px-1 py-1"
+                      >
+                        수정
+                      </button>
+                      <span className="text-gray-200">|</span>
+                      <button
+                        type="button"
+                        onClick={requestDeletePost}
+                        disabled={isDeletingPost}
+                        className="text-xs text-gray-400 hover:text-red-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed px-1 py-1"
+                      >
+                        삭제
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>

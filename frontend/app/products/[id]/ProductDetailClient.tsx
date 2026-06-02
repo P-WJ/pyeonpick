@@ -46,11 +46,11 @@ function NutritionTable({ nutrition }: { nutrition: Nutrition }) {
   );
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-        <p className="text-sm font-bold text-gray-800">영양성분</p>
+    <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+      <div className="px-4 py-3.5 border-b border-gray-100">
+        <p className="text-sm font-semibold text-gray-900">영양성분</p>
         {nutrition.serving_size && (
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-400 mt-0.5">
             1회 제공량: {nutrition.serving_size}
           </p>
         )}
@@ -58,10 +58,10 @@ function NutritionTable({ nutrition }: { nutrition: Nutrition }) {
 
       {nutrition.calories !== undefined && (
         <div className="px-4 py-4 border-b border-gray-100 flex items-baseline justify-between">
-          <span className="text-base font-semibold text-gray-700">열량</span>
+          <span className="text-sm font-medium text-gray-500">열량</span>
           <span className="text-3xl font-black text-gray-900">
             {nutrition.calories}
-            <span className="text-sm font-normal text-gray-500 ml-1">kcal</span>
+            <span className="text-sm font-normal text-gray-400 ml-1">kcal</span>
           </span>
         </div>
       )}
@@ -71,7 +71,7 @@ function NutritionTable({ nutrition }: { nutrition: Nutrition }) {
           <tbody>
             {availableNutrients.map((key) => (
               <tr key={key} className="border-b border-gray-50 last:border-0">
-                <td className="px-4 py-2.5 text-gray-600">
+                <td className="px-4 py-2.5 text-gray-500">
                   {NUTRITION_LABELS[key]}
                 </td>
                 <td className="px-4 py-2.5 text-right font-medium text-gray-900">
@@ -122,24 +122,30 @@ function RelatedProductCard({ product }: { product: Product }) {
     <button
       type="button"
       onClick={() => router.push(`/products/${product.id}`)}
-      className="min-w-[120px] w-[120px] flex-shrink-0 flex flex-col gap-1 rounded-2xl bg-white border border-gray-100 p-2 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] active:scale-[0.98]"
+      className="min-w-[120px] w-[120px] flex-shrink-0 flex flex-col gap-1.5 rounded-2xl bg-white border border-gray-100 p-2.5 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] active:scale-[0.98]"
     >
       <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-50">
         <Image
           src={product.imageUrl || PLACEHOLDER_IMAGE}
           alt={product.name}
           fill
-          className="object-contain"
+          className="object-contain p-1"
           unoptimized={!product.imageUrl}
         />
       </div>
       <EventBadge eventType={product.eventType} className="text-[10px] px-1.5 py-0.5" />
-      <p className="text-xs text-gray-800 line-clamp-2 leading-tight">
+      <p className="text-xs text-gray-800 line-clamp-2 leading-snug">
         {product.name}
       </p>
-      <p className="text-xs font-bold" style={{ color: storeColors.primary }}>
-        {product.price.toLocaleString("ko-KR")}원
-      </p>
+      <div className="flex items-center gap-1">
+        <span
+          className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: storeColors.primary }}
+        />
+        <p className="text-xs font-bold text-gray-900">
+          {product.price.toLocaleString("ko-KR")}원
+        </p>
+      </div>
     </button>
   );
 }
@@ -173,87 +179,112 @@ export function ProductDetailClient({
   return (
     <>
       <main className="max-w-2xl mx-auto pb-28 bg-gray-50 min-h-screen">
-        {/* 뒤로가기 */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
+        {/* 뒤로가기 바 */}
+        <div className="flex items-center gap-3 px-4 py-3 bg-white">
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 active:scale-95 transition-all duration-150 flex-shrink-0"
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 active:scale-95 transition-all duration-150 flex-shrink-0"
             aria-label="뒤로가기"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
           <span className="text-base font-semibold text-gray-900">상품 상세</span>
         </div>
+
         {/* 이미지 영역 */}
-        <div className="relative w-full max-h-72 bg-white flex items-center justify-center overflow-hidden">
-          <div className="relative w-full h-72">
-            <Image
-              src={product.imageUrl || PLACEHOLDER_IMAGE}
-              alt={product.name}
-              fill
-              className="object-contain p-4"
-              unoptimized={!product.imageUrl}
-              priority
-            />
-          </div>
+        <div className="relative w-full aspect-square bg-white">
+          <Image
+            src={product.imageUrl || PLACEHOLDER_IMAGE}
+            alt={product.name}
+            fill
+            className="object-contain p-8"
+            unoptimized={!product.imageUrl}
+            priority
+          />
         </div>
 
         {/* 상품 정보 */}
-        <div className="px-4 py-5 space-y-4">
-          {/* 편의점명 + 행사 뱃지 */}
+        <div className="px-4 pt-5 pb-4 bg-white border-b border-gray-100 space-y-3">
+          {/* 편의점 뱃지 + 행사 뱃지 */}
           <div className="flex items-center gap-2">
             <span
-              className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              style={{ backgroundColor: storeColors.secondary, color: storeColors.primary }}
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              style={{
+                backgroundColor: storeColors.secondary,
+                color: storeColors.primary,
+              }}
             >
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: storeColors.primary }}
+              />
               {product.store}
             </span>
             <EventBadge eventType={product.eventType} />
           </div>
 
           {/* 상품명 */}
-          <h1 className="text-2xl font-bold text-gray-900 leading-snug">
+          <h1 className="text-xl font-bold text-gray-900 leading-snug">
             {product.name}
           </h1>
 
-          {/* 가격 혜택 카드 */}
-          <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: storeColors.primary + "33", backgroundColor: storeColors.primary + "08" }}>
-            {/* 표시 가격 + 절약률 */}
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-xs text-gray-400 mb-0.5">표시 가격</p>
-                <p className="text-3xl font-black" style={{ color: storeColors.primary }}>
-                  {product.price.toLocaleString("ko-KR")}
-                  <span className="text-lg font-semibold text-gray-500">원</span>
-                </p>
-              </div>
-              {benefit.savingsRate > 0 && (
-                <span className="rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white">
-                  {benefit.savingsRate}% 절약
-                </span>
-              )}
+          {/* 가격 행 */}
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">표시 가격</p>
+              <p className="text-3xl font-black text-gray-900">
+                {product.price.toLocaleString("ko-KR")}
+                <span className="text-base font-medium text-gray-400 ml-1">원</span>
+              </p>
             </div>
+            {benefit.savingsRate > 0 && (
+              <span className="rounded-full bg-red-50 px-3 py-1 text-sm font-bold text-red-500 border border-red-100">
+                {benefit.savingsRate}% 절약
+              </span>
+            )}
+          </div>
+        </div>
 
-            {/* 행사 혜택 상세 */}
+        {/* 혜택 카드 */}
+        <div className="mx-4 mt-4">
+          <div className="rounded-2xl border border-gray-100 bg-white p-4 space-y-3 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              행사 혜택
+            </p>
+
             {benefit.savings > 0 ? (
-              <div className="rounded-xl bg-white p-3 space-y-2">
-                <p className="text-xs font-semibold text-gray-500">{benefit.benefitDescription}</p>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">
+                  {benefit.benefitDescription}
+                </p>
                 <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-lg bg-gray-50 py-2">
-                    <p className="text-[10px] text-gray-400">최소 구매</p>
-                    <p className="text-base font-bold text-gray-800">{benefit.requiredQuantity}개</p>
+                  <div className="rounded-xl bg-gray-50 py-3 px-2">
+                    <p className="text-[10px] text-gray-400 mb-0.5">최소 구매</p>
+                    <p className="text-base font-bold text-gray-900">
+                      {benefit.requiredQuantity}개
+                    </p>
                   </div>
-                  <div className="rounded-lg py-2" style={{ backgroundColor: storeColors.primary + "15" }}>
-                    <p className="text-[10px] text-gray-400">개당 단가</p>
-                    <p className="text-base font-bold" style={{ color: storeColors.primary }}>
+                  <div className="rounded-xl bg-gray-50 py-3 px-2">
+                    <p className="text-[10px] text-gray-400 mb-0.5">개당 단가</p>
+                    <p className="text-base font-bold text-gray-900">
                       {benefit.unitPrice.toLocaleString("ko-KR")}원
                     </p>
                   </div>
-                  <div className="rounded-lg bg-red-50 py-2">
-                    <p className="text-[10px] text-gray-400">절약 금액</p>
+                  <div className="rounded-xl bg-red-50 py-3 px-2">
+                    <p className="text-[10px] text-red-400 mb-0.5">절약 금액</p>
                     <p className="text-base font-bold text-red-500">
                       {benefit.savings.toLocaleString("ko-KR")}원
                     </p>
@@ -264,51 +295,51 @@ export function ProductDetailClient({
               <p className="text-sm text-gray-500">{benefit.benefitDescription}</p>
             )}
           </div>
-
-          {/* 유효기간 + 카테고리 */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-              {product.category}
-            </span>
-            <span className="text-xs text-gray-400">
-              행사기간: {product.validFrom} ~ {product.validTo}
-            </span>
-          </div>
         </div>
 
-        {/* 영양성분 섹션 — 식품류만 표시 */}
+        {/* 카테고리 + 유효기간 */}
+        <div className="mx-4 mt-3 flex items-center gap-2 flex-wrap">
+          <span className="inline-block rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+            {product.category}
+          </span>
+          <span className="text-xs text-gray-400">
+            행사기간: {product.validFrom} ~ {product.validTo}
+          </span>
+        </div>
+
+        {/* 영양성분 섹션 */}
         {product.category !== "생활용품" && (
-          <div className="px-4">
+          <div className="mx-4 mt-4">
             {product.nutrition ? (
               <NutritionTable nutrition={product.nutrition} />
             ) : (
-              <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
-                <p className="text-xs text-amber-600">영양성분 정보를 준비 중이에요.</p>
+              <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+                <p className="text-xs text-gray-400">영양성분 정보를 준비 중이에요.</p>
               </div>
             )}
           </div>
         )}
 
         {/* 관련 상품 섹션 */}
-        <div className="px-4 mt-6">
-          <p className="text-sm font-bold text-gray-800 mb-3">
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-gray-900 mb-3 px-4">
             이 카테고리 베스트
           </p>
 
           {relatedProducts.length === 0 ? (
-            <div>
+            <div className="px-4">
               <p className="text-xs text-gray-400">관련 상품이 없습니다.</p>
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="mt-3 px-4 py-2 bg-gray-900 text-white rounded-xl text-sm font-medium"
+                className="mt-3 px-4 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium min-h-[44px] active:scale-[0.98] transition-all duration-150"
               >
                 다른 상품 보러가기
               </button>
             </div>
           ) : (
             <div
-              className="flex gap-3 overflow-x-auto pb-2"
+              className="flex gap-3 overflow-x-auto pb-2 px-4"
               style={{ scrollbarWidth: "none" }}
             >
               {relatedProducts.map((relatedProduct) => (
@@ -327,8 +358,7 @@ export function ProductDetailClient({
         <button
           type="button"
           onClick={handleAddToCart}
-          className="w-full py-3 rounded-xl text-base font-bold text-white hover:opacity-90 active:scale-[0.98] transition-all duration-150 min-h-[48px]"
-          style={{ backgroundColor: storeColors.primary }}
+          className="w-full py-3.5 rounded-xl text-base font-bold text-white bg-gray-900 hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 min-h-[52px]"
         >
           장바구니 담기
         </button>
