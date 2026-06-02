@@ -26,14 +26,12 @@ interface CartContextValue {
   cartItems: CartItem[];
   wishlistIds: number[];
   isCartOpen: boolean;
-  isSubscribeOpen: boolean;
   toastMessage: string | null;
   cartCount: number;
   totalPrice: number;
   totalSavings: number;
   cartBounceTrigger: boolean;
   setIsCartOpen: (open: boolean) => void;
-  setIsSubscribeOpen: (open: boolean) => void;
   setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
   handleAddToCart: (product: Product) => void;
   handleAddMultipleToCart: (products: Product[]) => void;
@@ -51,7 +49,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [cartBounceTrigger, setCartBounceTrigger] = useState(false);
 
@@ -151,14 +148,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         cartItems,
         wishlistIds,
         isCartOpen,
-        isSubscribeOpen,
         toastMessage,
         cartCount,
         totalPrice,
         totalSavings,
         cartBounceTrigger,
         setIsCartOpen,
-        setIsSubscribeOpen,
         setCartItems,
         handleAddToCart,
         handleAddMultipleToCart,

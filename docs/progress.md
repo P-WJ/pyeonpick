@@ -39,7 +39,7 @@
 3. 구독 조건에 맞는 신규 상품을 웹 푸시(Web Push API + VAPID)로 발송
 4. 만료된 구독(HTTP 410)은 자동 삭제
 
-> 카카오 알림톡·Resend 이메일은 **둘 다 미사용**. 과거 이메일 구독 UI(`SubscribeForm`, `/api/subscriptions`, `/notifications`, `subscriptions` 테이블)는 웹 푸시로 정리 예정(legacy).
+> 카카오 알림톡·Resend 이메일은 **둘 다 미사용**. 이메일 구독 UI·API·repository는 제거 완료(2026-06-03). `/notifications`는 웹 푸시 설정 페이지로 유지.
 
 ---
 
@@ -172,6 +172,16 @@ UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소�
 - **검증**: `tsc` 통과 + dev 서버 실측(`/products/9055` CU 천하장사 → GS25·세븐일레븐 비교 정상 노출, 최저가/개당가 확인)
 - **한계(후속)**: `(3입)`·`(원형)` 등 구성 차이 변형이 같은 키로 묶일 수 있음 → 매장별 최저 개당가 1행으로 흡수. 정확 매칭 고도화는 추후.
 
+### 이메일 구독 잔재 제거 (✅ 완료 2026-06-03)
+웹 푸시 일원화에 따라 사용하지 않는 이메일 구독 코드를 제거.
+- 삭제: 프론트 `SubscribeForm.tsx`, `/api/subscriptions/route.ts`, `infrastructure/repositories/subscription-repository.ts`, 크롤러 `subscription_repository.py`
+- 삭제: 크롤러 `entities.py`의 `Subscription`·`NotifyResult` 데이터클래스(미사용)
+- 정리: `GlobalShell`의 이메일 구독 모달 + `cart-context`의 `isSubscribeOpen`/`setIsSubscribeOpen`(트리거가 없는 죽은 코드였음)
+- `/notifications`: 이메일 검색·설정 파트 제거, **웹 푸시 섹션(`WebPushSection`)만 유지**
+- 보존: `push-subscription-repository.ts`, `/api/push/*`, `usePushNotification`, `PushNotificationBell`
+- 검증: `tsc` 통과 + 크롤러 import 정상
+- DB(수동): `subscriptions`, `notifications_sent` 테이블은 Supabase에서 수동 드롭 가능(남겨둬도 무해)
+
 ### 3단계 — 남은 확장 (🔜 예정)
 - **카카오톡 공유**: 카카오 SDK 연동 (현재 공유 = 클립보드 복사뿐, `copyShareUrl`에 `.catch` 없음 → 함께 보완)
 - **로그인 후 찜 목록 서버 동기화**: 현재 localStorage 전용이라 기기 종속
@@ -182,4 +192,4 @@ UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소�
 
 - ~~카카오 알림톡 전환~~ / ~~Resend 이메일~~ → **둘 다 취소 (2026-06-03)**: 알림은 **웹 푸시**로 운영
 - 알림 설정 수정 기능 추가 (현재 해제만 가능)
-- (후속 정리) 이메일 구독 잔재 제거: 크롤러 `subscription_repository.py`(고아), 프론트 `SubscribeForm`·`/api/subscriptions`·`/notifications`·`subscriptions` 테이블
+- 이메일 구독 잔재 제거 — ✅ 완료 (2026-06-03, 위 참조). `subscriptions`/`notifications_sent` 테이블만 수동 드롭 남음(선택)

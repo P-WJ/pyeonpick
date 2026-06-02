@@ -43,11 +43,11 @@ PyeonPick/
 │   │   ├── entities/          # product, cart, post, recommendation
 │   │   └── use-cases/         # cart, price, recommend
 │   ├── infrastructure/
-│   │   ├── repositories/      # product, subscription, post
+│   │   ├── repositories/      # product, push-subscription, post
 │   │   ├── supabase.ts
 │   │   └── gemini.ts          # Groq API 래퍼 (파일명 유지, 내부는 Groq)
 │   └── app/
-│       ├── components/        # Header, ProductCard, CartDrawer, FilterBar, SubscribeForm, AiBanner 등
+│       ├── components/        # Header, ProductCard, CartDrawer, FilterBar, StoreComparison, PushNotificationBell, AiBanner 등
 │       ├── products/[id]/     # 상품 상세
 │       ├── notifications/     # 알림 구독 조회
 │       ├── board/             # 커뮤니티 게시판

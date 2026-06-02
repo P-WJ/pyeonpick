@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from typing import Literal
 
 Category = Literal["음료", "과자", "식품", "아이스크림", "생활용품"]
@@ -29,21 +29,3 @@ class CrawlResult:
     @property
     def succeeded(self) -> bool:
         return self.error is None
-
-
-@dataclass
-class Subscription:
-    id: str                      # uuid
-    email: str
-    keywords: list[str]          # 빈 리스트면 전체 상품 알림
-    stores: list[str]            # 빈 리스트면 전체 편의점
-    created_at: datetime
-
-
-@dataclass
-class NotifyResult:
-    total_subscriptions: int
-    sent_count: int
-    skipped_count: int           # 매칭 상품 없어서 건너뜀
-    failed_count: int
-    errors: list[str]
