@@ -2,11 +2,12 @@ import asyncio
 import json
 import logging
 import random
-from datetime import date, timedelta
+from datetime import date
 
 import httpx
 
 from crawler.domain.entities import Product
+from crawler.infrastructure.common import current_month_range
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +125,7 @@ async def _fetch_all_products(client: httpx.AsyncClient) -> dict:
 
 async def fetch_products() -> list[Product]:
     """GS25 행사 상품 목록을 크롤링해 반환한다."""
-    valid_from = date.today()
-    valid_to = valid_from + timedelta(days=6)
+    valid_from, valid_to = current_month_range()
 
     request_headers = {"User-Agent": USER_AGENT}
 

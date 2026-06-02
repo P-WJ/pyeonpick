@@ -2,13 +2,13 @@ import asyncio
 import logging
 import random
 import re
-from datetime import date, timedelta
+from datetime import date
 
 import httpx
 from bs4 import BeautifulSoup
 
 from crawler.domain.entities import Product
-from crawler.infrastructure.common import parse_price
+from crawler.infrastructure.common import parse_price, current_month_range
 
 logger = logging.getLogger(__name__)
 
@@ -127,8 +127,7 @@ async def _fetch_page(client: httpx.AsyncClient, page_index: int) -> str:
 
 async def fetch_products() -> list[Product]:
     """CU 행사 상품 목록을 크롤링해 반환한다."""
-    valid_from = date.today()
-    valid_to = valid_from + timedelta(days=6)
+    valid_from, valid_to = current_month_range()
 
     request_headers = {"User-Agent": USER_AGENT}
     all_products: list[Product] = []

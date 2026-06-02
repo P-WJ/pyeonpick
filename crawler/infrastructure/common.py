@@ -1,4 +1,15 @@
 """크롤러 공통 유틸리티."""
+import calendar
+from datetime import date
+
+
+def current_month_range() -> tuple[date, date]:
+    """이번 달 1일과 말일을 반환한다."""
+    today = date.today()
+    first = today.replace(day=1)
+    last_day = calendar.monthrange(today.year, today.month)[1]
+    last = today.replace(day=last_day)
+    return first, last
 
 # 카테고리 우선순위 순서 (앞에 있을수록 먼저 매칭)
 CATEGORY_KEYWORDS: dict[str, list[str]] = {
