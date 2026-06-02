@@ -33,22 +33,19 @@ UPSERT_BATCH_SIZE = 500
 
 
 def _deduplicate(products: list[Product]) -> list[Product]:
-    """(store, name, valid_from) 기준으로 중복 제거한다."""
-    seen: set[tuple[str, str, str]] = set()
-    result: list[Product] = []
+    """(store, name) 기준으로 중복 제거한다. 동일 상품이 여러 번 있으면 마지막 것을 사용한다."""
+    seen: dict[tuple[str, str], Product] = {}
     for product in products:
-        key = (product.store, product.name, product.valid_from.isoformat())
-        if key not in seen:
-            seen.add(key)
-            result.append(product)
-    return result
+        key = (product.store, product.name)
+        seen[key] = product
+    return list(seen.values())
 
 
 async def upsert_products(products: list[Product]) -> int:
     """products를 DB에 upsert하고 처리된 행 수를 반환한다.
 
+    (store, name) 충돌 시 valid_from·valid_to·price·event_type·image_url·category를 갱신한다.
     upsert 후 DB가 부여한 id를 각 Product 엔티티에 채워 넣는다.
-    이 id는 알림 중복 발송 방지(notifications_sent 테이블)에 사용된다.
     """
     if not products:
         return 0
@@ -62,7 +59,7 @@ async def upsert_products(products: list[Product]) -> int:
         rows = [_product_to_row(product) for product in batch]
         result = (
             client.table("products")
-            .upsert(rows, on_conflict="store,name,valid_from")
+            .upsert(rows, on_conflict="store,name")
             .execute()
         )
         returned_rows: list[dict] = result.data or []
@@ -70,13 +67,13 @@ async def upsert_products(products: list[Product]) -> int:
         total += count
 
         # upsert 결과에서 id를 Product 엔티티에 역주입한다
-        id_by_key: dict[tuple[str, str, str], int] = {
-            (row["store"], row["name"], row["valid_from"]): row["id"]
+        id_by_key: dict[tuple[str, str], int] = {
+            (row["store"], row["name"]): row["id"]
             for row in returned_rows
             if "id" in row
         }
         for product in batch:
-            key = (product.store, product.name, product.valid_from.isoformat())
+            key = (product.store, product.name)
             if key in id_by_key:
                 product.id = id_by_key[key]
 
