@@ -81,6 +81,9 @@ export function SubscribeForm() {
           {keywords.length > 0 ? `"${keywords.join(", ")}" 관련 상품` : "전체 행사 상품"}을
           언제든 확인할 수 있어요.
         </p>
+        <p className="text-xs font-medium text-blue-500">
+          매월 1일·15일 새 행사 상품 알림이 발송됩니다.
+        </p>
         <Link
           href="/notifications"
           className="inline-block rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"

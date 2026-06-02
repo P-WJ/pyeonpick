@@ -29,12 +29,18 @@ function base64UrlToUint8Array(base64UrlString: string): Uint8Array<ArrayBuffer>
   return outputArray;
 }
 
+export interface PushSubscriptionSettings {
+  keywords: string[];
+  stores: string[];
+}
+
 export interface PushNotificationState {
   isSupported: boolean;
   permission: NotificationPermission;
   isSubscribed: boolean;
   subscribe: (keywords?: string[], stores?: string[]) => Promise<void>;
   unsubscribe: () => Promise<void>;
+  fetchCurrentSettings: () => Promise<PushSubscriptionSettings | null>;
 }
 
 export function usePushNotification(): PushNotificationState {
@@ -125,6 +131,30 @@ export function usePushNotification(): PushNotificationState {
     []
   );
 
+  const fetchCurrentSettings = useCallback(
+    async (): Promise<PushSubscriptionSettings | null> => {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        if (!subscription) return null;
+
+        const response = await fetch(
+          "/api/push/subscription?endpoint=" + encodeURIComponent(subscription.endpoint)
+        );
+        const json = (await response.json()) as {
+          data: PushSubscriptionSettings | null;
+          error: string | null;
+        };
+
+        if (!response.ok || json.error || !json.data) return null;
+        return json.data;
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
   const unsubscribe = useCallback(async () => {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
@@ -153,7 +183,7 @@ export function usePushNotification(): PushNotificationState {
     localStorage.setItem(LOCAL_STORAGE_SUBSCRIBED_KEY, "false");
   }, []);
 
-  return { isSupported, permission, isSubscribed, subscribe, unsubscribe };
+  return { isSupported, permission, isSubscribed, subscribe, unsubscribe, fetchCurrentSettings };
 }
 
 // 사용되지 않으나 추후 서버 유틸리티에서 필요할 수 있어 export

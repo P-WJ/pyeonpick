@@ -58,6 +58,26 @@ export async function deletePushSubscription(endpoint: string): Promise<void> {
   }
 }
 
+export async function getPushSubscriptionByEndpoint(
+  endpoint: string
+): Promise<PushSubscriptionRecord | null> {
+  const supabase = createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("push_subscriptions")
+    .select("*")
+    .eq("endpoint", endpoint)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`웹 푸시 구독 조회 실패: ${error.message}`);
+  }
+
+  if (!data) return null;
+
+  return parseRow(data as Record<string, unknown>);
+}
+
 export async function getAllPushSubscriptions(): Promise<PushSubscriptionRecord[]> {
   const supabase = createSupabaseServerClient();
 

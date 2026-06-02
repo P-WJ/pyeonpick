@@ -48,16 +48,22 @@ def _matches_subscription(
 
 
 def _build_push_payload(products: list[Product]) -> str:
-    """웹 푸시 페이로드 JSON을 생성한다."""
+    """웹 푸시 페이로드 JSON을 생성한다.
+
+    상품이 1개면 해당 상품 상세 페이지 URL을 포함해 클릭 시 바로 이동하도록 한다.
+    여러 개면 메인 페이지 URL을 사용한다.
+    """
     if len(products) == 1:
         body = f"{products[0].store} {products[0].name} ({products[0].event_type})"
+        target_url = f"{SITE_URL}/products/{products[0].id}"
     else:
         body = f"새로운 행사 상품 {len(products)}개가 등록됐어요!"
+        target_url = SITE_URL
 
     return json.dumps({
         "title": "[편픽] 이번 달 행사 상품 알림",
         "body": body,
-        "url": SITE_URL,
+        "url": target_url,
         "icon": f"{SITE_URL}/icon-192x192.png",
     })
 

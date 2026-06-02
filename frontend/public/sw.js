@@ -59,25 +59,39 @@ self.addEventListener("notificationclick", (event) => {
 
 // ─── pushsubscriptionchange 이벤트: 구독 만료/갱신 ──────────────────────────
 self.addEventListener("pushsubscriptionchange", (event) => {
+  const oldEndpoint = event.oldSubscription ? event.oldSubscription.endpoint : null;
+
   event.waitUntil(
-    self.registration.pushManager
-      .subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: event.oldSubscription
-          ? event.oldSubscription.options.applicationServerKey
-          : null,
-      })
-      .then((newSubscription) => {
-        const { endpoint, keys } = newSubscription.toJSON();
-        return fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            endpoint,
-            p256dh: keys && keys.p256dh ? keys.p256dh : "",
-            auth: keys && keys.auth ? keys.auth : "",
-          }),
-        });
-      })
+    // 1. OLD 구독의 keywords/stores를 서버에서 조회
+    (oldEndpoint
+      ? fetch("/api/push/subscription?endpoint=" + encodeURIComponent(oldEndpoint))
+          .then((res) => (res.ok ? res.json() : { data: null, error: null }))
+          .then((json) => (json.data ? json.data : { keywords: [], stores: [] }))
+      : Promise.resolve({ keywords: [], stores: [] })
+    ).then(({ keywords, stores }) =>
+      // 2. 새 구독 생성
+      self.registration.pushManager
+        .subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: event.oldSubscription
+            ? event.oldSubscription.options.applicationServerKey
+            : null,
+        })
+        .then((newSubscription) => {
+          const { endpoint, keys } = newSubscription.toJSON();
+          // 3. 새 구독 + 복원된 keywords/stores를 함께 저장
+          return fetch("/api/push/subscribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              endpoint,
+              p256dh: keys && keys.p256dh ? keys.p256dh : "",
+              auth: keys && keys.auth ? keys.auth : "",
+              keywords,
+              stores,
+            }),
+          });
+        })
+    )
   );
 });
