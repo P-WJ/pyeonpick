@@ -6,7 +6,7 @@ import { buildRecommendationPrompt, parseRecommendationResponse } from "@/domain
 import { generateTextFromPrompt } from "@/infrastructure/gemini";
 import { getProducts } from "@/app/use-cases/get-products";
 
-const MAX_PRODUCTS_FOR_AI = 100;
+const MAX_PRODUCTS_FOR_AI = 50;
 const MIN_BUDGET = 1000;
 const MAX_BUDGET = 10_000_000;
 const MAX_USER_PROMPT_LENGTH = 200;

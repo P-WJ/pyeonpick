@@ -15,8 +15,7 @@ export function buildRecommendationPrompt(
     store: product.store,
     name: product.name,
     price: product.price,
-    eventType: product.eventType,
-    category: product.category,
+    event: product.eventType,
   }));
 
   const userPreferenceSection = userPrompt?.trim()
