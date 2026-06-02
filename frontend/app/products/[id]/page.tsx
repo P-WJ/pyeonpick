@@ -1,5 +1,9 @@
 import { notFound } from "next/navigation";
-import { getProductById, getRelatedProducts } from "@/infrastructure/repositories/product-repository";
+import {
+  getProductById,
+  getRelatedProducts,
+  getCrossStoreComparison,
+} from "@/infrastructure/repositories/product-repository";
 import { ProductDetailClient } from "./ProductDetailClient";
 
 interface ProductDetailPageProps {
@@ -16,11 +20,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   if (!product) notFound();
 
-  const relatedProducts = await getRelatedProducts(productId, product.category);
+  const [relatedProducts, crossStoreProducts] = await Promise.all([
+    getRelatedProducts(productId, product.category),
+    getCrossStoreComparison(product),
+  ]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-      <ProductDetailClient product={product} relatedProducts={relatedProducts} />
+      <ProductDetailClient
+        product={product}
+        relatedProducts={relatedProducts}
+        crossStoreProducts={crossStoreProducts}
+      />
     </div>
   );
 }

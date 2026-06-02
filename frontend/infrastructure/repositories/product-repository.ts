@@ -1,6 +1,10 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase";
 import type { Product, Store, EventType, Category, ProductSort } from "@/domain/entities/product";
+import { normalizeProductName, extractSearchCore } from "@/domain/use-cases/product-matching";
 import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT, EVENT_TYPES } from "@/lib/constants";
+
+const CROSS_STORE_CANDIDATE_LIMIT = 300;
+const MIN_SEARCH_CORE_LENGTH = 2;
 
 const VALID_STORES = new Set<string>(["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"]);
 const VALID_EVENT_TYPES = new Set<string>(["1+1", "2+1", "3+1", "할인", "증정"]);
@@ -162,6 +166,35 @@ export async function getRelatedProducts(
       return productA.name.localeCompare(productB.name, "ko");
     })
     .slice(0, limit);
+}
+
+/**
+ * 매장 간 동일 상품 비교 후보를 조회한다.
+ * 핵심 토큰(extractSearchCore)으로 ilike 후보군을 좁힌 뒤,
+ * 정규화 이름이 정확히 일치하는 상품만 반환한다 (현재 상품의 매장 포함).
+ */
+export async function getCrossStoreComparison(product: Product): Promise<Product[]> {
+  const searchCore = extractSearchCore(product.name);
+  if (searchCore.length < MIN_SEARCH_CORE_LENGTH) return [];
+
+  const supabase = createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .gte("valid_to", todayDateString())
+    .in("event_type", EVENT_TYPES)
+    .ilike("name", `%${searchCore}%`)
+    .limit(CROSS_STORE_CANDIDATE_LIMIT);
+
+  if (error) throw new Error(`매장 간 비교 조회 실패: ${error.message}`);
+
+  const targetKey = normalizeProductName(product.name);
+  return (data ?? []).flatMap((row) => {
+    const candidate = parseProductRow(row);
+    return candidate && normalizeProductName(candidate.name) === targetKey
+      ? [candidate]
+      : [];
+  });
 }
 
 export async function getProductsByIds(ids: number[]): Promise<Product[]> {

@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import type { Product } from "@/domain/entities/product";
 import { STORE_COLORS } from "@/lib/constants";
 import { EventBadge } from "@/app/components/EventBadge";
+import { StoreComparison } from "@/app/components/StoreComparison";
 import { calculatePriceBenefit } from "@/domain/use-cases/price";
 import { useCart } from "@/app/contexts/cart-context";
 
@@ -19,6 +20,7 @@ const PLACEHOLDER_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org
 interface ProductDetailClientProps {
   product: Product;
   relatedProducts: Product[];
+  crossStoreProducts: Product[];
 }
 
 function RelatedProductCard({ product }: { product: Product }) {
@@ -62,6 +64,7 @@ function RelatedProductCard({ product }: { product: Product }) {
 export function ProductDetailClient({
   product,
   relatedProducts,
+  crossStoreProducts,
 }: ProductDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -223,7 +226,8 @@ export function ProductDetailClient({
           </span>
         </div>
 
-
+        {/* 매장 간 가격 비교 섹션 (동일 상품이 2개 매장 이상일 때만 노출) */}
+        <StoreComparison products={crossStoreProducts} currentStore={product.store} />
 
         {/* 관련 상품 섹션 */}
         <div className="mt-7">
