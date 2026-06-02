@@ -179,103 +179,115 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 편의점 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
-        <button
-          type="button"
-          onClick={() => handlePillFilterChange("store", "")}
-          className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
-            filters.store === ""
-              ? "bg-gray-950 border-gray-950 text-white shadow-sm"
-              : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-          }`}
-        >
-          전체 편의점
-        </button>
-        {STORES.map((store) => {
-          const isActive = filters.store === store;
-          const storeColors = STORE_COLORS[store];
-          return (
-            <button
-              key={store}
-              type="button"
-              onClick={() => handlePillFilterChange("store", isActive ? "" : store)}
-              className="shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
-              style={
-                isActive
-                  ? { backgroundColor: storeColors.primary, borderColor: storeColors.primary, color: "#FFFFFF" }
-                  : { backgroundColor: "#FFFFFF", borderColor: "#E5E7EB", color: "#4B5563" }
-              }
-            >
-              {store}
-            </button>
-          );
-        })}
+      <div className="relative -mx-4 px-4">
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/70 to-transparent z-10" />
+        <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5 px-2">
+          <button
+            type="button"
+            onClick={() => handlePillFilterChange("store", "")}
+            className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+              filters.store === ""
+                ? "bg-gray-950 border-gray-950 text-white shadow-sm"
+                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+            }`}
+          >
+            전체 편의점
+          </button>
+          {STORES.map((store) => {
+            const isActive = filters.store === store;
+            const storeColors = STORE_COLORS[store];
+            return (
+              <button
+                key={store}
+                type="button"
+                onClick={() => handlePillFilterChange("store", isActive ? "" : store)}
+                className="shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
+                style={
+                  isActive
+                    ? { backgroundColor: storeColors.primary, borderColor: storeColors.primary, color: "#FFFFFF" }
+                    : { backgroundColor: "#FFFFFF", borderColor: "#E5E7EB", color: "#4B5563" }
+                }
+              >
+                {store}
+              </button>
+            );
+          })}
+        </div>
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 via-gray-50/70 to-transparent z-10" />
       </div>
 
       {/* 행사 유형 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
-        <button
-          type="button"
-          onClick={() => handlePillFilterChange("eventType", "")}
-          className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
-            filters.eventType === ""
-              ? "bg-gray-950 border-gray-950 text-white shadow-sm"
-              : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-          }`}
-        >
-          전체 행사
-        </button>
-        {EVENT_TYPES.map((eventType) => {
-          const isActive = filters.eventType === eventType;
-          const badge = EVENT_TYPE_BADGES[eventType];
-          return (
-            <button
-              key={eventType}
-              type="button"
-              onClick={() => handlePillFilterChange("eventType", isActive ? "" : eventType)}
-              className="shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
-              style={
-                isActive
-                  ? { backgroundColor: badge.bg, color: badge.color, borderColor: badge.bg }
-                  : { backgroundColor: "#FFFFFF", color: "#4B5563", borderColor: "#E5E7EB" }
-              }
-            >
-              {eventType}
-            </button>
-          );
-        })}
+      <div className="relative -mx-4 px-4">
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/70 to-transparent z-10" />
+        <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5 px-2">
+          <button
+            type="button"
+            onClick={() => handlePillFilterChange("eventType", "")}
+            className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+              filters.eventType === ""
+                ? "bg-gray-950 border-gray-950 text-white shadow-sm"
+                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+            }`}
+          >
+            전체 행사
+          </button>
+          {EVENT_TYPES.map((eventType) => {
+            const isActive = filters.eventType === eventType;
+            const badge = EVENT_TYPE_BADGES[eventType];
+            return (
+              <button
+                key={eventType}
+                type="button"
+                onClick={() => handlePillFilterChange("eventType", isActive ? "" : eventType)}
+                className="shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
+                style={
+                  isActive
+                    ? { backgroundColor: badge.bg, color: badge.color, borderColor: badge.bg }
+                    : { backgroundColor: "#FFFFFF", color: "#4B5563", borderColor: "#E5E7EB" }
+                }
+              >
+                {eventType}
+              </button>
+            );
+          })}
+        </div>
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 via-gray-50/70 to-transparent z-10" />
       </div>
 
       {/* 카테고리 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
-        <button
-          type="button"
-          onClick={() => handlePillFilterChange("category", "")}
-          className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
-            filters.category === ""
-              ? "bg-violet-600 border-violet-600 text-white shadow-sm"
-              : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-          }`}
-        >
-          전체 카테고리
-        </button>
-        {CATEGORIES.map((category) => {
-          const isActive = filters.category === category;
-          return (
-            <button
-              key={category}
-              type="button"
-              onClick={() => handlePillFilterChange("category", isActive ? "" : category)}
-              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
-                isActive
-                  ? "bg-violet-600 border-violet-600 text-white shadow-sm"
-                  : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
-            >
-              {category}
-            </button>
-          );
-        })}
+      <div className="relative -mx-4 px-4">
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-gray-50 via-gray-50/70 to-transparent z-10" />
+        <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5 px-2">
+          <button
+            type="button"
+            onClick={() => handlePillFilterChange("category", "")}
+            className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+              filters.category === ""
+                ? "bg-violet-600 border-violet-600 text-white shadow-sm"
+                : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+            }`}
+          >
+            전체 카테고리
+          </button>
+          {CATEGORIES.map((category) => {
+            const isActive = filters.category === category;
+            return (
+              <button
+                key={category}
+                type="button"
+                onClick={() => handlePillFilterChange("category", isActive ? "" : category)}
+                className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+                  isActive
+                    ? "bg-violet-600 border-violet-600 text-white shadow-sm"
+                    : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
+                }`}
+              >
+                {category}
+              </button>
+            );
+          })}
+        </div>
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 via-gray-50/70 to-transparent z-10" />
       </div>
     </div>
   );

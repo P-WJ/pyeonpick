@@ -31,6 +31,7 @@ interface CartContextValue {
   cartCount: number;
   totalPrice: number;
   totalSavings: number;
+  cartBounceTrigger: boolean;
   setIsCartOpen: (open: boolean) => void;
   setIsSubscribeOpen: (open: boolean) => void;
   setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
@@ -52,6 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [cartBounceTrigger, setCartBounceTrigger] = useState(false);
 
   // 첫 번째 save 실행을 건너뛰기 위한 플래그 (복원 전 초기 [] 로 덮어쓰기 방지)
   const isFirstCartSave = useRef(true);
@@ -83,6 +85,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistIds));
   }, [wishlistIds]);
 
+  function triggerBounce() {
+    setCartBounceTrigger(true);
+    const timer = setTimeout(() => setCartBounceTrigger(false), 500);
+    return () => clearTimeout(timer);
+  }
+
   function showToast(message: string) {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), TOAST_DURATION_MS);
@@ -91,6 +99,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   function handleAddToCart(product: Product) {
     setCartItems((prev) => addToCart(prev, product));
     showToast(`${product.name}을(를) 담았습니다.`);
+    triggerBounce();
   }
 
   function handleAddMultipleToCart(productsToAdd: Product[]) {
@@ -102,6 +111,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return updated;
     });
     showToast(`${productsToAdd.length}개 상품을 장바구니에 담았습니다.`);
+    triggerBounce();
   }
 
   function handleUpdateQuantity(productId: number, quantity: number) {
@@ -146,6 +156,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         cartCount,
         totalPrice,
         totalSavings,
+        cartBounceTrigger,
         setIsCartOpen,
         setIsSubscribeOpen,
         setCartItems,

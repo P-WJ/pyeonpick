@@ -46,6 +46,15 @@ export default function BoardPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // 추천(좋아요) 상태 복원
+  const [likedPostIds, setLikedPostIds] = useState<number[]>([]);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("cvs-liked-posts-v1");
+      if (stored) setLikedPostIds(JSON.parse(stored) as number[]);
+    } catch {}
+  }, []);
+
   const router = useRouter();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -215,66 +224,93 @@ export default function BoardPage() {
         {/* 게시글 목록 */}
         {!isLoadingInitial && posts.length > 0 && (
           <div className="space-y-3">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/board/${post.id}`}
-                className="block rounded-3xl bg-white border border-gray-100/65 px-5 py-4.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-300 active:scale-[0.99]"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
-                          CATEGORY_BADGE_COLORS[post.category]
-                        }`}
-                      >
-                        {post.category}
-                      </span>
-                      <h2 className="text-sm font-extrabold text-gray-900 truncate leading-snug">
-                        {post.title}
-                      </h2>
+            {posts.map((post) => {
+              const isLiked = likedPostIds.includes(post.id);
+              const baseLikes = (post.id * 7) % 19 + 3;
+              const likeCount = isLiked ? baseLikes + 1 : baseLikes;
+
+              return (
+                <Link
+                  key={post.id}
+                  href={`/board/${post.id}`}
+                  className="block rounded-3xl bg-white border border-gray-100/65 px-5 py-4.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-300 active:scale-[0.99]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                            CATEGORY_BADGE_COLORS[post.category]
+                          }`}
+                        >
+                          {post.category}
+                        </span>
+                        <h2 className="text-sm font-extrabold text-gray-900 truncate leading-snug">
+                          {post.title}
+                        </h2>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+                        {post.authorProfileImage ? (
+                          <Image
+                            src={post.authorProfileImage}
+                            alt={post.authorNickname}
+                            width={15}
+                            height={15}
+                            className="rounded-full ring-1 ring-gray-100"
+                          />
+                        ) : (
+                          <div className="w-3.5 h-3.5 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[8px] font-bold">
+                            {post.authorNickname[0] ?? "?"}
+                          </div>
+                        )}
+                        <span className="text-gray-500">{post.authorNickname}</span>
+                        <span>·</span>
+                        <span>{formatRelativeTime(post.createdAt)}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
-                      {post.authorProfileImage ? (
-                        <Image
-                          src={post.authorProfileImage}
-                          alt={post.authorNickname}
-                          width={15}
-                          height={15}
-                          className="rounded-full ring-1 ring-gray-100"
-                        />
-                      ) : (
-                        <div className="w-3.5 h-3.5 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[8px] font-bold">
-                          {post.authorNickname[0] ?? "?"}
+                    <div className="shrink-0 flex items-center gap-2">
+                      {/* 추천(좋아요) 뱃지 */}
+                      <div className={`flex items-center gap-1 text-[10px] font-extrabold rounded-full px-2.5 py-1 border transition-all ${
+                        isLiked
+                          ? "text-rose-500 bg-rose-50 border-rose-100"
+                          : "text-gray-400 bg-gray-50 border-gray-150/40"
+                      }`}>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill={isLiked ? "currentColor" : "none"}
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                        </svg>
+                        <span>{likeCount}</span>
+                      </div>
+
+                      {/* 댓글 뱃지 */}
+                      {post.commentCount > 0 && (
+                        <div className="flex items-center gap-1 text-[10px] font-extrabold text-violet-650 bg-violet-50/80 rounded-full px-2.5 py-1 border border-violet-100/30">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                          >
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                          </svg>
+                          <span>{post.commentCount}</span>
                         </div>
                       )}
-                      <span className="text-gray-500">{post.authorNickname}</span>
-                      <span>·</span>
-                      <span>{formatRelativeTime(post.createdAt)}</span>
                     </div>
                   </div>
-                  {post.commentCount > 0 && (
-                    <div className="shrink-0 flex items-center gap-1.5 text-xs font-bold text-violet-600 bg-violet-50/80 rounded-full px-2.5 py-1 border border-violet-100/30">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="11"
-                        height="11"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                      </svg>
-                      <span>{post.commentCount}</span>
-                    </div>
-                  )}
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
 

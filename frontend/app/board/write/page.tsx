@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { PostCategory } from "@/domain/entities/post";
+import { useCart } from "@/app/contexts/cart-context";
 
 const CATEGORY_OPTIONS: PostCategory[] = ["자유", "조합공유", "질문"];
 const TITLE_MAX_LENGTH = 100;
@@ -12,6 +13,7 @@ const CONTENT_MAX_LENGTH = 5000;
 export default function WritePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { cartItems, totalPrice, totalSavings } = useCart();
 
   const [category, setCategory] = useState<PostCategory>("자유");
   const [title, setTitle] = useState("");
@@ -139,6 +141,31 @@ export default function WritePage() {
               })}
             </div>
           </div>
+
+          {/* 장바구니 조합 불러오기 연동 버튼 */}
+          {cartItems.length > 0 && (
+            <div className="bg-violet-50/50 border border-violet-100 rounded-2xl p-4 flex items-center justify-between gap-3.5 shadow-sm">
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-violet-700 flex items-center gap-1">
+                  <span>⚡</span> 내 장바구니에 {cartItems.length}개의 상품 조합이 있어요!
+                </p>
+                <p className="text-[10px] text-gray-450 font-semibold leading-relaxed">
+                  클릭하시면 장바구니 목록과 가격 통계를 본문에 이쁘게 자동 작성해 드려요.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const cartSummary = `[나만의 편의점 꿀조합 ⚡]\n\n총 ${cartItems.length}개의 행사 상품 조합입니다.\n${cartItems.map((item, idx) => `${idx + 1}. [${item.product.store}] ${item.product.name} (${item.product.price.toLocaleString()}원, ${item.product.eventType})`).join("\n")}\n\n💵 총 조합 가격: ${totalPrice.toLocaleString()}원\n🎉 절약액: ${totalSavings.toLocaleString()}원\n\n----------------------------\n💡 조합 소개 및 맛있게 먹는 꿀팁을 이곳에 적어주세요:\n`;
+                  setContent(cartSummary);
+                  setCategory("조합공유");
+                }}
+                className="shrink-0 rounded-xl bg-violet-600 hover:bg-violet-750 text-white px-3.5 py-2 text-xs font-bold transition-all duration-150 active:scale-95 shadow-sm"
+              >
+                조합 가져오기
+              </button>
+            </div>
+          )}
 
           {/* 제목 */}
           <div>

@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase";
-import type { Product, Store, EventType, Category, Nutrition } from "@/domain/entities/product";
+import type { Product, Store, EventType, Category } from "@/domain/entities/product";
 import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT, EVENT_TYPES } from "@/lib/constants";
 
 const VALID_STORES = new Set<string>(["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"]);
@@ -154,11 +154,6 @@ function parseProductRow(row: Record<string, unknown>): Product | null {
   if (!VALID_CATEGORIES.has(category)) return null;
   if (!name || isNaN(id) || isNaN(price)) return null;
 
-  const nutrition =
-    row.nutrition != null && typeof row.nutrition === "object"
-      ? (row.nutrition as Nutrition)
-      : null;
-
   return {
     id,
     store: store as Store,
@@ -169,6 +164,5 @@ function parseProductRow(row: Record<string, unknown>): Product | null {
     imageUrl,
     validFrom,
     validTo,
-    nutrition,
   };
 }

@@ -19,14 +19,14 @@ const INITIAL_FILTERS: ActiveFilters = {
   search: "",
 };
 
-function buildSearchParams(filters: ActiveFilters, page: number): URLSearchParams {
+function buildSearchParams(filters: ActiveFilters, page: number, customLimit?: number): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.store) params.set("store", filters.store);
   if (filters.eventType) params.set("eventType", filters.eventType);
   if (filters.category) params.set("category", filters.category);
   if (filters.search) params.set("search", filters.search);
   params.set("page", String(page));
-  params.set("limit", String(PRODUCTS_PAGE_LIMIT));
+  params.set("limit", String(customLimit ?? PRODUCTS_PAGE_LIMIT));
   return params;
 }
 
@@ -55,6 +55,25 @@ function HomePageContent() {
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
+  const stateRef = useRef({ filters: INITIAL_FILTERS, page: 1 });
+
+  // 최신 필터 및 페이지 상태 동기화 (언마운트 시 sessionStorage에 백업하기 위함)
+  useEffect(() => {
+    stateRef.current = { filters, page };
+  }, [filters, page]);
+
+  // 언마운트 시점에 상태 및 스크롤 Y 좌표 백업
+  useEffect(() => {
+    return () => {
+      const scrollY = window.scrollY;
+      const backup = {
+        filters: stateRef.current.filters,
+        page: stateRef.current.page,
+        scrollY,
+      };
+      sessionStorage.setItem("pyeonpick-restore-state", JSON.stringify(backup));
+    };
+  }, []);
 
   // 공유 링크 자동 불러오기 (?cart=id1,id2,id3)
   useEffect(() => {
@@ -93,7 +112,7 @@ function HomePageContent() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPage = useCallback(
-    async (targetPage: number, isInitialLoad: boolean) => {
+    async (targetPage: number, isInitialLoad: boolean, restorePageNum?: number) => {
       if (isLoadingRef.current) return;
       isLoadingRef.current = true;
 
@@ -102,7 +121,13 @@ function HomePageContent() {
       setFetchError(null);
 
       try {
-        const params = buildSearchParams(filters, targetPage);
+        const fetchLimit = restorePageNum 
+          ? restorePageNum * PRODUCTS_PAGE_LIMIT 
+          : PRODUCTS_PAGE_LIMIT;
+        
+        const apiPage = restorePageNum ? 1 : targetPage;
+        const params = buildSearchParams(filters, apiPage, fetchLimit);
+        
         const response = await fetch(`/api/products?${params.toString()}`);
         const json = (await response.json()) as {
           data: Product[] | null;
@@ -115,7 +140,12 @@ function HomePageContent() {
         if (isInitialLoad) setProducts(newProducts);
         else setProducts((prev) => [...prev, ...newProducts]);
         setHasMore(json.meta?.hasMore ?? false);
-        setPage(targetPage);
+        
+        if (restorePageNum) {
+          setPage(restorePageNum);
+        } else {
+          setPage(targetPage);
+        }
       } catch (error) {
         setFetchError(error instanceof Error ? error.message : "상품을 불러오지 못했습니다.");
       } finally {
@@ -129,8 +159,28 @@ function HomePageContent() {
 
   useEffect(() => {
     setProducts([]);
-    setPage(1);
     setHasMore(true);
+
+    const restoreJson = sessionStorage.getItem("pyeonpick-restore-state");
+    if (restoreJson) {
+      try {
+        const parsed = JSON.parse(restoreJson);
+        setFilters(parsed.filters);
+        fetchPage(1, true, parsed.page).then(() => {
+          setTimeout(() => {
+            window.scrollTo({
+              top: parsed.scrollY,
+              behavior: "instant" as ScrollBehavior,
+            });
+          }, 100);
+        });
+        sessionStorage.removeItem("pyeonpick-restore-state");
+        return;
+      } catch {}
+      sessionStorage.removeItem("pyeonpick-restore-state");
+    }
+
+    setPage(1);
     fetchPage(1, true);
   }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
 

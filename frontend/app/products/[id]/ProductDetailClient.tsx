@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import type { Product, Nutrition } from "@/domain/entities/product";
+import { useSession } from "next-auth/react";
+import type { Product } from "@/domain/entities/product";
 import type { CartItem } from "@/domain/entities/cart";
 import { STORE_COLORS } from "@/lib/constants";
 import { EventBadge } from "@/app/components/EventBadge";
 import { calculatePriceBenefit } from "@/domain/use-cases/price";
+import { useCart } from "@/app/contexts/cart-context";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
 const RECENTLY_VIEWED_KEY = "cvs-recently-viewed-v1";
@@ -15,78 +17,6 @@ const RECENTLY_VIEWED_MAX_COUNT = 20;
 
 // Elegant inline SVG data URI as the primary fallback instead of raw broken image
 const PLACEHOLDER_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23f9fafb"/><stop offset="100%" stop-color="%23f3f4f6"/></linearGradient></defs><rect width="100" height="100" fill="url(%23g)"/><circle cx="50" cy="45" r="14" fill="%23e5e7eb" opacity="0.8"/><path d="M32 72 h36 v-22 h-36 z" fill="%23d1d5db" opacity="0.6"/><path d="M42 50 h16 v-6 h-16 z" fill="%239ca3af" opacity="0.5"/></svg>`;
-
-const NUTRITION_LABELS: Record<keyof Omit<Nutrition, "serving_size" | "calories">, string> = {
-  protein: "단백질",
-  fat: "지방",
-  carbohydrates: "탄수화물",
-  sugars: "당류",
-  sodium: "나트륨",
-  saturated_fat: "포화지방",
-  trans_fat: "트랜스지방",
-  cholesterol: "콜레스테롤",
-};
-
-const NUTRITION_UNITS: Record<keyof Omit<Nutrition, "serving_size" | "calories">, string> = {
-  protein: "g",
-  fat: "g",
-  carbohydrates: "g",
-  sugars: "g",
-  sodium: "mg",
-  saturated_fat: "g",
-  trans_fat: "g",
-  cholesterol: "mg",
-};
-
-function NutritionTable({ nutrition }: { nutrition: Nutrition }) {
-  const nutrientKeys = Object.keys(NUTRITION_LABELS) as Array<
-    keyof Omit<Nutrition, "serving_size" | "calories">
-  >;
-  const availableNutrients = nutrientKeys.filter(
-    (key) => nutrition[key] !== undefined && nutrition[key] !== null
-  );
-
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
-      <div className="px-5 py-4 border-b border-gray-100">
-        <p className="text-sm font-extrabold text-gray-900">영양성분</p>
-        {nutrition.serving_size && (
-          <p className="text-xs text-gray-400 mt-1 font-medium">
-            1회 제공량: {nutrition.serving_size}
-          </p>
-        )}
-      </div>
-
-      {nutrition.calories !== undefined && (
-        <div className="px-5 py-4.5 border-b border-gray-50 flex items-baseline justify-between">
-          <span className="text-sm font-bold text-gray-500">열량</span>
-          <span className="text-3xl font-black text-gray-950">
-            {nutrition.calories}
-            <span className="text-xs font-semibold text-gray-450 ml-1">kcal</span>
-          </span>
-        </div>
-      )}
-
-      {availableNutrients.length > 0 && (
-        <table className="w-full text-xs font-semibold">
-          <tbody>
-            {availableNutrients.map((key) => (
-              <tr key={key} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                <td className="px-5 py-3.5 text-gray-500">
-                  {NUTRITION_LABELS[key]}
-                </td>
-                <td className="px-5 py-3.5 text-right text-gray-900 font-bold">
-                  {nutrition[key]}
-                  <span className="text-[10px] text-gray-400 ml-0.5">{NUTRITION_UNITS[key]}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
-}
 
 interface ProductDetailClientProps {
   product: Product;
@@ -158,9 +88,12 @@ export function ProductDetailClient({
   relatedProducts,
 }: ProductDetailClientProps) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const { wishlistIds, handleToggleWishlist, showToast } = useCart();
+  const isWishlisted = wishlistIds.includes(product.id);
+
   const storeColors = STORE_COLORS[product.store];
   const benefit = calculatePriceBenefit(product.price, product.eventType);
-
   useEffect(() => {
     try {
       const stored = JSON.parse(
@@ -181,7 +114,7 @@ export function ProductDetailClient({
 
   return (
     <>
-      <main className="max-w-2xl mx-auto pb-28 bg-gray-50/50 min-h-screen">
+      <main className="max-w-2xl mx-auto pb-36 bg-gray-50/50 min-h-screen">
         {/* 뒤로가기 바 */}
         <div className="flex items-center gap-3 px-4 py-3.5 bg-white border-b border-gray-100/50">
           <button
@@ -314,18 +247,7 @@ export function ProductDetailClient({
           </span>
         </div>
 
-        {/* 영양성분 섹션 */}
-        {product.category !== "생활용품" && (
-          <div className="mx-4 mt-4.5">
-            {product.nutrition ? (
-              <NutritionTable nutrition={product.nutrition} />
-            ) : (
-              <div className="rounded-2xl bg-white border border-gray-100 p-5 text-center shadow-[0_4px_12px_rgba(0,0,0,0.01)]">
-                <p className="text-xs font-semibold text-gray-400">영양성분 정보를 준비 중이에요.</p>
-              </div>
-            )}
-          </div>
-        )}
+
 
         {/* 관련 상품 섹션 */}
         <div className="mt-7">
@@ -359,14 +281,48 @@ export function ProductDetailClient({
             </div>
           )}
         </div>
+        {/* 하단 안심 스페이서 */}
+        <div className="h-10" />
       </main>
 
-      {/* 하단 고정 장바구니 버튼 */}
+      {/* 하단 고정 장바구니 및 찜하기 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-gray-100/80 px-4 py-3.5 max-w-2xl mx-auto flex gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+        {/* 찜하기 버튼 */}
+        <button
+          type="button"
+          onClick={() => {
+            if (!session?.user) {
+              showToast("찜하기는 로그인 후 이용할 수 있습니다.");
+              return;
+            }
+            handleToggleWishlist(product);
+          }}
+          className={`flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-2xl border transition-all duration-150 active:scale-95 shadow-sm ${
+            isWishlisted
+              ? "bg-rose-50 border-rose-100 text-rose-500 hover:bg-rose-100/50"
+              : "bg-white border-gray-200 text-gray-400 hover:text-gray-650 hover:border-gray-300 bg-white/50"
+          }`}
+          aria-label={isWishlisted ? "찜하기 해제" : "찜하기"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill={isWishlisted ? "currentColor" : "none"}
+            stroke="currentColor"
+            strokeWidth="2.5"
+            className="transition-transform duration-200"
+          >
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+          </svg>
+        </button>
+
+        {/* 장바구니 담기 버튼 */}
         <button
           type="button"
           onClick={handleAddToCart}
-          className="w-full py-4 rounded-2xl text-sm font-extrabold text-white bg-gray-950 hover:bg-gray-800 active:scale-[0.98] transition-all duration-200 min-h-[50px] shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:shadow-lg"
+          className="flex-1 py-4 rounded-2xl text-sm font-extrabold text-white bg-gray-950 hover:bg-gray-800 active:scale-[0.98] transition-all duration-200 min-h-[50px] shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:shadow-lg"
         >
           장바구니 담기
         </button>

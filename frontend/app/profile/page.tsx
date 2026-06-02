@@ -161,36 +161,80 @@ function formatDate(dateString: string): string {
 
 interface MyPostCardProps {
   post: Post;
+  likedPostIds: number[];
 }
 
-function MyPostCard({ post }: MyPostCardProps) {
+function MyPostCard({ post, likedPostIds }: MyPostCardProps) {
   const router = useRouter();
+  const isLiked = likedPostIds.includes(post.id);
+  const baseLikes = (post.id * 7) % 19 + 3;
+  const likeCount = isLiked ? baseLikes + 1 : baseLikes;
 
   return (
     <button
       type="button"
       onClick={() => router.push(`/board/${post.id}`)}
-      className="w-full rounded-3xl bg-white border border-gray-100/65 px-5 py-4.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-300 active:scale-[0.99] text-left space-y-2 flex flex-col justify-between"
+      className="w-full block rounded-3xl bg-white border border-gray-100/65 px-5 py-4.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 hover:border-gray-200 transition-all duration-300 active:scale-[0.99] text-left"
     >
-      <div className="flex items-center gap-2">
-        <span
-          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
-            CATEGORY_BADGE_COLORS[post.category] ?? "bg-gray-100 text-gray-600"
-          }`}
-        >
-          {post.category}
-        </span>
-      </div>
-      <h3 className="text-sm font-extrabold text-gray-900 line-clamp-2 leading-snug">
-        {post.title}
-      </h3>
-      <div className="flex items-center gap-2 text-xs font-bold text-gray-400 pt-1 border-t border-gray-50/50 w-full justify-between">
-        <span>{formatDate(post.createdAt)}</span>
-        {post.commentCount > 0 && (
-          <span className="text-[10px] text-violet-600 bg-violet-50 px-2.5 py-0.5 rounded-full border border-violet-100/30">
-            댓글 {post.commentCount}
-          </span>
-        )}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span
+              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                CATEGORY_BADGE_COLORS[post.category] ?? "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {post.category}
+            </span>
+            <h3 className="text-sm font-extrabold text-gray-900 truncate leading-snug">
+              {post.title}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+            <span>{formatDate(post.createdAt)}</span>
+          </div>
+        </div>
+        
+        {/* 추천 및 댓글 배지 그룹 — 게시판과 동일 레이아웃 */}
+        <div className="shrink-0 flex items-center gap-2">
+          {/* 추천(좋아요) 뱃지 */}
+          <div className={`flex items-center gap-1 text-[10px] font-extrabold rounded-full px-2.5 py-1 border transition-all ${
+            isLiked
+              ? "text-rose-500 bg-rose-50 border-rose-100"
+              : "text-gray-400 bg-gray-50 border-gray-150/40"
+          }`}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill={isLiked ? "currentColor" : "none"}
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+            <span>{likeCount}</span>
+          </div>
+
+          {/* 댓글 뱃지 */}
+          {post.commentCount > 0 && (
+            <div className="flex items-center gap-1 text-[10px] font-extrabold text-violet-650 bg-violet-50/80 rounded-full px-2.5 py-1 border border-violet-100/30">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              <span>{post.commentCount}</span>
+            </div>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -230,6 +274,15 @@ export default function ProfilePage() {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
   const [hasFetchedPosts, setHasFetchedPosts] = useState(false);
+
+  // 추천(좋아요) 리스트 상태 복원
+  const [likedPostIds, setLikedPostIds] = useState<number[]>([]);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("cvs-liked-posts-v1");
+      if (stored) setLikedPostIds(JSON.parse(stored) as number[]);
+    } catch {}
+  }, []);
 
   // 찜 목록 로컬스토리지 로드
   useEffect(() => {
@@ -502,14 +555,30 @@ export default function ProfilePage() {
             )}
 
             {!isLoadingWishlist && !wishlistError && wishlistProducts.length > 0 && (
-              <div className="grid grid-cols-2 gap-3.5">
-                {wishlistProducts.map((product) => (
-                  <WishlistProductCard
-                    key={product.id}
-                    product={product}
-                    onRemoveWishlist={handleRemoveWishlist}
-                  />
-                ))}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">찜한 상품 ({wishlistProducts.length})</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem(WISHLIST_STORAGE_KEY);
+                      setWishlistIds([]);
+                      setWishlistProducts([]);
+                    }}
+                    className="text-[10px] font-extrabold text-gray-400 hover:text-red-500 transition-colors bg-white border border-gray-150 px-2.5 py-1.5 rounded-lg active:scale-95 shadow-sm"
+                  >
+                    찜한 상품 전체 비우기
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3.5">
+                  {wishlistProducts.map((product) => (
+                    <WishlistProductCard
+                      key={product.id}
+                      product={product}
+                      onRemoveWishlist={handleRemoveWishlist}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </section>
@@ -618,7 +687,7 @@ export default function ProfilePage() {
             {!isLoadingPosts && !postsError && myPosts.length > 0 && (
               <div className="space-y-3">
                 {myPosts.map((post) => (
-                  <MyPostCard key={post.id} post={post} />
+                  <MyPostCard key={post.id} post={post} likedPostIds={likedPostIds} />
                 ))}
               </div>
             )}

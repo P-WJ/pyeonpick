@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -27,6 +28,7 @@ export function ProductCard({
   const storeColors = STORE_COLORS[product.store];
   const { data: session } = useSession();
   const { showToast } = useCart();
+  const [isAdded, setIsAdded] = useState(false);
 
   return (
     <Link
@@ -111,10 +113,16 @@ export function ProductCard({
             event.preventDefault();
             event.stopPropagation();
             onAddToCart(product);
+            setIsAdded(true);
+            setTimeout(() => setIsAdded(false), 1200);
           }}
-          className="w-full mt-3 rounded-xl py-2.5 text-xs font-bold bg-gray-950 hover:bg-gray-800 active:scale-[0.98] text-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] hover:shadow-md transition-all duration-200 flex items-center justify-center gap-1 min-h-[38px]"
+          className={`w-full mt-3 rounded-xl py-2.5 text-xs font-bold active:scale-[0.98] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.08)] hover:shadow-md transition-all duration-200 flex items-center justify-center gap-1 min-h-[38px] ${
+            isAdded
+              ? "bg-violet-600 hover:bg-violet-700 text-white"
+              : "bg-gray-950 hover:bg-gray-800 text-white"
+          }`}
         >
-          + 담기
+          {isAdded ? "✓ 담겼어요!" : "+ 담기"}
         </button>
       </div>
     </Link>

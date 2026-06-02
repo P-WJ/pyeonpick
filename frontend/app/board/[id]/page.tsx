@@ -64,6 +64,32 @@ export default function PostDetailPage() {
   // 댓글 삭제 진행 중인 commentId 목록
   const [deletingCommentIds, setDeletingCommentIds] = useState<Set<number>>(new Set());
 
+  // 추천(좋아요) 시뮬레이션 상태
+  const [likedPostIds, setLikedPostIds] = useState<number[]>([]);
+  
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("cvs-liked-posts-v1");
+      if (stored) setLikedPostIds(JSON.parse(stored) as number[]);
+    } catch {}
+  }, []);
+
+  const isLiked = likedPostIds.includes(postId);
+  const baseLikes = (postId * 7) % 19 + 3; 
+  const likeCount = isLiked ? baseLikes + 1 : baseLikes;
+
+  function handleToggleLike() {
+    if (!session?.user) {
+      alert("추천(좋아요)은 로그인 후 이용하실 수 있습니다.");
+      return;
+    }
+    const nextList = isLiked
+      ? likedPostIds.filter((id) => id !== postId)
+      : [...likedPostIds, postId];
+    setLikedPostIds(nextList);
+    localStorage.setItem("cvs-liked-posts-v1", JSON.stringify(nextList));
+  }
+
   const isPostAuthor =
     post !== null &&
     session?.user?.nickname !== undefined &&
@@ -472,6 +498,33 @@ export default function PostDetailPage() {
                 </div>
                 <div className="text-sm font-semibold text-gray-800 leading-relaxed whitespace-pre-wrap tracking-tight pt-2">
                   {post.content}
+                </div>
+
+                {/* ⚡ 세련된 추천(좋아요) 인터랙티브 보드 */}
+                <div className="flex items-center justify-center pt-8 pb-4">
+                  <button
+                    type="button"
+                    onClick={handleToggleLike}
+                    className={`flex items-center gap-2 rounded-full px-5 py-3 text-xs font-bold transition-all duration-200 border active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md ${
+                      isLiked
+                        ? "bg-rose-50 border-rose-100 text-rose-500"
+                        : "bg-white border-gray-150 text-gray-500 hover:border-gray-250"
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill={isLiked ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      className={`transition-transform duration-200 ${isLiked ? "scale-110" : ""}`}
+                    >
+                      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                    </svg>
+                    <span>이 글 추천 ({likeCount})</span>
+                  </button>
                 </div>
               </>
             )}

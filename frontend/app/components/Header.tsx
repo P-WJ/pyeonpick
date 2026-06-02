@@ -10,7 +10,7 @@ import { PushNotificationBell } from "@/app/components/PushNotificationBell";
 export function Header() {
   const { data: session } = useSession();
   const user = session?.user;
-  const { cartCount, setIsCartOpen } = useCart();
+  const { cartCount, setIsCartOpen, cartBounceTrigger } = useCart();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -170,7 +170,9 @@ export function Header() {
             </svg>
             <span className="hidden sm:inline">장바구니</span>
             {cartCount > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-500 text-[9px] font-extrabold text-white shadow-sm ring-2 ring-white animate-pulse-slow">
+              <span className={`absolute -right-1.5 -top-1.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-500 text-[9px] font-extrabold text-white shadow-sm ring-2 ring-white ${
+                cartBounceTrigger ? "animate-cart-bounce" : "animate-pulse-slow"
+              }`}>
                 {cartCount > 9 ? "9+" : cartCount}
               </span>
             )}
