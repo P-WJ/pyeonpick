@@ -2,8 +2,8 @@ name: 편의점 크롤링
 
 on:
   schedule:
-    # 매월 1일·2일 09:00 KST (= 00:00 UTC) 실행
-    - cron: '0 0 1,2 * *'
+    # 매월 1일·15일 09:00 KST (= 00:00 UTC) 실행
+    - cron: '0 0 1,15 * *'
   workflow_dispatch: # 수동 실행 버튼
 
 jobs:
@@ -27,7 +27,8 @@ jobs:
       - name: 크롤링 실행
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           python -c "
           import asyncio, logging
