@@ -152,82 +152,91 @@ function HomePageContent() {
   const showEmptyState = !isLoadingInitial && !fetchError && products.length === 0;
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-5 space-y-3 bg-gray-50 min-h-screen pb-24">
-      <FilterBar
-        filters={filters}
-        onFilterChange={setFilters}
-        onSearch={(text) => setFilters((prev) => ({ ...prev, search: text }))}
-      />
-
-      {process.env.NEXT_PUBLIC_ENABLE_AI_RECOMMEND === "true" && (
-        <AiBanner onOpenModal={() => setIsAiModalOpen(true)} />
-      )}
-
-      {isLoadingInitial && (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-            <div
-              key={i}
-              className="h-64 animate-pulse rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]"
-            />
-          ))}
-        </div>
-      )}
-
-      {fetchError && (
-        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600 border border-red-100">
-          {fetchError}
-        </div>
-      )}
-
-      {showEmptyState && (
-        <div className="flex flex-col items-center justify-center py-24 text-center px-8">
-          <div className="mb-4 text-5xl">🔍</div>
-          <p className="text-base font-semibold text-gray-900">검색 결과가 없어요</p>
-          <p className="mt-1 text-sm text-gray-400">조건에 맞는 상품이 없습니다. 필터를 변경해보세요.</p>
-          <button
-            type="button"
-            onClick={() => setFilters(INITIAL_FILTERS)}
-            className="mt-5 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 min-h-[44px]"
-          >
-            필터 초기화
-          </button>
-        </div>
-      )}
-
-      {!isLoadingInitial && products.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={handleAddToCart}
-              isWishlisted={wishlistIds.includes(product.id)}
-              onToggleWishlist={handleToggleWishlist}
-            />
-          ))}
-        </div>
-      )}
-
-      {isLoadingMore && (
-        <div className="flex justify-center py-6">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-100 border-t-gray-400" />
-        </div>
-      )}
-
-      {!isLoadingInitial && !hasMore && products.length > 0 && (
-        <p className="text-center text-xs text-gray-400 py-4">모든 상품을 불러왔습니다.</p>
-      )}
-
-      <div ref={sentinelRef} className="h-1" />
-
-      {process.env.NEXT_PUBLIC_ENABLE_AI_RECOMMEND === "true" && isAiModalOpen && (
-        <AiRecommendModal
-          allProducts={products}
-          onClose={() => setIsAiModalOpen(false)}
-          onAddToCart={handleAddMultipleToCart}
+    <main className="min-h-screen bg-gray-50 pb-24">
+      <div className="mx-auto max-w-7xl px-4 py-4 space-y-3">
+        <FilterBar
+          filters={filters}
+          onFilterChange={setFilters}
+          onSearch={(text) => setFilters((prev) => ({ ...prev, search: text }))}
         />
-      )}
+
+        {process.env.NEXT_PUBLIC_ENABLE_AI_RECOMMEND === "true" && (
+          <AiBanner onOpenModal={() => setIsAiModalOpen(true)} />
+        )}
+
+        {/* 상품 수 표시 */}
+        {!isLoadingInitial && !fetchError && products.length > 0 && (
+          <div className="flex items-center justify-between px-1">
+            <p className="text-xs text-gray-400">
+              행사 상품 <span className="font-semibold text-gray-700">{products.length.toLocaleString()}개</span>
+              {hasMore && " 이상"}
+            </p>
+          </div>
+        )}
+
+        {isLoadingInitial && (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+              <div key={i} className="animate-pulse rounded-2xl bg-white aspect-[3/4] shadow-[0_1px_4px_rgba(0,0,0,0.06)]" />
+            ))}
+          </div>
+        )}
+
+        {fetchError && (
+          <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600 border border-red-100">
+            {fetchError}
+          </div>
+        )}
+
+        {showEmptyState && (
+          <div className="flex flex-col items-center justify-center py-24 text-center px-8">
+            <div className="mb-4 text-5xl">🔍</div>
+            <p className="text-base font-semibold text-gray-900">검색 결과가 없어요</p>
+            <p className="mt-1 text-sm text-gray-400">조건에 맞는 상품이 없습니다. 필터를 변경해보세요.</p>
+            <button
+              type="button"
+              onClick={() => setFilters(INITIAL_FILTERS)}
+              className="mt-5 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150"
+            >
+              필터 초기화
+            </button>
+          </div>
+        )}
+
+        {!isLoadingInitial && products.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={handleAddToCart}
+                isWishlisted={wishlistIds.includes(product.id)}
+                onToggleWishlist={handleToggleWishlist}
+              />
+            ))}
+          </div>
+        )}
+
+        {isLoadingMore && (
+          <div className="flex justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-500" />
+          </div>
+        )}
+
+        {!isLoadingInitial && !hasMore && products.length > 0 && (
+          <p className="text-center text-xs text-gray-400 py-4">— 모든 상품을 불러왔습니다 —</p>
+        )}
+
+        <div ref={sentinelRef} className="h-1" />
+
+        {process.env.NEXT_PUBLIC_ENABLE_AI_RECOMMEND === "true" && isAiModalOpen && (
+          <AiRecommendModal
+            allProducts={products}
+            onClose={() => setIsAiModalOpen(false)}
+            onAddToCart={handleAddMultipleToCart}
+          />
+        )}
+      </div>
     </main>
   );
 }
