@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def _get_supabase_client() -> Client:
     """환경변수에서 Supabase 클라이언트를 생성한다."""
     url = os.environ["SUPABASE_URL"]
-    key = os.environ["SUPABASE_SERVICE_KEY"]
+    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
     return create_client(url, key)
 
 
