@@ -6,8 +6,14 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import type { Product } from "@/domain/entities/product";
 import { STORE_COLORS } from "@/lib/constants";
+import { calculatePriceBenefit } from "@/domain/use-cases/price";
+import { daysUntilEnd, formatDaysLeft } from "@/domain/use-cases/event-period";
 import { EventBadge } from "./EventBadge";
 import { useCart } from "@/app/contexts/cart-context";
+
+// 종료 임박 뱃지를 노출할 기준 (남은 일수)
+const DDAY_VISIBLE_THRESHOLD = 7;
+const DDAY_URGENT_THRESHOLD = 2;
 
 // Elegant inline SVG data URI as the primary fallback instead of raw broken image
 const PLACEHOLDER_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%23f9fafb"/><stop offset="100%" stop-color="%23f3f4f6"/></linearGradient></defs><rect width="100" height="100" fill="url(%23g)"/><circle cx="50" cy="45" r="14" fill="%23e5e7eb" opacity="0.8"/><path d="M32 72 h36 v-22 h-36 z" fill="%23d1d5db" opacity="0.6"/><path d="M42 50 h16 v-6 h-16 z" fill="%239ca3af" opacity="0.5"/></svg>`;
@@ -30,6 +36,11 @@ export function ProductCard({
   const { showToast } = useCart();
   const [isAdded, setIsAdded] = useState(false);
 
+  const benefit = calculatePriceBenefit(product.price, product.eventType);
+  const daysLeft = daysUntilEnd(product.validTo);
+  const showDday = daysLeft !== null && daysLeft >= 0 && daysLeft <= DDAY_VISIBLE_THRESHOLD;
+  const isUrgent = daysLeft !== null && daysLeft <= DDAY_URGENT_THRESHOLD;
+
   return (
     <Link
       href={`/products/${product.id}`}
@@ -45,9 +56,20 @@ export function ProductCard({
           unoptimized={!product.imageUrl}
         />
 
-        {/* 행사 뱃지 — 좌하단 */}
-        <div className="absolute left-2.5 top-2.5 z-10 shadow-sm rounded-lg overflow-hidden">
-          <EventBadge eventType={product.eventType} />
+        {/* 행사 뱃지 + 종료 임박 — 좌상단 세로 배치 */}
+        <div className="absolute left-2.5 top-2.5 z-10 flex flex-col items-start gap-1.5">
+          <span className="shadow-sm rounded-lg overflow-hidden">
+            <EventBadge eventType={product.eventType} />
+          </span>
+          {showDday && (
+            <span
+              className={`inline-flex items-center rounded-full text-[10px] font-bold px-1.5 py-0.5 shadow-sm select-none ${
+                isUrgent ? "bg-rose-500 text-white" : "bg-gray-900/80 text-white backdrop-blur-sm"
+              }`}
+            >
+              {formatDaysLeft(daysLeft!)}
+            </span>
+          )}
         </div>
 
         {/* 찜하기 버튼 — 우상단 */}
@@ -105,6 +127,16 @@ export function ProductCard({
         <h3 className="line-clamp-2 text-sm font-semibold text-gray-800 leading-snug flex-1 min-h-[2.5rem]">
           {product.name}
         </h3>
+
+        {/* 개당 실질가격 — 행사로 단가가 내려가는 경우만 노출 */}
+        {benefit.savings > 0 && benefit.unitPrice < product.price && (
+          <p className="mt-1.5 text-[11px] font-bold text-violet-600">
+            개당 {benefit.unitPrice.toLocaleString("ko-KR")}원
+            <span className="ml-1 font-semibold text-gray-400 line-through">
+              {product.price.toLocaleString("ko-KR")}원
+            </span>
+          </p>
+        )}
 
         {/* 담기 버튼 */}
         <button

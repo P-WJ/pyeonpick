@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Product } from "@/domain/entities/product";
+import type { Product, ProductSort } from "@/domain/entities/product";
+import type { ProductStats } from "@/app/use-cases/get-products";
 import { FilterBar, type ActiveFilters } from "./components/FilterBar";
 import { ProductCard } from "./components/ProductCard";
 import { AiBanner } from "./components/AiBanner";
 import { AiRecommendModal } from "./components/AiRecommendModal";
-import { PRODUCTS_PAGE_LIMIT } from "@/lib/constants";
+import { PRODUCTS_PAGE_LIMIT, SORT_OPTIONS } from "@/lib/constants";
 import { useCart } from "@/app/contexts/cart-context";
 
 const SKELETON_COUNT = 10;
@@ -17,6 +18,7 @@ const INITIAL_FILTERS: ActiveFilters = {
   eventType: "",
   category: "",
   search: "",
+  sort: "recommended",
 };
 
 function buildSearchParams(filters: ActiveFilters, page: number, customLimit?: number): URLSearchParams {
@@ -25,6 +27,7 @@ function buildSearchParams(filters: ActiveFilters, page: number, customLimit?: n
   if (filters.eventType) params.set("eventType", filters.eventType);
   if (filters.category) params.set("category", filters.category);
   if (filters.search) params.set("search", filters.search);
+  if (filters.sort && filters.sort !== "recommended") params.set("sort", filters.sort);
   params.set("page", String(page));
   params.set("limit", String(customLimit ?? PRODUCTS_PAGE_LIMIT));
   return params;
@@ -52,6 +55,7 @@ function HomePageContent() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ActiveFilters>(INITIAL_FILTERS);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [stats, setStats] = useState<ProductStats | null>(null);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -73,6 +77,16 @@ function HomePageContent() {
       };
       sessionStorage.setItem("pyeonpick-restore-state", JSON.stringify(backup));
     };
+  }, []);
+
+  // 진행 중인 행사 상품 통계 조회 (마운트 시 1회)
+  useEffect(() => {
+    fetch("/api/products/stats")
+      .then((r) => r.json())
+      .then((json: { data: ProductStats | null; error: string | null }) => {
+        if (json.data) setStats(json.data);
+      })
+      .catch(() => {});
   }, []);
 
   // 공유 링크 자동 불러오기 (?cart=id1,id2,id3)
@@ -165,7 +179,7 @@ function HomePageContent() {
     if (restoreJson) {
       try {
         const parsed = JSON.parse(restoreJson);
-        setFilters(parsed.filters);
+        setFilters({ ...INITIAL_FILTERS, ...parsed.filters });
         fetchPage(1, true, parsed.page).then(() => {
           setTimeout(() => {
             window.scrollTo({
@@ -225,28 +239,31 @@ function HomePageContent() {
       </section>
 
       <div className="mx-auto max-w-7xl px-4 py-6 space-y-6">
-        {/* 📊 미니 대시보드 통계 카드 */}
+        {/* 📊 진행 중인 행사 실시간 통계 (실제 DB 집계) */}
         <section className="grid grid-cols-3 gap-3">
           <div className="rounded-2xl border border-gray-150/60 bg-white/70 backdrop-blur-md p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-300">
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">오늘의 1+1</p>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">진행 중 행사</p>
             <p className="text-base sm:text-lg font-black text-gray-900 mt-1 leading-none">
-              1,248<span className="text-[10px] font-semibold text-gray-450 ml-0.5">개 상품</span>
+              {stats ? stats.total.toLocaleString("ko-KR") : "—"}
+              <span className="text-[10px] font-semibold text-gray-450 ml-0.5">개 상품</span>
             </p>
-            <p className="text-[9px] font-semibold text-rose-500 mt-1">▲ 전일비 +12%</p>
+            <p className="text-[9px] font-semibold text-gray-400 mt-1">5대 편의점 통합</p>
           </div>
           <div className="rounded-2xl border border-gray-150/60 bg-white/70 backdrop-blur-md p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-300">
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">AI 연산 조합</p>
-            <p className="text-base sm:text-lg font-black text-violet-650 mt-1 leading-none">
-              512<span className="text-[10px] font-semibold text-violet-400 ml-0.5">개 추천</span>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">1+1 행사</p>
+            <p className="text-base sm:text-lg font-black text-rose-600 mt-1 leading-none">
+              {stats ? stats.onePlusOne.toLocaleString("ko-KR") : "—"}
+              <span className="text-[10px] font-semibold text-rose-400 ml-0.5">개 상품</span>
             </p>
-            <p className="text-[9px] font-semibold text-violet-500 mt-1">🤖 최적 혜택 연산</p>
+            <p className="text-[9px] font-semibold text-rose-500 mt-1">🔥 최대 50% 절약</p>
           </div>
           <div className="rounded-2xl border border-gray-150/60 bg-white/70 backdrop-blur-md p-3.5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-300">
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">조합 공유</p>
-            <p className="text-base sm:text-lg font-black text-gray-900 mt-1 leading-none">
-              4,802<span className="text-[10px] font-semibold text-gray-450 ml-0.5">건 누적</span>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">2+1 행사</p>
+            <p className="text-base sm:text-lg font-black text-orange-600 mt-1 leading-none">
+              {stats ? stats.twoPlusOne.toLocaleString("ko-KR") : "—"}
+              <span className="text-[10px] font-semibold text-orange-400 ml-0.5">개 상품</span>
             </p>
-            <p className="text-[9px] font-semibold text-emerald-500 mt-1">● 커뮤니티 활성</p>
+            <p className="text-[9px] font-semibold text-orange-500 mt-1">🎁 1개 무료 증정</p>
           </div>
         </section>
 
@@ -264,13 +281,36 @@ function HomePageContent() {
           <AiBanner onOpenModal={() => setIsAiModalOpen(true)} />
         )}
 
-        {/* 상품 수량 및 안내 인디케이터 */}
+        {/* 상품 수량 인디케이터 + 정렬 */}
         {!isLoadingInitial && !fetchError && products.length > 0 && (
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between gap-3 px-1">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
               행사 상품 조회결과 <span className="font-extrabold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-md border border-violet-100/30 ml-1">{products.length.toLocaleString()}개</span>
               {hasMore && " 이상"}
             </p>
+            <div className="relative shrink-0">
+              <select
+                value={filters.sort}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, sort: e.target.value as ProductSort }))
+                }
+                aria-label="정렬 기준"
+                className="appearance-none rounded-xl border border-gray-200 bg-white py-1.5 pl-3 pr-7 text-xs font-bold text-gray-700 hover:border-gray-300 focus:border-violet-400 focus:outline-none cursor-pointer transition-colors duration-150"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <svg
+                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
+                width="11" height="11" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           </div>
         )}
 

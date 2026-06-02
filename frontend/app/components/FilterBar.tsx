@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react";
 import { STORES, EVENT_TYPES, CATEGORIES, EVENT_TYPE_BADGES, STORE_COLORS } from "@/lib/constants";
-import type { Store, EventType, Category } from "@/domain/entities/product";
+import type { Store, EventType, Category, ProductSort } from "@/domain/entities/product";
 
 export interface ActiveFilters {
   store: Store | "";
   eventType: EventType | "";
   category: Category | "";
   search: string;
+  sort: ProductSort;
 }
 
 interface FilterBarProps {

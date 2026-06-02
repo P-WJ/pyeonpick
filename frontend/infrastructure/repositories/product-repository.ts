@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase";
-import type { Product, Store, EventType, Category } from "@/domain/entities/product";
+import type { Product, Store, EventType, Category, ProductSort } from "@/domain/entities/product";
 import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT, EVENT_TYPES } from "@/lib/constants";
 
 const VALID_STORES = new Set<string>(["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"]);
@@ -19,6 +19,13 @@ export interface ProductFilters {
   eventType?: EventType;
   category?: Category;
   search?: string;
+  sort?: ProductSort;
+}
+
+export interface ProductStats {
+  total: number;        // 진행 중인 전체 행사 상품 수
+  onePlusOne: number;   // 1+1 상품 수
+  twoPlusOne: number;   // 2+1 상품 수
 }
 
 export interface PaginationOptions {
@@ -53,9 +60,20 @@ export async function getProducts(
   if (filters.category) query = query.eq("category", filters.category);
   if (filters.search) query = query.ilike("name", `%${filters.search}%`);
 
-  const { data, error } = await query
-    .order("name")
-    .range(offset, offset + pagination.limit);
+  // 정렬: 저가순(price 오름차순), 할인율순(event_type 오름차순 — 1+1>2+1>3+1>증정>할인),
+  //       추천순(기본, 이름순)
+  switch (filters.sort) {
+    case "price_asc":
+      query = query.order("price", { ascending: true }).order("name");
+      break;
+    case "discount":
+      query = query.order("event_type", { ascending: true }).order("name");
+      break;
+    default:
+      query = query.order("name");
+  }
+
+  const { data, error } = await query.range(offset, offset + pagination.limit);
 
   if (error) throw new Error(`상품 조회 실패: ${error.message}`);
 
@@ -70,6 +88,32 @@ export async function getProducts(
   });
 
   return { products, hasMore };
+}
+
+export async function getProductStats(): Promise<ProductStats> {
+  const supabase = createSupabaseServerClient();
+  const today = todayDateString();
+
+  async function countProducts(eventType?: EventType): Promise<number> {
+    let query = supabase
+      .from("products")
+      .select("*", { count: "exact", head: true })
+      .gte("valid_to", today)
+      .in("event_type", EVENT_TYPES);
+    if (eventType) query = query.eq("event_type", eventType);
+
+    const { count, error } = await query;
+    if (error) throw new Error(`상품 통계 조회 실패: ${error.message}`);
+    return count ?? 0;
+  }
+
+  const [total, onePlusOne, twoPlusOne] = await Promise.all([
+    countProducts(),
+    countProducts("1+1"),
+    countProducts("2+1"),
+  ]);
+
+  return { total, onePlusOne, twoPlusOne };
 }
 
 export async function getProductById(id: number): Promise<Product | null> {

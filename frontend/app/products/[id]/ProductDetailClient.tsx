@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import type { Product } from "@/domain/entities/product";
-import type { CartItem } from "@/domain/entities/cart";
 import { STORE_COLORS } from "@/lib/constants";
 import { EventBadge } from "@/app/components/EventBadge";
 import { calculatePriceBenefit } from "@/domain/use-cases/price";
 import { useCart } from "@/app/contexts/cart-context";
 
-const CART_STORAGE_KEY = "cvs-cart-v1";
 const RECENTLY_VIEWED_KEY = "cvs-recently-viewed-v1";
 const RECENTLY_VIEWED_MAX_COUNT = 20;
 
@@ -21,28 +19,6 @@ const PLACEHOLDER_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org
 interface ProductDetailClientProps {
   product: Product;
   relatedProducts: Product[];
-}
-
-function addProductToCart(product: Product): void {
-  const stored = localStorage.getItem(CART_STORAGE_KEY);
-  const cartItems: CartItem[] = stored
-    ? (JSON.parse(stored) as CartItem[])
-    : [];
-
-  const existingItemIndex = cartItems.findIndex(
-    (item) => item.product.id === product.id
-  );
-
-  if (existingItemIndex >= 0) {
-    cartItems[existingItemIndex] = {
-      ...cartItems[existingItemIndex],
-      quantity: (cartItems[existingItemIndex]?.quantity ?? 0) + 1,
-    };
-  } else {
-    cartItems.push({ product, quantity: 1 });
-  }
-
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
 }
 
 function RelatedProductCard({ product }: { product: Product }) {
@@ -89,7 +65,7 @@ export function ProductDetailClient({
 }: ProductDetailClientProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const { wishlistIds, handleToggleWishlist, showToast } = useCart();
+  const { wishlistIds, handleToggleWishlist, showToast, handleAddToCart: addToCartViaContext } = useCart();
   const isWishlisted = wishlistIds.includes(product.id);
 
   const storeColors = STORE_COLORS[product.store];
@@ -108,8 +84,8 @@ export function ProductDetailClient({
   }, [product.id]);
 
   function handleAddToCart() {
-    addProductToCart(product);
-    router.push("/");
+    // 컨텍스트 핸들러가 토스트·헤더 카운트 갱신까지 처리한다. 페이지는 그대로 유지.
+    addToCartViaContext(product);
   }
 
   return (

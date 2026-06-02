@@ -3,7 +3,7 @@
 ## 프로젝트 개요
 
 CU, GS25, 세븐일레븐, 이마트24, 씨스페이스의 1+1·2+1·3+1·할인·증정 행사상품을 한눈에 비교하는 웹 서비스.
-차별점: 장바구니·절약액 계산·찜하기·알림(카카오톡)·AI 조합 추천·커뮤니티 게시판.
+차별점: 장바구니·절약액 계산·개당가 비교·찜하기·알림(웹 푸시)·AI 조합 추천·커뮤니티 게시판.
 
 ## 아키텍처 원칙 (전체 공통)
 
@@ -75,7 +75,8 @@ PyeonPick/
 | 고도화 1단계 | 공유 링크 자동 불러오기, 찜하기, UI 폴리싱 | ✅ 완료 |
 | 고도화 2단계 | 최근 본 상품, 프로필 페이지, 게시글 수정/삭제 | ✅ 완료 |
 | v1.2 | AI 조합 추천 (Groq API) | ✅ 완료 |
-| v1.3 | 알림 카카오톡 전환 | 🔜 진행 예정 |
+| 고도화 3단계 | 실통계·개당가·정렬·D-day (비교 본질 보강) | 🔄 진행 중 |
+| v1.3 | 알림 설정 수정 (웹 푸시) | 🔜 진행 예정 |
 
 ## 기술 스택
 
@@ -86,7 +87,7 @@ PyeonPick/
 | 백엔드 API | Next.js API Routes                                |
 | 크롤러     | Python 3.11+, Playwright, httpx, APScheduler      |
 | DB         | PostgreSQL (Supabase)                             |
-| 알림       | 카카오톡 알림톡 (예정, 현재 Resend 이메일 임시)   |
+| 알림       | 웹 푸시 (Web Push API + VAPID) — 카카오·이메일 미사용 |
 | AI 분류    | Groq API (llama-3.3-70b-versatile)                |
 | AI 추천    | Groq API (llama-3.3-70b-versatile)                |
 | 배포       | Vercel (프론트), GitHub Actions (크롤러 스케줄)   |
@@ -117,7 +118,7 @@ PyeonPick/
 | -------- | ---- |
 | crawler | 편의점 크롤러 작성·디버깅 |
 | frontend | Next.js UI 컴포넌트·페이지·API Route |
-| notifier | 알림 발송 로직 (카카오톡 전환 예정) |
+| notifier | 알림 발송 로직 (웹 푸시) |
 | ai-recommender | Groq AI 추천 기능 (llama-3.3-70b) |
 | reviewer | 코드 리뷰 (Read-only) |
 | ux-auditor | UX 감사·기능 누락 탐지 (Read-only) |
@@ -125,7 +126,7 @@ PyeonPick/
 
 ## 개발 규칙
 
-- 패키지 매니저: `pnpm` (frontend), `uv` (crawler)
+- 패키지 매니저: `npm` (frontend — `package-lock.json` 기반, pnpm 사용 금지), `uv` (crawler)
 - 커밋: `feat:`, `fix:`, `chore:`, `refactor:`
 - 모든 API 응답: `{ data: T | null, error: string | null, meta? }`
 - 환경변수: `.env.local` (frontend), `.env` (crawler)
@@ -139,12 +140,12 @@ PyeonPick/
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-AUTH_KAKAO_ID
+AUTH_KAKAO_ID                      # 카카오 로그인 (알림 아님)
 AUTH_KAKAO_SECRET
 AUTH_SECRET
-GROQ_API_KEY
 GROQ_API_KEY                       # AI 추천 + 카테고리 분류 공용
-NEXT_PUBLIC_ENABLE_AI_RECOMMEND   # true 시 AI 추천 배너 노출
+NEXT_PUBLIC_ENABLE_AI_RECOMMEND    # true 시 AI 추천 배너 노출
+NEXT_PUBLIC_VAPID_PUBLIC_KEY       # 웹 푸시 구독용 VAPID 공개키
 ```
 
 **crawler `.env`**
@@ -152,6 +153,8 @@ NEXT_PUBLIC_ENABLE_AI_RECOMMEND   # true 시 AI 추천 배너 노출
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 GROQ_API_KEY
+VAPID_PRIVATE_KEY                  # 웹 푸시 발송용 VAPID 비밀키
+VAPID_SUBJECT                      # mailto: 형식 연락처
 ```
 
 ## 로컬스토리지 키

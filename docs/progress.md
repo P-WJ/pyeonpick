@@ -1,6 +1,6 @@
 # 진행 현황
 
-## 현재 단계: 기능 고도화 1단계 진행 예정
+## 현재 단계: UX 고도화 3단계 진행 중 (비교 본질 보강) / v1.3 진행 예정
 
 ---
 
@@ -33,11 +33,13 @@
 - **커뮤니티 게시판**: 목록(무한스크롤, 카테고리 탭), 글쓰기, 댓글
 - **DB**: subscriptions, notifications_sent, posts, comments 테이블
 
-### 알림 구독 흐름 (현재)
-1. 사용자가 이메일 + 키워드(선택) + 편의점(선택) 입력 후 구독
-2. 매월 크롤링 완료 후 `notify_subscribers()` 자동 실행
-3. 구독 조건에 맞는 신규 상품만 이메일 발송 (임시 Resend, 추후 카카오 알림톡으로 전환 예정)
-4. `notifications_sent` 테이블로 중복 발송 방지
+### 알림 구독 흐름 (웹 푸시 — 2026-06-03 전환)
+1. 사용자가 브라우저 푸시 권한 허용 + 키워드(선택)·편의점(선택) 설정 후 구독 → `push_subscriptions` 테이블 저장
+2. 매월 크롤링 완료 후 `send_web_push_notifications()` 자동 실행
+3. 구독 조건에 맞는 신규 상품을 웹 푸시(Web Push API + VAPID)로 발송
+4. 만료된 구독(HTTP 410)은 자동 삭제
+
+> 카카오 알림톡·Resend 이메일은 **둘 다 미사용**. 과거 이메일 구독 UI(`SubscribeForm`, `/api/subscriptions`, `/notifications`, `subscriptions` 테이블)는 웹 푸시로 정리 예정(legacy).
 
 ---
 
@@ -61,16 +63,35 @@
 
 ---
 
-## 고도화 1단계 — 진행 예정
+## 고도화 1단계 — 완료 (2026-06-02~03)
 
+### 완료 항목
+- **UI 전면 리디자인 (Toss/당근마켓 스타일)**
+  - ProductCard: aspect-square 이미지, 브랜드 컬러 dot, 플랫 뱃지, 담기 버튼 dark
+  - FilterBar: 아이콘 검색바, dark 선택 상태 통일, 모바일 가로 스크롤
+  - Header: h-14 고정, BETA 뱃지, 모바일 게시판 아이콘
+  - ProductDetailClient: 브랜드색 제거, aspect-square, 영양성분 섹션 완전 제거
+  - 게시판(board): 카테고리 뱃지 중립화, window.confirm → 인라인 확인
+- **영양성분 완전 제거**
+  - `domain/entities/product.ts` — Nutrition 타입 + nutrition 필드 제거
+  - `infrastructure/repositories/product-repository.ts` — nutrition 파싱 제거
+  - `crawler/domain/entities.py` — nutrition 필드 제거
+  - `crawler/infrastructure/stores/cu.py` — 영양성분 파싱 전체 제거
+
+### 고도화 1단계 미완료 항목 (다음 단계로 이월)
 - **공유 링크 자동 불러오기**: URL `?cart=1,2,3` 파싱 → 장바구니 자동 담기
 - **찜하기**: 하트 아이콘 + 로컬스토리지(`cvs-wishlist-v1`) 기반
-- **UI 폴리싱**: 버튼·카드 애니메이션, 그림자 효과 전반 개선
+
+---
 
 ## 고도화 2단계 — 진행 예정
 
 - **최근 본 상품**: 상세 페이지 접속 시 로컬스토리지 기록, 메인 하단 노출
 - **프로필 페이지** (`/profile`): 찜한 상품, 작성 글 모아보기
+- **공유 링크 자동 불러오기**: URL `?cart=1,2,3` 파싱 → 장바구니 자동 담기
+- **찜하기**: 하트 아이콘 + 로컬스토리지(`cvs-wishlist-v1`) 기반
+
+---
 
 ## v1.2 — 완료 (2026-06-02)
 
@@ -78,12 +99,75 @@
 - AI 조합 추천 백엔드 구현 (Groq llama-3.3-70b-versatile)
 - Gemini API quota 문제로 Groq으로 교체 (`infrastructure/gemini.ts` 내부 교체)
 - `/api/ai/recommend` POST 엔드포인트 + 5분 캐시
-- UI: AiBanner, AiRecommendModal (기존 완성)
+- UI: AiBanner, AiRecommendModal 완성
 - 활성화: Vercel 환경변수 `NEXT_PUBLIC_ENABLE_AI_RECOMMEND=true` 필요
-- UI는 완성 상태 (`AiBanner`, `AiRecommendModal`), API Route만 구현하면 됨
+
+---
+
+## 크롤러 개선 — 완료 (2026-06-03)
+
+### 완료 항목
+- **AI 분류 모델 변경**: `llama-3.3-70b-versatile` → `llama-3.1-8b-instant` (TPD 500,000으로 rate limit 해소)
+- **행사기간 수정**: `date.today()+6일` → 월 1일~말일 (`current_month_range()` 함수 추가)
+- **상품 중복 적재 해결**: unique constraint `(store, name, valid_from)` → `(store, name)` 으로 변경
+  - 마이그레이션 SQL: `docs/migrations/005_products_unique_store_name.sql` (Supabase에서 수동 실행 필요)
+- **카테고리 재분류 스크립트**: `ai_classify.py` — BATCH_SIZE=45, SLEEP=3초, 체크포인트 지원
+
+### 미완료 (수동 작업 필요)
+- Supabase SQL Editor에서 `docs/migrations/005_products_unique_store_name.sql` 실행
+- `classify_progress.json` 삭제 후 `uv run python ai_classify.py` 실행
+
+---
+
+## 코드 리뷰 반영 — 완료 (2026-06-03)
+
+### 🔴 필수 수정 3건 반영
+- **AI 추천 API stores 검증**: `app/api/ai/recommend/route.ts` — `body.stores` 배열 원소를 `VALID_STORES` 기준 type guard로 필터링 (프롬프트 오염 방지)
+- **AI 분류 JSON 파싱 강화**: `crawler/infrastructure/ai_classifier.py` — `_parse_response`의 `int(k)` 변환을 try/except로 감싸 인덱스 파싱 실패 시 경고 후 건너뜀
+- **도메인 엔티티 타입 강화**: `crawler/domain/entities.py` — `Category`/`StoreType`/`EventType` Literal 타입 정의, `Product` 필드에 적용
+
+리뷰 리포트: `docs/review-2026-06-03.md`
+
+---
+
+## UX 고도화 3단계 — 비교 본질 보강 (2026-06-03)
+
+UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소가 약하다"는 지적 반영.
+
+### 1단계 — 신뢰·흐름 (✅ 완료)
+- **홈 가짜 통계 제거**: 하드코딩(`1,248 / 512 / 4,802` + 가짜 트렌드 `▲+12%`)을 **실제 DB 집계**로 교체
+  - 신규 `getProductStats()` (repository) → `/api/products/stats` → 홈에서 진행 중 행사 / 1+1 / 2+1 실시간 수 노출
+- **상세 담기 → 홈 강제 이동 제거**: `ProductDetailClient`가 로컬 `addProductToCart` + `router.push("/")` 하던 것을 cart-context `handleAddToCart`로 교체 (토스트·헤더 카운트 갱신, 페이지 유지). 미사용 로컬 함수·상수·import 정리
+
+### 2단계 — 비교 본질 (✅ 완료)
+- **개당 실질가격 노출**: `ProductCard`에 `calculatePriceBenefit().unitPrice` 표시 (`개당 N원` + 원가 취소선). 행사로 단가가 내려가는 경우만 노출
+- **정렬 기능 추가**: 추천순/저가순/할인율순
+  - `ProductSort` 타입(`domain/entities/product.ts`), `SORT_OPTIONS`(constants)
+  - repository `getProducts`에 정렬 분기 (price asc / event_type asc / name)
+  - `/api/products` `sort` 파라미터 검증, `ActiveFilters.sort`, 홈 결과 행에 정렬 드롭다운
+- **행사 임박 D-day 뱃지**: 순수 함수 `domain/use-cases/event-period.ts`(`daysUntilEnd`/`formatDaysLeft`), `ProductCard`에서 종료 7일 이내 노출(2일 이내 빨강)
+
+### 알림 채널 정리 — 웹 푸시 전용 (✅ 완료)
+- 카카오 알림톡 + Resend 이메일을 **둘 다 제거**, 알림은 **웹 푸시**로 일원화
+- `crawl_all.py`: 이메일(`notify_subscribers`) 호출 제거, `send_web_push_notifications` 결과 로깅으로 정리
+- 삭제: `crawler/infrastructure/notifier.py`(Resend), `crawler/use_cases/notify_subscribers.py`(이메일 오케스트레이션)
+- 웹 푸시는 `crawler/infrastructure/web_push_notifier.py` + 프론트 구독 인프라(`/api/push/*`, `usePushNotification`, `PushNotificationBell`)로 이미 완비
+- 환경변수: 크롤러 `VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`, 프론트 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`
+
+### 검증
+- `tsc --noEmit` 통과(exit 0). (참고: node_modules가 pnpm/npm 혼용으로 손상되어 `npm install`로 복구함. 이 프로젝트는 package-lock.json 기반 npm 사용)
+- 크롤러 `crawl_all` import 정상 확인
+- ESLint는 프로젝트에 미설정 상태
+
+### 3단계 — 확장 (🔜 예정)
+- **매장 간 같은 상품 비교 뷰**: 동일/유사 상품을 5개 편의점 가로 비교 (서비스 정체성 핵심)
+- **카카오톡 공유**: 카카오 SDK 연동 (현재 공유 = 클립보드 복사뿐, `copyShareUrl`에 `.catch` 없음 → 함께 보완)
+- **로그인 후 찜 목록 서버 동기화**: 현재 localStorage 전용이라 기기 종속
+
+---
 
 ## v1.3 — 진행 예정
 
-- 알림 발송을 카카오 알림톡으로 전환 (현재 이메일 임시 운영)
+- ~~카카오 알림톡 전환~~ / ~~Resend 이메일~~ → **둘 다 취소 (2026-06-03)**: 알림은 **웹 푸시**로 운영
 - 알림 설정 수정 기능 추가 (현재 해제만 가능)
-- 카카오 비즈니스 채널(플러스친구) 설정 필요
+- (후속 정리) 이메일 구독 잔재 제거: 크롤러 `subscription_repository.py`(고아), 프론트 `SubscribeForm`·`/api/subscriptions`·`/notifications`·`subscriptions` 테이블

@@ -1,8 +1,14 @@
-import type { Store, EventType, Category } from "@/domain/entities/product";
+import type { Store, EventType, Category, ProductSort } from "@/domain/entities/product";
 
 export const STORES: Store[] = ["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"];
 export const EVENT_TYPES: EventType[] = ["1+1", "2+1", "3+1", "할인", "증정"];
 export const CATEGORIES: Category[] = ["음료", "과자", "식품", "아이스크림", "생활용품"];
+
+export const SORT_OPTIONS: { value: ProductSort; label: string }[] = [
+  { value: "recommended", label: "추천순" },
+  { value: "price_asc", label: "저가순" },
+  { value: "discount", label: "할인율순" },
+];
 
 export const EVENT_TYPE_COLORS: Record<string, string> = {
   "1+1": "bg-red-500",

@@ -5,7 +5,6 @@ from crawler.domain.entities import CrawlResult, Product
 from crawler.infrastructure.repository import upsert_products
 from crawler.infrastructure.ai_classifier import classify_products
 from crawler.infrastructure.stores import cu, cspace, emart24, gs25, seven
-from crawler.use_cases.notify_subscribers import notify_subscribers
 from crawler.infrastructure.web_push_notifier import send_web_push_notifications
 
 logger = logging.getLogger(__name__)
@@ -16,7 +15,7 @@ STORE_MODULES: list[ModuleType] = [cu, gs25, seven, emart24, cspace]
 async def crawl_all_stores() -> list[CrawlResult]:
     """모든 편의점을 순차 크롤링하고 AI로 카테고리 분류 후 DB에 저장한다.
 
-    크롤링·저장 완료 후 활성 구독자에게 신규 상품 알림을 발송한다.
+    크롤링·저장 완료 후 웹 푸시 구독자에게 신규 상품 알림을 발송한다.
     """
     results: list[CrawlResult] = []
 
@@ -41,17 +40,15 @@ async def crawl_all_stores() -> list[CrawlResult]:
     ]
 
     if all_products:
-        logger.info("구독자 알림 발송 시작 — 총 %d개 상품 대상", len(all_products))
-        notify_result = notify_subscribers(all_products)
+        logger.info("웹 푸시 알림 발송 시작 — 총 %d개 상품 대상", len(all_products))
+        push_result = send_web_push_notifications(all_products)
         logger.info(
-            "구독자 알림 발송 결과 — 전체 구독자 %d명 / 발송 %d건 / 건너뜀 %d건 / 실패 %d건",
-            notify_result.total_subscriptions,
-            notify_result.sent_count,
-            notify_result.skipped_count,
-            notify_result.failed_count,
+            "웹 푸시 알림 발송 결과 — 발송 %d건 / 건너뜀 %d건 / 실패 %d건",
+            push_result["sent"],
+            push_result["skipped"],
+            push_result["failed"],
         )
-        send_web_push_notifications(all_products)
     else:
-        logger.warning("수집된 상품이 없어 구독자 알림 발송을 건너뜁니다.")
+        logger.warning("수집된 상품이 없어 알림 발송을 건너뜁니다.")
 
     return results
