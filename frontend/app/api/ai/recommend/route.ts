@@ -9,15 +9,16 @@ import { getProducts } from "@/app/use-cases/get-products";
 const MAX_PRODUCTS_FOR_AI = 100;
 const MIN_BUDGET = 1000;
 const MAX_BUDGET = 10_000_000;
+const MAX_USER_PROMPT_LENGTH = 200;
 const CACHE_REVALIDATE_SECONDS = 5 * 60; // 5분
 
-function buildCacheKey(budget: number, stores: Store[]): string {
+function buildCacheKey(budget: number, stores: Store[], userPrompt: string): string {
   const sortedStores = [...stores].sort().join(",");
-  return `ai-recommend:${budget}:${sortedStores}`;
+  return `ai-recommend:${budget}:${sortedStores}:${userPrompt}`;
 }
 
-function createCachedRecommendation(budget: number, stores: Store[]) {
-  const cacheKey = buildCacheKey(budget, stores);
+function createCachedRecommendation(budget: number, stores: Store[], userPrompt: string) {
+  const cacheKey = buildCacheKey(budget, stores, userPrompt);
   return unstable_cache(
     async (): Promise<RecommendationResult> => {
       const filters = stores.length === 1 ? { store: stores[0] } : {};
@@ -42,7 +43,7 @@ function createCachedRecommendation(budget: number, stores: Store[]) {
         throw new Error("현재 조건에 맞는 행사 상품이 없습니다.");
       }
 
-      const prompt = buildRecommendationPrompt(products, budget);
+      const prompt = buildRecommendationPrompt(products, budget, userPrompt);
       const rawResponse = await generateTextFromPrompt(prompt);
       return parseRecommendationResponse(rawResponse);
     },
@@ -53,7 +54,7 @@ function createCachedRecommendation(budget: number, stores: Store[]) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { budget?: unknown; stores?: unknown };
+    const body = (await request.json()) as { budget?: unknown; stores?: unknown; userPrompt?: unknown };
 
     const budget = Number(body.budget);
     if (!Number.isFinite(budget) || budget < MIN_BUDGET || budget > MAX_BUDGET) {
@@ -70,7 +71,11 @@ export async function POST(request: NextRequest) {
       ? (body.stores as Store[])
       : [];
 
-    const getCachedRecommendation = createCachedRecommendation(budget, requestedStores);
+    const userPrompt = typeof body.userPrompt === "string"
+      ? body.userPrompt.trim().slice(0, MAX_USER_PROMPT_LENGTH)
+      : "";
+
+    const getCachedRecommendation = createCachedRecommendation(budget, requestedStores, userPrompt);
     const recommendationResult = await getCachedRecommendation();
 
     return NextResponse.json({ data: recommendationResult, error: null });

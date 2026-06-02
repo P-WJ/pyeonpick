@@ -22,6 +22,7 @@ export function AiRecommendModal({
 }: AiRecommendModalProps) {
   const [budget, setBudget] = useState<number>(DEFAULT_BUDGET);
   const [selectedStores, setSelectedStores] = useState<Store[]>([]);
+  const [userPrompt, setUserPrompt] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [recommendationResult, setRecommendationResult] =
     useState<RecommendationResult | null>(null);
@@ -55,6 +56,7 @@ export function AiRecommendModal({
       const requestBody = {
         budget,
         stores: selectedStores.length > 0 ? selectedStores : undefined,
+        userPrompt: userPrompt.trim() || undefined,
       };
 
       const response = await fetch("/api/ai/recommend", {
@@ -213,6 +215,27 @@ export function AiRecommendModal({
                   );
                 })}
               </div>
+            </div>
+
+            {/* 사용자 요청 */}
+            <div>
+              <label
+                htmlFor="user-prompt-input"
+                className="block text-sm font-semibold text-gray-700 mb-1.5"
+              >
+                원하는 조합 말해주세요
+                <span className="ml-1.5 text-xs font-normal text-gray-400">(선택)</span>
+              </label>
+              <textarea
+                id="user-prompt-input"
+                value={userPrompt}
+                onChange={(e) => setUserPrompt(e.target.value)}
+                maxLength={200}
+                rows={2}
+                placeholder="예: 매운 거 좋아해요, 혼술하고 싶어요, 다이어트 중이에요..."
+                className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 transition"
+              />
+              <p className="mt-1 text-right text-xs text-gray-400">{userPrompt.length}/200</p>
             </div>
 
             {/* 추천받기 버튼 */}
