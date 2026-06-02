@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { STORES, EVENT_TYPES, CATEGORIES, EVENT_TYPE_BADGES } from "@/lib/constants";
+import { STORES, EVENT_TYPES, CATEGORIES, EVENT_TYPE_BADGES, STORE_COLORS } from "@/lib/constants";
 import type { Store, EventType, Category } from "@/domain/entities/product";
 
 export interface ActiveFilters {
@@ -26,7 +26,7 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   return (
     <>
       {text.slice(0, matchIndex)}
-      <span className="font-bold text-gray-900">
+      <span className="font-extrabold text-violet-600 bg-violet-50 px-0.5 rounded">
         {text.slice(matchIndex, matchIndex + query.length)}
       </span>
       {text.slice(matchIndex + query.length)}
@@ -110,17 +110,17 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
   }
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3.5">
       {/* 검색바 */}
       <div ref={searchContainerRef} className="relative">
-        <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+        <div className="flex items-center gap-3 bg-white border border-gray-200/80 rounded-2xl px-4 py-3 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.04)] focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100 transition-all duration-200">
           <svg
             width="16"
             height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             className="text-gray-400 shrink-0"
@@ -130,7 +130,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
           </svg>
           <input
             type="text"
-            placeholder="상품명으로 검색"
+            placeholder="어떤 행사 상품을 찾으시나요?"
             value={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value);
@@ -138,7 +138,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-            className="flex-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none bg-transparent"
+            className="flex-1 text-sm font-semibold text-gray-900 placeholder:text-gray-450 focus:outline-none bg-transparent"
           />
           {inputValue && (
             <button
@@ -147,10 +147,10 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
                 setInputValue("");
                 submitSearch("");
               }}
-              className="text-gray-400 hover:text-gray-600 transition-colors shrink-0"
+              className="text-gray-400 hover:text-gray-600 transition-colors shrink-0 p-0.5 hover:bg-gray-50 rounded-lg"
               aria-label="검색어 지우기"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -160,15 +160,15 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
 
         {/* 자동완성 드롭다운 */}
         {showSuggestions && suggestions.length > 0 && (
-          <ul className="absolute left-0 right-0 top-full z-50 mt-1.5 rounded-xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08)] overflow-hidden">
+          <ul className="absolute left-0 right-0 top-full z-50 mt-2.5 rounded-2xl border border-gray-100 bg-white/95 backdrop-blur-md shadow-[0_12px_30px_rgba(0,0,0,0.08)] overflow-hidden transition-all duration-200">
             {suggestions.map((suggestion, index) => (
               <li
                 key={suggestion}
                 onMouseDown={() => submitSearch(suggestion)}
-                className={`cursor-pointer px-4 py-2.5 text-sm transition-colors duration-100 ${
+                className={`cursor-pointer px-4 py-3 text-xs transition-colors duration-100 ${
                   index === activeSuggestionIndex
-                    ? "bg-gray-50 text-gray-900 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-violet-50/70 text-violet-700 font-bold"
+                    : "text-gray-700 hover:bg-gray-50/80 font-medium"
                 }`}
               >
                 {highlightMatch(suggestion, inputValue)}
@@ -179,30 +179,32 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 편의점 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-1.5 pb-0.5">
+      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
         <button
           type="button"
           onClick={() => handlePillFilterChange("store", "")}
-          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+          className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
             filters.store === ""
-              ? "bg-gray-900 border-gray-900 text-white"
+              ? "bg-gray-950 border-gray-950 text-white shadow-sm"
               : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
           }`}
         >
-          전체
+          전체 편의점
         </button>
         {STORES.map((store) => {
           const isActive = filters.store === store;
+          const storeColors = STORE_COLORS[store];
           return (
             <button
               key={store}
               type="button"
               onClick={() => handlePillFilterChange("store", isActive ? "" : store)}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+              className="shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
+              style={
                 isActive
-                  ? "bg-gray-900 border-gray-900 text-white"
-                  : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
-              }`}
+                  ? { backgroundColor: storeColors.primary, borderColor: storeColors.primary, color: "#FFFFFF" }
+                  : { backgroundColor: "#FFFFFF", borderColor: "#E5E7EB", color: "#4B5563" }
+              }
             >
               {store}
             </button>
@@ -211,13 +213,13 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 행사 유형 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-1.5 pb-0.5">
+      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
         <button
           type="button"
           onClick={() => handlePillFilterChange("eventType", "")}
-          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+          className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
             filters.eventType === ""
-              ? "bg-gray-900 border-gray-900 text-white"
+              ? "bg-gray-950 border-gray-950 text-white shadow-sm"
               : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
           }`}
         >
@@ -231,7 +233,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               key={eventType}
               type="button"
               onClick={() => handlePillFilterChange("eventType", isActive ? "" : eventType)}
-              className="shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
+              className="shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
               style={
                 isActive
                   ? { backgroundColor: badge.bg, color: badge.color, borderColor: badge.bg }
@@ -245,13 +247,13 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 카테고리 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-1.5 pb-0.5">
+      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
         <button
           type="button"
           onClick={() => handlePillFilterChange("category", "")}
-          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+          className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
             filters.category === ""
-              ? "bg-gray-900 border-gray-900 text-white"
+              ? "bg-violet-600 border-violet-600 text-white shadow-sm"
               : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
           }`}
         >
@@ -264,9 +266,9 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               key={category}
               type="button"
               onClick={() => handlePillFilterChange("category", isActive ? "" : category)}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
+              className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-150 whitespace-nowrap active:scale-[0.97] ${
                 isActive
-                  ? "bg-gray-900 border-gray-900 text-white"
+                  ? "bg-violet-600 border-violet-600 text-white shadow-sm"
                   : "bg-white border-gray-200 text-gray-600 hover:border-gray-300"
               }`}
             >

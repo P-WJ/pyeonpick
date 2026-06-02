@@ -105,43 +105,41 @@ export function AiRecommendModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
         <div
-          className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+          className="relative w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl bg-white shadow-[0_24px_60px_-15px_rgba(0,0,0,0.15)] border border-gray-100 animate-pulse-slow"
           onClick={(event) => event.stopPropagation()}
         >
           {/* 헤더 */}
           <div
-            className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl px-6 py-4"
-            style={{
-              background:
-                "linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #C084FC 100%)",
-            }}
+            className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl px-6 py-5.5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 border-b border-white/10"
           >
             <div>
-              <h2 className="text-lg font-bold text-white">AI 조합 추천</h2>
-              <p className="mt-0.5 text-xs text-purple-200">
-                행사 혜택을 극대화하는 최적 조합을 찾아드려요
+              <h2 className="text-lg font-black text-white flex items-center gap-1.5">
+                <span>🤖</span> AI 조합 추천
+              </h2>
+              <p className="mt-1 text-xs text-violet-200 font-medium">
+                행사 혜택과 예산에 최적화된 편의점 조합을 추천합니다
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-purple-200 hover:bg-white/20 hover:text-white transition-colors"
+              className="rounded-xl p-1.5 text-violet-200 hover:bg-white/20 hover:text-white transition-all active:scale-95"
               aria-label="모달 닫기"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
+                width="18"
+                height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="2.5"
+                strokeWidth="2.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
@@ -151,14 +149,14 @@ export function AiRecommendModal({
             </button>
           </div>
 
-          <div className="px-6 py-5 space-y-5">
+          <div className="px-6 py-5.5 space-y-5">
             {/* 예산 입력 */}
             <div>
               <label
                 htmlFor="budget-input"
-                className="block text-sm font-semibold text-gray-700 mb-1.5"
+                className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
               >
-                예산
+                예산 설정
               </label>
               <div className="relative">
                 <input
@@ -169,10 +167,10 @@ export function AiRecommendModal({
                   step={500}
                   value={budget}
                   onChange={(event) => setBudget(Number(event.target.value))}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-10 text-sm font-medium text-gray-900 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 transition"
+                  className="w-full rounded-2xl border border-gray-200/80 bg-gray-50/50 px-4.5 py-3.5 pr-10 text-sm font-bold text-gray-900 focus:border-violet-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
                   placeholder="예산을 입력하세요"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                <span className="absolute right-4.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400">
                   원
                 </span>
               </div>
@@ -180,9 +178,9 @@ export function AiRecommendModal({
 
             {/* 편의점 필터 */}
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2.5">
                 편의점 선택{" "}
-                <span className="text-xs font-normal text-gray-400">
+                <span className="text-[10px] font-medium text-gray-400 lowercase">
                   (선택 안 하면 전체)
                 </span>
               </p>
@@ -195,7 +193,7 @@ export function AiRecommendModal({
                       key={store}
                       type="button"
                       onClick={() => toggleStoreSelection(store)}
-                      className="rounded-full border px-3 py-1.5 text-xs font-semibold transition-all"
+                      className="rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all shadow-sm active:scale-[0.95] duration-150"
                       style={
                         isSelected
                           ? {
@@ -221,10 +219,10 @@ export function AiRecommendModal({
             <div>
               <label
                 htmlFor="user-prompt-input"
-                className="block text-sm font-semibold text-gray-700 mb-1.5"
+                className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
               >
-                원하는 조합 말해주세요
-                <span className="ml-1.5 text-xs font-normal text-gray-400">(선택)</span>
+                원하는 조합 조건{" "}
+                <span className="text-[10px] font-medium text-gray-400 lowercase">(선택)</span>
               </label>
               <textarea
                 id="user-prompt-input"
@@ -232,10 +230,10 @@ export function AiRecommendModal({
                 onChange={(e) => setUserPrompt(e.target.value)}
                 maxLength={200}
                 rows={2}
-                placeholder="예: 매운 거 좋아해요, 혼술하고 싶어요, 다이어트 중이에요..."
-                className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 transition"
+                placeholder="예: 매운 거 좋아해요, 혼술 안주 추천, 저칼로리 간식 위주 등"
+                className="w-full resize-none rounded-2xl border border-gray-200/80 bg-gray-50/50 px-4.5 py-3.5 text-sm font-semibold text-gray-900 placeholder:text-gray-400 focus:border-violet-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all"
               />
-              <p className="mt-1 text-right text-xs text-gray-400">{userPrompt.length}/200</p>
+              <p className="mt-1 text-right text-[10px] font-bold text-gray-450">{userPrompt.length}/200</p>
             </div>
 
             {/* 추천받기 버튼 */}
@@ -243,11 +241,7 @@ export function AiRecommendModal({
               type="button"
               onClick={handleRequestRecommendation}
               disabled={isLoading}
-              className="w-full rounded-xl py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              style={{
-                background:
-                  "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
-              }}
+              className="w-full rounded-2xl py-4 text-sm font-extrabold text-white transition-all hover:shadow-[0_8px_24px_rgba(124,58,237,0.25)] disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] duration-150 bg-gradient-to-r from-violet-600 to-indigo-600 shadow-[0_4px_16px_rgba(124,58,237,0.15)]"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -255,22 +249,22 @@ export function AiRecommendModal({
                   AI가 분석 중...
                 </span>
               ) : (
-                "추천받기"
+                "조합 추천 요청하기"
               )}
             </button>
 
             {/* 오류 메시지 */}
             {errorMessage && (
-              <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+              <div className="rounded-2xl bg-red-50 border border-red-100 px-4 py-3 text-xs font-bold text-red-650">
                 {errorMessage}
               </div>
             )}
 
             {/* 추천 결과 */}
             {recommendationResult && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold text-gray-800">
-                  추천 조합 {recommendationResult.combinations.length}개
+              <div className="space-y-4 pt-2">
+                <h3 className="text-xs font-extrabold text-gray-400 uppercase tracking-widest">
+                  추천 조합 결과 ({recommendationResult.combinations.length})
                 </h3>
                 {recommendationResult.combinations.map(
                   (combination, combinationIndex) => {
@@ -316,43 +310,46 @@ function RecommendationCombinationCard({
   onAddToCart,
 }: RecommendationCombinationCardProps) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+    <div className="rounded-2xl border border-violet-100/60 bg-violet-50/40 p-5 space-y-4 shadow-[0_2px_12px_rgba(124,58,237,0.02)]">
       {/* 조합 제목 + 총 가격 */}
-      <div className="flex items-start justify-between gap-2">
-        <h4 className="text-sm font-bold text-gray-900">{combination.title}</h4>
-        <span className="shrink-0 text-sm font-bold text-purple-700">
+      <div className="flex items-start justify-between gap-3">
+        <h4 className="text-sm font-extrabold text-gray-900">{combination.title}</h4>
+        <span className="shrink-0 text-base font-black text-violet-700 bg-violet-100/60 px-2.5 py-1 rounded-lg">
           {combination.totalPrice.toLocaleString("ko-KR")}원
         </span>
       </div>
 
       {/* 추천 이유 */}
-      <p className="text-xs text-gray-500 leading-relaxed">{combination.reason}</p>
+      <p className="text-xs font-semibold text-gray-500 leading-relaxed bg-white/70 rounded-xl p-3 border border-violet-50/50">
+        💡 {combination.reason}
+      </p>
 
       {/* 상품 목록 */}
       {resolvedProducts.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {resolvedProducts.map((product) => {
             const storeColors = STORE_COLORS[product.store];
             return (
               <div
                 key={product.id}
-                className="flex items-center justify-between rounded-lg bg-white border border-gray-100 px-3 py-2"
+                className="flex items-center justify-between rounded-xl bg-white border border-gray-100 px-3.5 py-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.01)] hover:border-gray-200 transition-all"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span
-                    className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    className="shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold border"
                     style={{
                       backgroundColor: storeColors.secondary,
-                      color: storeColors.primary,
+                      color: storeColors.text,
+                      borderColor: storeColors.primary + "20"
                     }}
                   >
                     {product.store}
                   </span>
-                  <span className="truncate text-xs font-medium text-gray-800">
+                  <span className="truncate text-xs font-bold text-gray-800">
                     {product.name}
                   </span>
                 </div>
-                <span className="shrink-0 ml-2 text-xs font-semibold text-gray-700">
+                <span className="shrink-0 ml-2 text-xs font-extrabold text-gray-700">
                   {product.price.toLocaleString("ko-KR")}원
                 </span>
               </div>
@@ -360,9 +357,8 @@ function RecommendationCombinationCard({
           })}
 
           {combination.products.length > resolvedProducts.length && (
-            <p className="text-xs text-gray-400 pl-1">
-              {combination.products.length - resolvedProducts.length}개 상품은
-              현재 목록에서 찾을 수 없습니다.
+            <p className="text-[10px] font-semibold text-gray-400 pl-1.5">
+              ⚠️ {combination.products.length - resolvedProducts.length}개 상품은 현재 목록에서 일시적으로 매칭할 수 없습니다.
             </p>
           )}
         </div>
@@ -373,26 +369,25 @@ function RecommendationCombinationCard({
         type="button"
         onClick={onAddToCart}
         disabled={isAlreadyAdded || resolvedProducts.length === 0}
-        className="w-full rounded-lg py-2 text-xs font-bold transition-all"
+        className="w-full rounded-xl py-3 text-xs font-bold transition-all active:scale-[0.98] duration-150 shadow-sm"
         style={
           isAlreadyAdded
             ? {
-                backgroundColor: "#F3E8FF",
+                backgroundColor: "#EDE9FE",
                 color: "#7C3AED",
                 cursor: "default",
               }
             : {
-                background:
-                  "linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)",
+                background: "linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)",
                 color: "#fff",
               }
         }
       >
         {isAlreadyAdded
-          ? "담기 완료"
+          ? "장바구니 담기 완료"
           : resolvedProducts.length === 0
           ? "담을 수 있는 상품 없음"
-          : `장바구니에 ${resolvedProducts.length}개 담기`}
+          : `장바구니에 ${resolvedProducts.length}개 상품 모두 담기`}
       </button>
     </div>
   );

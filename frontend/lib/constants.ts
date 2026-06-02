@@ -20,29 +20,29 @@ export interface StoreColorConfig {
 
 export const STORE_COLORS: Record<Store, StoreColorConfig> = {
   CU: {
-    primary: "#4F46E5",
-    secondary: "#EEEFFE",
-    text: "#4F46E5",
-  },
-  GS25: {
-    primary: "#1D4ED8",
-    secondary: "#EFF6FF",
-    text: "#1D4ED8",
-  },
-  세븐일레븐: {
-    primary: "#16A34A",
-    secondary: "#F0FDF4",
-    text: "#16A34A",
-  },
-  이마트24: {
-    primary: "#DC2626",
-    secondary: "#FEF2F2",
-    text: "#DC2626",
-  },
-  씨스페이스: {
-    primary: "#7C3AED",
+    primary: "#7C3AED", // Signature Violet
     secondary: "#F5F3FF",
     text: "#7C3AED",
+  },
+  GS25: {
+    primary: "#0EA5E9", // Sleek Cyan Blue
+    secondary: "#F0F9FF",
+    text: "#0369A1",
+  },
+  세븐일레븐: {
+    primary: "#10B981", // Modern Green
+    secondary: "#ECFDF5",
+    text: "#047857",
+  },
+  이마트24: {
+    primary: "#F59E0B", // High-fidelity Golden Yellow
+    secondary: "#FEF3C7",
+    text: "#B45309", // High contrast brown-orange for legibility
+  },
+  씨스페이스: {
+    primary: "#0D9488", // Emerald Teal
+    secondary: "#F0FDFA",
+    text: "#0F766E",
   },
 };
 
