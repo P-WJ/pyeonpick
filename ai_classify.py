@@ -17,9 +17,9 @@ from crawler.infrastructure.repository import _get_supabase_client
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-MODEL = 'llama-3.3-70b-versatile'
+MODEL = 'llama-3.1-8b-instant'  # TPD 500,000 / RPD 14,400 — 대량 분류에 적합
 BATCH_SIZE = 45
-SLEEP_BETWEEN_BATCHES = 8
+SLEEP_BETWEEN_BATCHES = 3   # 분당 20회 (8B TPM 131,072 기준 여유)
 MAX_RETRIES = 3
 CHECKPOINT_FILE = 'classify_progress.json'
 
