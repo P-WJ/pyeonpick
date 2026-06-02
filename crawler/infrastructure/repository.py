@@ -26,7 +26,6 @@ def _product_to_row(product: Product) -> dict:
         "image_url": product.image_url,
         "valid_from": product.valid_from.isoformat(),
         "valid_to": product.valid_to.isoformat(),
-        "nutrition": product.nutrition,
     }
 
 
