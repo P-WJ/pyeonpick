@@ -9,6 +9,7 @@ import { ProductCard } from "./components/ProductCard";
 import { AiBanner } from "./components/AiBanner";
 import { AiRecommendModal } from "./components/AiRecommendModal";
 import { PRODUCTS_PAGE_LIMIT, SORT_OPTIONS } from "@/lib/constants";
+import { currentMonthPromotion, formatDaysLeft } from "@/domain/use-cases/event-period";
 import { useCart } from "@/app/contexts/cart-context";
 
 const SKELETON_COUNT = 10;
@@ -56,6 +57,8 @@ function HomePageContent() {
   const [filters, setFilters] = useState<ActiveFilters>(INITIAL_FILTERS);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [stats, setStats] = useState<ProductStats | null>(null);
+  // 이번 달 행사 마감 정보 (전 상품 공통: 매월 1일~말일). 하이드레이션 불일치 방지 위해 마운트 후 계산.
+  const [promotion, setPromotion] = useState<{ endLabel: string; daysLeft: number } | null>(null);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -77,6 +80,11 @@ function HomePageContent() {
       };
       sessionStorage.setItem("pyeonpick-restore-state", JSON.stringify(backup));
     };
+  }, []);
+
+  // 이번 달 행사 마감 정보 계산 (마운트 후 1회)
+  useEffect(() => {
+    setPromotion(currentMonthPromotion());
   }, []);
 
   // 진행 중인 행사 상품 통계 조회 (마운트 시 1회)
@@ -224,10 +232,18 @@ function HomePageContent() {
         <div className="absolute -right-16 -bottom-16 w-52 h-52 bg-indigo-500/15 rounded-full blur-3xl" />
         
         <div className="mx-auto max-w-7xl relative z-10 space-y-4">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/20 px-3.5 py-1.5 text-[9px] font-bold text-violet-300 border border-violet-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping" />
-            실시간 5대 편의점 통합 포털
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/20 px-3.5 py-1.5 text-[9px] font-bold text-violet-300 border border-violet-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-ping" />
+              실시간 5대 편의점 통합 포털
+            </span>
+            {promotion && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-[9px] font-bold text-white border border-white/15">
+                📅 이번 달 행사 {promotion.endLabel}까지
+                <span className="text-amber-300">· {formatDaysLeft(promotion.daysLeft)}</span>
+              </span>
+            )}
+          </div>
           <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
             오늘 편의점, 어디서 <br className="sm:hidden" />
             <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-300 bg-clip-text text-transparent">터는 게 이득</span>일까? ⚡

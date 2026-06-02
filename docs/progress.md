@@ -145,7 +145,9 @@ UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소�
   - `ProductSort` 타입(`domain/entities/product.ts`), `SORT_OPTIONS`(constants)
   - repository `getProducts`에 정렬 분기 (price asc / event_type asc / name)
   - `/api/products` `sort` 파라미터 검증, `ActiveFilters.sort`, 홈 결과 행에 정렬 드롭다운
-- **행사 임박 D-day 뱃지**: 순수 함수 `domain/use-cases/event-period.ts`(`daysUntilEnd`/`formatDaysLeft`), `ProductCard`에서 종료 7일 이내 노출(2일 이내 빨강)
+- **행사 마감 표시**: 전 상품이 매월 1일~말일로 종료일이 동일하므로, 카드마다 D-day를 다는 대신 **홈 히어로 배너에 1회** 표시 ("이번 달 행사 N월 N일까지 · D-N")
+  - 순수 함수 `domain/use-cases/event-period.ts` `currentMonthPromotion`/`formatDaysLeft`, 하이드레이션 불일치 방지 위해 마운트 후 계산
+  - (개정) 초기엔 ProductCard에 카드별 D-day를 넣었으나 종료일이 전 상품 공통이라 중복이라 제거하고 배너로 이동
 
 ### 알림 채널 정리 — 웹 푸시 전용 (✅ 완료)
 - 카카오 알림톡 + Resend 이메일을 **둘 다 제거**, 알림은 **웹 푸시**로 일원화
