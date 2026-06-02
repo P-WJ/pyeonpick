@@ -31,7 +31,7 @@ export function ProductCard({
   return (
     <Link
       href={`/products/${product.id}`}
-      className="relative flex flex-col rounded-xl bg-white shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer"
+      className="relative flex flex-col rounded-2xl bg-white overflow-hidden cursor-pointer transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] active:scale-[0.98]"
       style={{ borderTop: `3px solid ${storeColors.primary}` }}
     >
       {/* 행사 뱃지 */}
@@ -53,16 +53,16 @@ export function ProductCard({
             onToggleWishlist(product);
           }}
           aria-label={isWishlisted ? "찜하기 해제" : "찜하기"}
-          className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 shadow-sm transition-colors duration-150 hover:bg-white"
+          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-[0_1px_3px_rgba(0,0,0,0.1)] transition-all duration-150 hover:bg-white hover:scale-110 active:scale-95"
         >
-          <span className={`text-lg leading-none ${isWishlisted ? "text-rose-500" : "text-gray-300"}`}>
+          <span className={`text-base leading-none ${isWishlisted ? "text-rose-500" : "text-gray-300"}`}>
             {isWishlisted ? "♥" : "♡"}
           </span>
         </button>
       )}
 
       {/* 이미지 */}
-      <div className="relative mx-auto mt-4 h-32 w-32">
+      <div className="relative mx-auto mt-5 h-36 w-36">
         <Image
           src={product.imageUrl || PLACEHOLDER_IMAGE}
           alt={product.name}
@@ -74,13 +74,14 @@ export function ProductCard({
 
       {/* 정보 영역 */}
       <div className="flex flex-1 flex-col p-3">
-        <p
-          className="text-xs font-semibold"
-          style={{ color: storeColors.primary }}
+        {/* 편의점 뱃지 — pill 형태 */}
+        <span
+          className="inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-semibold"
+          style={{ backgroundColor: storeColors.secondary, color: storeColors.primary }}
         >
           {product.store}
-        </p>
-        <h3 className="mt-1 line-clamp-2 text-sm font-medium text-gray-900 leading-snug">
+        </span>
+        <h3 className="mt-1.5 line-clamp-2 text-sm font-medium text-gray-900 leading-snug">
           {product.name}
         </h3>
         <p className="mt-1.5 text-base font-bold text-gray-900">
@@ -88,7 +89,7 @@ export function ProductCard({
           <span className="text-xs font-normal text-gray-500">원</span>
         </p>
         {EVENT_BENEFIT_TEXT[product.eventType] && (
-          <p className="mt-0.5 text-xs text-gray-400">
+          <p className="mt-0.5 text-xs" style={{ color: storeColors.primary, opacity: 0.75 }}>
             {EVENT_BENEFIT_TEXT[product.eventType]}
           </p>
         )}
@@ -100,7 +101,7 @@ export function ProductCard({
             event.stopPropagation();
             onAddToCart(product);
           }}
-          className="mt-3 w-full rounded-lg py-1.5 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 active:opacity-75"
+          className="mt-3 w-full rounded-xl py-2 text-sm font-semibold text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98] min-h-[40px]"
           style={{ backgroundColor: storeColors.primary }}
         >
           담기

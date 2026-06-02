@@ -162,6 +162,110 @@ GROQ_API_KEY
 | `cvs-wishlist-v1` | 찜 목록 (예정) |
 | `cvs-recently-viewed-v1` | 최근 본 상품 (예정) |
 
+## 디자인 시스템
+
+**디자인 철학**: 심플하고 세련된 한국형 커머스 UI. Toss·당근마켓처럼 여백이 넉넉하고 위계가 명확한 디자인. 화려함보다 신뢰감.
+
+### 컬러 팔레트
+
+| 용도 | 값 | 설명 |
+|------|----|------|
+| 페이지 배경 | `bg-gray-50` (`#F9FAFB`) | 카드와 대비되는 미세한 회색 |
+| 카드/컴포넌트 | `bg-white` | 항상 흰색 |
+| 주요 텍스트 | `text-gray-900` | 제목, 가격 |
+| 보조 텍스트 | `text-gray-500` | 설명, 라벨 |
+| 3차 텍스트 | `text-gray-400` | 힌트, 캡션 |
+| 테두리 | `border-gray-100` | 카드 테두리 (매우 연하게) |
+| 구분선 | `border-gray-200` | 섹션 구분 |
+| 브랜드(AI) | `#7C3AED` (purple-700) | AI 추천, 강조 요소 |
+
+편의점 브랜드 컬러는 `STORE_COLORS`에서만 사용. 일반 UI에 임의로 섞지 않는다.
+
+### 그림자 시스템
+
+```
+카드 기본:  shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]
+카드 호버:  shadow-[0_8px_24px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)]
+드로어/모달: shadow-2xl
+```
+`shadow-sm` / `shadow-md` Tailwind 기본값 대신 커스텀 shadow로 섬세하게.
+
+### 타이포그래피
+
+| 용도 | 클래스 |
+|------|--------|
+| 페이지 제목 | `text-xl font-bold tracking-tight text-gray-900` |
+| 섹션 제목 | `text-base font-semibold text-gray-900` |
+| 카드 상품명 | `text-sm font-medium text-gray-900 leading-snug` |
+| 가격 | `text-base font-bold text-gray-900` |
+| 보조 설명 | `text-xs text-gray-500` |
+| 캡션/힌트 | `text-xs text-gray-400` |
+
+### 모서리(Border Radius)
+
+| 요소 | 값 |
+|------|----|
+| 카드, 드로어 | `rounded-2xl` |
+| 버튼 (기본) | `rounded-xl` |
+| 입력 필드 | `rounded-xl` |
+| 작은 뱃지/태그 | `rounded-full` |
+| 내부 요소 | `rounded-lg` |
+
+### 애니메이션
+
+```
+기본 전환: transition-all duration-200 ease-out
+카드 호버: hover:-translate-y-0.5 (1px만 살짝)
+버튼 클릭: active:scale-[0.98]
+모달 열기: fade-in + slide-up (translateY 8px → 0)
+스켈레톤: animate-pulse
+```
+과도한 움직임 금지. 전환은 150~200ms, 모달은 250ms 이하.
+
+### 컴포넌트 패턴
+
+**카드**
+- 배경 흰색, 테두리 `border border-gray-100`, `rounded-2xl`
+- 상단 편의점 컬러 강조선 3px (`border-t-[3px]`)
+- 호버 시 shadow 강화 + `-translate-y-0.5`
+
+**버튼 (Primary)**
+- 편의점 브랜드 색상 배경, 흰색 텍스트
+- `rounded-xl py-2 px-4 text-sm font-semibold`
+- `hover:opacity-90 active:scale-[0.98]`
+
+**버튼 (Secondary/Ghost)**
+- `border border-gray-200 bg-white text-gray-700`
+- `hover:bg-gray-50`
+
+**인풋/셀렉트**
+- `border border-gray-200 bg-gray-50 rounded-xl`
+- `focus:border-gray-400 focus:ring-0 focus:bg-white`
+- 테두리색만 변하는 포커스 (ring 최소화)
+
+**뱃지**
+- 행사 유형 뱃지: 그라디언트 + `rounded-full` + `text-[11px] font-bold`
+- 편의점 뱃지: 브랜드 secondary 배경 + primary 텍스트
+
+**빈 상태(Empty State)**
+- 아이콘 + 제목 + 설명 + CTA 버튼 구조
+- 아이콘: 64px, `text-gray-300`
+
+### 간격(Spacing)
+
+- 섹션 간격: `space-y-6` 또는 `gap-6`
+- 카드 그리드: `gap-3` (모바일), `gap-4` (데스크탑)
+- 카드 내부 패딩: `p-4`
+- 페이지 좌우 여백: `px-4` (모바일), `px-6` (데스크탑)
+
+### 금지 사항
+
+- `shadow-md`, `shadow-lg` 직접 사용 금지 → 커스텀 shadow 사용
+- 텍스트에 편의점 브랜드 컬러 남용 금지
+- `font-bold` 과남용 금지 — 중요한 숫자·제목만
+- 테두리 두께 2px 이상 금지 (강조선 제외)
+- 여러 색상 그라디언트 남용 금지 (AI 배너 등 포인트 요소만)
+
 ## 참고 문서
 
 @docs/progress.md

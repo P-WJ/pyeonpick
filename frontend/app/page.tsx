@@ -152,7 +152,7 @@ function HomePageContent() {
   const showEmptyState = !isLoadingInitial && !fetchError && products.length === 0;
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 space-y-4">
+    <main className="mx-auto max-w-7xl px-4 py-5 space-y-3 bg-gray-50 min-h-screen pb-24">
       <FilterBar
         filters={filters}
         onFilterChange={setFilters}
@@ -164,28 +164,31 @@ function HomePageContent() {
       )}
 
       {isLoadingInitial && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-            <div key={i} className="h-64 animate-pulse rounded-xl bg-gray-200" />
+            <div
+              key={i}
+              className="h-64 animate-pulse rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]"
+            />
           ))}
         </div>
       )}
 
       {fetchError && (
-        <div className="rounded-xl bg-red-50 p-4 text-center text-sm text-red-600 border border-red-100">
+        <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600 border border-red-100">
           {fetchError}
         </div>
       )}
 
       {showEmptyState && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="flex flex-col items-center justify-center py-24 text-center px-8">
           <div className="mb-4 text-5xl">🔍</div>
-          <p className="text-base font-semibold text-gray-700">검색 결과가 없습니다</p>
+          <p className="text-base font-semibold text-gray-900">검색 결과가 없어요</p>
           <p className="mt-1 text-sm text-gray-400">조건에 맞는 상품이 없습니다. 필터를 변경해보세요.</p>
           <button
             type="button"
             onClick={() => setFilters(INITIAL_FILTERS)}
-            className="mt-5 rounded-full bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="mt-5 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 min-h-[44px]"
           >
             필터 초기화
           </button>
@@ -193,7 +196,7 @@ function HomePageContent() {
       )}
 
       {!isLoadingInitial && products.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {products.map((product) => (
             <ProductCard
               key={product.id}
@@ -208,7 +211,7 @@ function HomePageContent() {
 
       {isLoadingMore && (
         <div className="flex justify-center py-6">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-100 border-t-gray-400" />
         </div>
       )}
 

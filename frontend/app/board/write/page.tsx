@@ -28,8 +28,8 @@ export default function WritePage() {
 
   if (status === "loading" || !session?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F8FAFC" }}>
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-100 border-t-gray-400" />
       </div>
     );
   }
@@ -76,15 +76,15 @@ export default function WritePage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-       
+    <div className="min-h-screen bg-gray-50">
 
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <main className="mx-auto max-w-3xl px-4 py-5">
         <div className="mb-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-white active:scale-95 transition-all duration-150"
+            aria-label="뒤로가기"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -99,14 +99,13 @@ export default function WritePage() {
             >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            뒤로
           </button>
-          <h1 className="text-xl font-bold text-gray-900">글쓰기</h1>
+          <h1 className="text-lg font-bold text-gray-900">글쓰기</h1>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl bg-white shadow-sm p-6 space-y-5"
+          className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] p-5 space-y-5"
         >
           {/* 카테고리 선택 */}
           <div>
@@ -119,9 +118,9 @@ export default function WritePage() {
                   key={option}
                   type="button"
                   onClick={() => setCategory(option)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-150 active:scale-[0.97] ${
                     category === option
-                      ? "bg-blue-600 text-white"
+                      ? "bg-gray-900 text-white"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
@@ -146,7 +145,7 @@ export default function WritePage() {
               onChange={(e) => setTitle(e.target.value)}
               maxLength={TITLE_MAX_LENGTH}
               placeholder="제목을 입력해주세요"
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none transition-all duration-150"
             />
             <p className="mt-1 text-right text-xs text-gray-400">
               {title.length}/{TITLE_MAX_LENGTH}
@@ -168,7 +167,7 @@ export default function WritePage() {
               maxLength={CONTENT_MAX_LENGTH}
               placeholder="내용을 입력해주세요"
               rows={10}
-              className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none transition-all duration-150"
             />
             <p className="mt-1 text-right text-xs text-gray-400">
               {content.length}/{CONTENT_MAX_LENGTH}
@@ -183,18 +182,18 @@ export default function WritePage() {
           )}
 
           {/* 제출 버튼 */}
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => router.back()}
-              className="rounded-full px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 active:scale-[0.98] transition-all duration-150"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-150"
             >
               {isSubmitting ? "작성 중..." : "작성 완료"}
             </button>

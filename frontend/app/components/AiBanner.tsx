@@ -7,9 +7,9 @@ interface AiBannerProps {
 export function AiBanner({ onOpenModal }: AiBannerProps) {
   return (
     <div
-      className="flex items-center justify-between rounded-xl px-5 py-4"
+      className="flex items-center justify-between rounded-2xl px-5 py-4"
       style={{
-        background: "linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #C084FC 100%)",
+        background: "linear-gradient(135deg, #6D28D9 0%, #7C3AED 50%, #8B5CF6 100%)",
       }}
     >
       <div>
@@ -23,7 +23,7 @@ export function AiBanner({ onOpenModal }: AiBannerProps) {
       <button
         type="button"
         onClick={onOpenModal}
-        className="shrink-0 rounded-lg bg-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/30 transition-colors backdrop-blur-sm"
+        className="shrink-0 rounded-xl bg-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/30 active:scale-[0.98] transition-all duration-150 backdrop-blur-sm"
       >
         추천 받기
       </button>

@@ -145,32 +145,31 @@ export default function BoardPage() {
   }, [hasMore, page, fetchPage]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-       
+    <div className="min-h-screen bg-gray-50">
 
-      <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
+      <main className="mx-auto max-w-3xl px-4 py-5 space-y-3">
         {/* 헤더 영역 */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">게시판</h1>
+          <h1 className="text-xl font-bold text-gray-900">게시판</h1>
           <button
             type="button"
             onClick={handleWriteClick}
-            className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+            className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150"
           >
             글쓰기
           </button>
         </div>
 
         {/* 카테고리 탭 */}
-        <div className="flex gap-2 border-b border-gray-200 pb-0">
+        <div className="flex gap-0 border-b border-gray-200">
           {CATEGORY_TABS.map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`px-4 py-2.5 text-sm font-medium transition-all duration-150 border-b-2 -mb-px ${
                 activeTab === tab
-                  ? "border-blue-600 text-blue-600"
+                  ? "border-gray-900 text-gray-900"
                   : "border-transparent text-gray-500 hover:text-gray-700"
               }`}
             >
@@ -181,11 +180,11 @@ export default function BoardPage() {
 
         {/* 로딩 스켈레톤 */}
         {isLoadingInitial && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="h-20 animate-pulse rounded-2xl bg-gray-200"
+                className="h-20 animate-pulse rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               />
             ))}
           </div>
@@ -193,21 +192,21 @@ export default function BoardPage() {
 
         {/* 오류 */}
         {fetchError && (
-          <div className="rounded-xl bg-red-50 p-4 text-center text-sm text-red-600 border border-red-100">
+          <div className="rounded-2xl bg-red-50 p-4 text-center text-sm text-red-600 border border-red-100">
             {fetchError}
           </div>
         )}
 
         {/* 빈 결과 */}
         {!isLoadingInitial && !fetchError && posts.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <p className="text-lg font-medium text-gray-400">
-              아직 게시글이 없습니다.
-            </p>
+          <div className="flex flex-col items-center justify-center py-24 text-center px-8">
+            <div className="mb-4 text-5xl">📝</div>
+            <p className="font-medium text-gray-900">아직 게시글이 없어요</p>
+            <p className="mt-1 text-sm text-gray-400">첫 번째 글을 작성해보세요</p>
             {session?.user && (
               <Link
                 href="/board/write"
-                className="mt-4 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                className="mt-4 rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 min-h-[44px] inline-flex items-center"
               >
                 첫 글 작성하기
               </Link>
@@ -222,7 +221,7 @@ export default function BoardPage() {
               <Link
                 key={post.id}
                 href={`/board/${post.id}`}
-                className="block rounded-2xl bg-white shadow-sm p-4 hover:shadow-md transition-shadow"
+                className="block rounded-2xl bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all duration-200 ease-out hover:-translate-y-0.5 active:scale-[0.99]"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
@@ -234,7 +233,7 @@ export default function BoardPage() {
                       >
                         {post.category}
                       </span>
-                      <h2 className="text-sm font-semibold text-gray-900 truncate">
+                      <h2 className="text-sm font-medium text-gray-900 truncate">
                         {post.title}
                       </h2>
                     </div>
@@ -248,7 +247,7 @@ export default function BoardPage() {
                           className="rounded-full"
                         />
                       ) : (
-                        <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[9px] font-bold">
+                        <div className="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[9px] font-bold">
                           {post.authorNickname[0] ?? "?"}
                         </div>
                       )}
@@ -257,28 +256,24 @@ export default function BoardPage() {
                       <span>{formatRelativeTime(post.createdAt)}</span>
                     </div>
                   </div>
-                  <div
-                    className={`shrink-0 flex items-center gap-1 text-sm ${
-                      post.commentCount > 0
-                        ? "text-blue-600 font-medium"
-                        : "text-gray-400"
-                    }`}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    <span>{post.commentCount}</span>
-                  </div>
+                  {post.commentCount > 0 && (
+                    <div className="shrink-0 flex items-center gap-1 text-xs text-gray-500 font-medium bg-gray-100 rounded-full px-2 py-0.5">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      <span>{post.commentCount}</span>
+                    </div>
+                  )}
                 </div>
               </Link>
             ))}
@@ -288,7 +283,7 @@ export default function BoardPage() {
         {/* 추가 로딩 스피너 */}
         {isLoadingMore && (
           <div className="flex justify-center py-6">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-100 border-t-gray-400" />
           </div>
         )}
 

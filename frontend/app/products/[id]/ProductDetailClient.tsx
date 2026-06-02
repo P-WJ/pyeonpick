@@ -122,9 +122,9 @@ function RelatedProductCard({ product }: { product: Product }) {
     <button
       type="button"
       onClick={() => router.push(`/products/${product.id}`)}
-      className="min-w-[120px] w-[120px] flex-shrink-0 flex flex-col gap-1 rounded-xl bg-white border border-gray-100 p-2 text-left hover:border-gray-300 transition-colors"
+      className="min-w-[120px] w-[120px] flex-shrink-0 flex flex-col gap-1 rounded-2xl bg-white border border-gray-100 p-2 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] active:scale-[0.98]"
     >
-      <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-gray-50">
+      <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-50">
         <Image
           src={product.imageUrl || PLACEHOLDER_IMAGE}
           alt={product.name}
@@ -172,13 +172,13 @@ export function ProductDetailClient({
 
   return (
     <>
-      <main className="max-w-2xl mx-auto pb-28">
+      <main className="max-w-2xl mx-auto pb-28 bg-gray-50 min-h-screen">
         {/* 뒤로가기 */}
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors flex-shrink-0"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 active:scale-95 transition-all duration-150 flex-shrink-0"
             aria-label="뒤로가기"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -188,13 +188,13 @@ export function ProductDetailClient({
           <span className="text-base font-semibold text-gray-900">상품 상세</span>
         </div>
         {/* 이미지 영역 */}
-        <div className="relative w-full max-h-72 bg-gray-50 flex items-center justify-center overflow-hidden">
+        <div className="relative w-full max-h-72 bg-white flex items-center justify-center overflow-hidden">
           <div className="relative w-full h-72">
             <Image
               src={product.imageUrl || PLACEHOLDER_IMAGE}
               alt={product.name}
               fill
-              className="object-contain"
+              className="object-contain p-4"
               unoptimized={!product.imageUrl}
               priority
             />
@@ -206,8 +206,8 @@ export function ProductDetailClient({
           {/* 편의점명 + 행사 뱃지 */}
           <div className="flex items-center gap-2">
             <span
-              className="text-sm font-semibold"
-              style={{ color: storeColors.primary }}
+              className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              style={{ backgroundColor: storeColors.secondary, color: storeColors.primary }}
             >
               {product.store}
             </span>
@@ -327,7 +327,7 @@ export function ProductDetailClient({
         <button
           type="button"
           onClick={handleAddToCart}
-          className="w-full py-3 rounded-xl text-base font-bold text-white hover:opacity-90 active:opacity-75 transition-opacity"
+          className="w-full py-3 rounded-xl text-base font-bold text-white hover:opacity-90 active:scale-[0.98] transition-all duration-150 min-h-[48px]"
           style={{ backgroundColor: storeColors.primary }}
         >
           장바구니 담기

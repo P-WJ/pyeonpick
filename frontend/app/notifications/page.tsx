@@ -125,7 +125,7 @@ function WebPushSection() {
   if (!isSupported) return null;
 
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
+    <div className="rounded-2xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] space-y-4">
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-base font-bold text-gray-900">웹 푸시 알림</h2>
@@ -219,7 +219,7 @@ function WebPushSection() {
               <button
                 type="button"
                 onClick={() => setShowSubscribeForm(true)}
-                className="flex-1 rounded-lg border border-purple-200 py-2 text-xs font-medium text-purple-600 hover:bg-purple-50 transition-colors"
+                className="flex-1 rounded-xl border border-purple-200 py-2 text-xs font-medium text-purple-600 hover:bg-purple-50 active:scale-[0.98] transition-all duration-150"
               >
                 설정 변경
               </button>
@@ -227,7 +227,7 @@ function WebPushSection() {
                 type="button"
                 onClick={handleUnsubscribe}
                 disabled={isActionLoading}
-                className="flex-1 rounded-lg border border-red-200 py-2 text-xs font-medium text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50"
+                className="flex-1 rounded-xl border border-red-200 py-2 text-xs font-medium text-red-500 hover:bg-red-50 active:scale-[0.98] transition-all duration-150 disabled:opacity-50"
               >
                 {isActionLoading ? "처리 중..." : "해제"}
               </button>
@@ -241,7 +241,7 @@ function WebPushSection() {
         <button
           type="button"
           onClick={() => setShowSubscribeForm(true)}
-          className="w-full rounded-lg bg-purple-600 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 transition-colors"
+          className="w-full rounded-xl bg-purple-600 py-2.5 text-sm font-semibold text-white hover:bg-purple-700 active:scale-[0.98] transition-all duration-150"
         >
           브라우저 알림 받기
         </button>
@@ -262,7 +262,7 @@ function WebPushSection() {
                   key={store}
                   type="button"
                   onClick={() => toggleStore(store)}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-all duration-150 active:scale-[0.97] ${
                     selectedStores.includes(store)
                       ? "border-purple-500 bg-purple-50 text-purple-700"
                       : "border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50"
@@ -289,7 +289,7 @@ function WebPushSection() {
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               placeholder="예: 삼각김밥, 컵라면, 아이스크림"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-gray-400 focus:bg-white transition-all duration-150"
             />
           </div>
 
@@ -298,7 +298,7 @@ function WebPushSection() {
               type="button"
               onClick={() => setShowSubscribeForm(false)}
               disabled={isActionLoading}
-              className="flex-1 rounded-lg border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="flex-1 rounded-xl border border-gray-200 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 active:scale-[0.98] transition-all duration-150"
             >
               취소
             </button>
@@ -306,7 +306,7 @@ function WebPushSection() {
               type="button"
               onClick={isSubscribed ? handleSaveSettings : handleSubscribe}
               disabled={isActionLoading}
-              className="flex-1 rounded-lg bg-purple-600 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
+              className="flex-1 rounded-xl bg-purple-600 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50 active:scale-[0.98] transition-all duration-150"
             >
               {isActionLoading
                 ? "처리 중..."
@@ -425,18 +425,18 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
+    <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
-      <header className="sticky top-0 z-30 bg-white shadow-sm">
+      <header className="sticky top-0 z-30 bg-white border-b border-gray-100">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <Link href="/" className="text-xl font-extrabold text-blue-700 tracking-tight">
+          <Link href="/" className="text-xl font-black text-gray-900 tracking-tight">
             편픽
           </Link>
           <span className="text-sm font-medium text-gray-500">알림 설정</span>
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-8 space-y-6">
+      <main className="mx-auto max-w-2xl px-4 py-6 space-y-4">
         {/* 웹 푸시 알림 섹션 */}
         <WebPushSection />
 
@@ -448,7 +448,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* 이메일 검색 */}
-        <div className="rounded-2xl bg-white p-5 shadow-sm space-y-3">
+        <div className="rounded-2xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] space-y-3">
           <div>
             <h2 className="text-base font-bold text-gray-900">이메일 알림 설정 확인</h2>
             <p className="text-xs text-gray-500 mt-0.5">등록한 이메일로 알림 설정과 매칭 상품을 확인하세요</p>
@@ -460,29 +460,29 @@ export default function NotificationsPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
+              className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-400 focus:bg-white transition-all duration-150"
             />
             <button
               type="button"
               onClick={handleSearch}
               disabled={isLoading || !isValidEmail(email)}
-              className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+              className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-150 shrink-0"
             >
               {isLoading ? "조회 중..." : "확인"}
             </button>
           </div>
           {error && (
-            <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-xs text-red-500 bg-red-50 rounded-xl px-3 py-2 border border-red-100">{error}</p>
           )}
         </div>
 
         {/* 알림 설정 없음 */}
         {hasSearched && !subscription && (
-          <div className="rounded-2xl bg-white p-6 shadow-sm text-center space-y-3">
+          <div className="rounded-2xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)] text-center space-y-3">
             <p className="text-gray-500 text-sm">알림 설정이 없습니다.</p>
             <Link
               href="/"
-              className="inline-block rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors"
+              className="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150"
             >
               알림 설정하러 가기
             </Link>
@@ -491,7 +491,7 @@ export default function NotificationsPage() {
 
         {/* 알림 설정 카드 */}
         {subscription && (
-          <div className="rounded-2xl bg-white p-5 shadow-sm space-y-4">
+          <div className="rounded-2xl bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] space-y-4">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-sm font-bold text-gray-900">현재 이메일 알림 설정</h3>
@@ -501,7 +501,7 @@ export default function NotificationsPage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={isLoading}
-                className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors duration-150"
               >
                 알림 해제
               </button>
@@ -519,7 +519,7 @@ export default function NotificationsPage() {
                       return (
                         <span
                           key={store}
-                          className="rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
+                          className="rounded-full px-2.5 py-0.5 text-xs font-semibold text-white"
                           style={{ backgroundColor: color.primary }}
                         >
                           {store}
@@ -539,7 +539,7 @@ export default function NotificationsPage() {
                     subscription.keywords.map((kw) => (
                       <span
                         key={kw}
-                        className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs text-blue-700"
+                        className="rounded-full bg-gray-100 border border-gray-200 px-2.5 py-0.5 text-xs text-gray-700"
                       >
                         {kw}
                       </span>
@@ -554,19 +554,19 @@ export default function NotificationsPage() {
         {/* 매칭 상품 */}
         {subscription && (
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-gray-700">
+            <h3 className="text-sm font-bold text-gray-900">
               현재 행사 중인 매칭 상품
               {matchingProducts.length > 0 && (
-                <span className="ml-2 text-blue-500">{matchingProducts.length}개</span>
+                <span className="ml-1.5 text-sm font-normal text-gray-400">{matchingProducts.length}개</span>
               )}
             </h3>
 
             {matchingProducts.length === 0 ? (
-              <div className="rounded-2xl bg-white p-6 shadow-sm text-center">
+              <div className="rounded-2xl bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)] text-center">
                 <p className="text-sm text-gray-400">현재 행사 중인 매칭 상품이 없습니다.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
                 {matchingProducts.map((product) => (
                   <ProductCard
                     key={product.id}

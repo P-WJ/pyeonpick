@@ -26,7 +26,7 @@ function highlightMatch(text: string, query: string): React.ReactNode {
   return (
     <>
       {text.slice(0, matchIndex)}
-      <span className="font-bold text-blue-600">
+      <span className="font-bold text-gray-900">
         {text.slice(matchIndex, matchIndex + query.length)}
       </span>
       {text.slice(matchIndex + query.length)}
@@ -110,7 +110,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
   }
 
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm space-y-3">
+    <div className="rounded-2xl bg-white px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] space-y-3">
       {/* 검색 */}
       <div ref={searchContainerRef} className="relative">
         <div className="flex gap-2">
@@ -125,13 +125,13 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               }}
               onKeyDown={handleKeyDown}
               onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-gray-400 focus:bg-white transition-all duration-150"
             />
           </div>
           <button
             type="button"
             onClick={() => submitSearch(inputValue)}
-            className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600 transition-colors shrink-0"
+            className="rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 shrink-0"
           >
             검색
           </button>
@@ -139,14 +139,14 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
 
         {/* 자동완성 드롭다운 */}
         {showSuggestions && suggestions.length > 0 && (
-          <ul className="absolute left-0 right-0 top-full z-50 mt-1 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+          <ul className="absolute left-0 right-0 top-full z-50 mt-1.5 rounded-xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
             {suggestions.map((suggestion, index) => (
               <li
                 key={suggestion}
                 onMouseDown={() => submitSearch(suggestion)}
-                className={`cursor-pointer px-4 py-2.5 text-sm transition-colors ${
+                className={`cursor-pointer px-4 py-2.5 text-sm transition-colors duration-100 ${
                   index === activeSuggestionIndex
-                    ? "bg-blue-50 text-blue-700 font-medium"
+                    ? "bg-gray-50 text-gray-900 font-medium"
                     : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -158,15 +158,15 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 편의점 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
+      <div className="flex overflow-x-auto scrollbar-hide gap-1.5 pb-0.5">
         <button
           type="button"
           onClick={() => handlePillFilterChange("store", "")}
-          className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+          className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
           style={
             filters.store === ""
-              ? { backgroundColor: "#1F2937", color: "#FFFFFF", borderColor: "#1F2937" }
-              : { backgroundColor: "#FFFFFF", color: "#6B7280", borderColor: "#D1D5DB" }
+              ? { backgroundColor: "#111827", color: "#FFFFFF", borderColor: "#111827" }
+              : { backgroundColor: "#F9FAFB", color: "#6B7280", borderColor: "#E5E7EB" }
           }
         >
           전체
@@ -179,7 +179,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               key={store}
               type="button"
               onClick={() => handlePillFilterChange("store", isActive ? "" : store)}
-              className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+              className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
               style={
                 isActive
                   ? {
@@ -190,7 +190,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
                   : {
                       backgroundColor: colors.secondary,
                       color: colors.primary,
-                      borderColor: colors.primary,
+                      borderColor: "transparent",
                     }
               }
             >
@@ -201,15 +201,15 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
       </div>
 
       {/* 행사 유형 필터 */}
-      <div className="flex overflow-x-auto scrollbar-hide gap-2 pb-0.5">
+      <div className="flex overflow-x-auto scrollbar-hide gap-1.5 pb-0.5">
         <button
           type="button"
           onClick={() => handlePillFilterChange("eventType", "")}
-          className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+          className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
           style={
             filters.eventType === ""
-              ? { backgroundColor: "#1F2937", color: "#FFFFFF", borderColor: "#1F2937" }
-              : { backgroundColor: "#FFFFFF", color: "#6B7280", borderColor: "#D1D5DB" }
+              ? { backgroundColor: "#111827", color: "#FFFFFF", borderColor: "#111827" }
+              : { backgroundColor: "#F9FAFB", color: "#6B7280", borderColor: "#E5E7EB" }
           }
         >
           전체 행사
@@ -222,7 +222,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
               key={eventType}
               type="button"
               onClick={() => handlePillFilterChange("eventType", isActive ? "" : eventType)}
-              className="shrink-0 rounded-full border px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+              className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-150 whitespace-nowrap active:scale-[0.97]"
               style={
                 isActive
                   ? {
@@ -231,9 +231,9 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
                       borderColor: "transparent",
                     }
                   : {
-                      backgroundColor: "#FFFFFF",
+                      backgroundColor: "#F9FAFB",
                       color: "#374151",
-                      borderColor: "#D1D5DB",
+                      borderColor: "#E5E7EB",
                     }
               }
             >
@@ -248,7 +248,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
         <select
           value={filters.category}
           onChange={(e) => handlePillFilterChange("category", e.target.value)}
-          className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:border-gray-400 focus:bg-white transition-all duration-150"
         >
           <option value="">전체 카테고리</option>
           {CATEGORIES.map((category) => (

@@ -75,13 +75,13 @@ export function CartDrawer({
           {deletedItemToast}
         </div>
       )}
-      <aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-white shadow-xl">
+      <aside className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl">
         {/* 헤더 */}
-        <div className="flex items-center justify-between border-b px-5 py-4">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-bold text-gray-900">장바구니</h2>
             {totalItemCount > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[11px] font-bold text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-900 text-[11px] font-bold text-white">
                 {totalItemCount}
               </span>
             )}
@@ -89,7 +89,7 @@ export function CartDrawer({
               <button
                 type="button"
                 onClick={onClearCart}
-                className="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1"
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors duration-150 ml-1"
               >
                 비우기
               </button>
@@ -98,7 +98,7 @@ export function CartDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-150"
             aria-label="장바구니 닫기"
           >
             <svg
@@ -119,16 +119,23 @@ export function CartDrawer({
         </div>
 
         {/* 아이템 목록 */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
           {items.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="mb-3 text-5xl">🛒</div>
-              <p className="text-sm font-medium text-gray-500">
-                장바구니가 비어있어요
+            <div className="flex flex-col items-center justify-center py-20 text-center px-8">
+              <div className="mb-4 text-5xl">🛒</div>
+              <p className="font-medium text-gray-900">
+                장바구니가 비었어요
               </p>
-              <p className="mt-1 text-xs text-gray-400">
-                행사 상품을 담아보세요!
+              <p className="mt-1 text-sm text-gray-400">
+                행사 상품을 담아 얼마나 절약되는지 확인해보세요
               </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-4 px-5 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 active:scale-[0.98] transition-all duration-150 min-h-[44px]"
+              >
+                상품 보러가기
+              </button>
             </div>
           )}
           {items.map(({ product, quantity }) => {
@@ -137,14 +144,14 @@ export function CartDrawer({
             return (
               <div
                 key={product.id}
-                className={`flex items-center gap-3 rounded-xl border border-gray-100 p-3 transition-colors duration-300 ${
-                  isHighlighted ? "bg-yellow-50" : "bg-gray-50"
+                className={`flex items-center gap-3 rounded-2xl border p-3 transition-colors duration-300 ${
+                  isHighlighted ? "bg-amber-50 border-amber-100" : "bg-gray-50 border-gray-100"
                 }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span
-                      className="inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold"
+                      className="inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold"
                       style={{
                         backgroundColor: storeColors.secondary,
                         color: storeColors.primary,
@@ -165,7 +172,7 @@ export function CartDrawer({
                   <button
                     type="button"
                     onClick={() => onRemoveItem(product.id)}
-                    className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
+                    className="text-[11px] text-gray-400 hover:text-red-500 transition-colors duration-150"
                   >
                     삭제
                   </button>
@@ -175,17 +182,17 @@ export function CartDrawer({
                       onClick={() =>
                         handleDecrement(product.id, product.name, quantity)
                       }
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 active:scale-[0.95] transition-all duration-150"
                     >
                       −
                     </button>
-                    <span className="w-6 text-center text-sm font-semibold">
+                    <span className="w-7 text-center text-sm font-semibold text-gray-900">
                       {quantity}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleIncrement(product.id, quantity)}
-                      className="flex h-6 w-6 items-center justify-center rounded-md border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 active:scale-[0.95] transition-all duration-150"
                     >
                       +
                     </button>
@@ -197,7 +204,7 @@ export function CartDrawer({
         </div>
 
         {/* 하단 고정 영역 */}
-        <div className="border-t bg-white px-5 py-4 space-y-3">
+        <div className="border-t border-gray-100 bg-white px-5 py-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">총 금액</span>
             <span className="text-lg font-bold text-gray-900">
@@ -214,9 +221,9 @@ export function CartDrawer({
             type="button"
             onClick={onShare}
             disabled={items.length === 0}
-            className="w-full rounded-xl border-2 border-blue-600 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
           >
-            🔗 이 상품 친구에게 공유
+            공유하기
           </button>
         </div>
       </aside>

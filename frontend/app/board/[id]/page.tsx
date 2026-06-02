@@ -282,12 +282,12 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#F8FAFC" }}>
-      <main className="mx-auto max-w-3xl px-4 py-6 space-y-4">
+    <div className="min-h-screen bg-gray-50">
+      <main className="mx-auto max-w-3xl px-4 py-5 space-y-3">
         {/* 뒤로가기 */}
         <Link
           href="/board"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors duration-150 py-1"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -308,15 +308,15 @@ export default function PostDetailPage() {
         {/* 로딩 */}
         {isLoadingPost && (
           <div className="space-y-3">
-            <div className="h-8 w-2/3 animate-pulse rounded-lg bg-gray-200" />
-            <div className="h-4 w-1/3 animate-pulse rounded-lg bg-gray-200" />
-            <div className="h-48 animate-pulse rounded-2xl bg-gray-200" />
+            <div className="h-8 w-2/3 animate-pulse rounded-xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]" />
+            <div className="h-4 w-1/3 animate-pulse rounded-xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]" />
+            <div className="h-48 animate-pulse rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]" />
           </div>
         )}
 
         {/* 에러 */}
         {postError && (
-          <div className="rounded-xl bg-red-50 p-6 text-center text-sm text-red-600 border border-red-100">
+          <div className="rounded-2xl bg-red-50 p-6 text-center text-sm text-red-600 border border-red-100">
             <p>{postError}</p>
             <button
               type="button"
@@ -330,7 +330,7 @@ export default function PostDetailPage() {
 
         {/* 게시글 본문 */}
         {!isLoadingPost && post && (
-          <article className="rounded-2xl bg-white shadow-sm p-6 space-y-4">
+          <article className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] p-5 space-y-4">
             {/* 카테고리 배지 + 수정/삭제 버튼 */}
             <div className="flex items-center justify-between">
               <span
@@ -346,16 +346,16 @@ export default function PostDetailPage() {
                   <button
                     type="button"
                     onClick={enterEditMode}
-                    className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                    className="text-xs text-gray-400 hover:text-gray-700 transition-colors duration-150"
                   >
                     수정
                   </button>
-                  <span className="text-gray-300">|</span>
+                  <span className="text-gray-200">|</span>
                   <button
                     type="button"
                     onClick={handleDeletePost}
                     disabled={isDeletingPost}
-                    className="text-xs text-gray-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-xs text-gray-400 hover:text-red-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isDeletingPost ? "삭제 중..." : "삭제"}
                   </button>
@@ -379,7 +379,7 @@ export default function PostDetailPage() {
                     value={editTitle}
                     onChange={(e) => setEditTitle(e.target.value)}
                     maxLength={POST_TITLE_MAX_LENGTH}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-base font-bold text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-base font-bold text-gray-900 focus:border-gray-400 focus:bg-white focus:outline-none transition-all duration-150"
                   />
                 </div>
                 <div>
@@ -395,7 +395,7 @@ export default function PostDetailPage() {
                     onChange={(e) => setEditContent(e.target.value)}
                     maxLength={POST_CONTENT_MAX_LENGTH}
                     rows={8}
-                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:border-gray-400 focus:bg-white focus:outline-none transition-all duration-150"
                   />
                 </div>
                 {editError && (
@@ -405,7 +405,7 @@ export default function PostDetailPage() {
                   <button
                     type="button"
                     onClick={cancelEditMode}
-                    className="rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                    className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 active:scale-[0.98] transition-all duration-150"
                   >
                     취소
                   </button>
@@ -413,7 +413,7 @@ export default function PostDetailPage() {
                     type="button"
                     onClick={handleSavePost}
                     disabled={isSavingPost}
-                    className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-150"
                   >
                     {isSavingPost ? "저장 중..." : "저장"}
                   </button>
@@ -432,7 +432,7 @@ export default function PostDetailPage() {
                       className="rounded-full"
                     />
                   ) : (
-                    <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
+                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[10px] font-bold">
                       {post.authorNickname[0] ?? "?"}
                     </div>
                   )}
@@ -452,18 +452,23 @@ export default function PostDetailPage() {
 
         {/* 댓글 섹션 */}
         {!isLoadingPost && post && (
-          <section className="rounded-2xl bg-white shadow-sm p-6 space-y-4">
+          <section className="rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)] p-5 space-y-4">
             <h2 className="text-base font-bold text-gray-900">
-              댓글 {post.commentCount > 0 ? post.commentCount : ""}
+              댓글
+              {post.commentCount > 0 && (
+                <span className="ml-1.5 text-sm font-normal text-gray-400">
+                  {post.commentCount}
+                </span>
+              )}
             </h2>
 
             {/* 댓글 목록 */}
             {isLoadingComments ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {Array.from({ length: 2 }).map((_, index) => (
                   <div
                     key={index}
-                    className="h-14 animate-pulse rounded-xl bg-gray-100"
+                    className="h-14 animate-pulse rounded-xl bg-gray-50"
                   />
                 ))}
               </div>
@@ -492,7 +497,7 @@ export default function PostDetailPage() {
                               className="rounded-full"
                             />
                           ) : (
-                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-[10px] font-bold">
+                            <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[10px] font-bold">
                               {comment.authorNickname[0] ?? "?"}
                             </div>
                           )}
@@ -508,7 +513,7 @@ export default function PostDetailPage() {
                             type="button"
                             onClick={() => handleDeleteComment(comment.id)}
                             disabled={isDeletingThisComment}
-                            className="text-xs text-red-400 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="text-xs text-gray-400 hover:text-red-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isDeletingThisComment ? "삭제 중..." : "삭제"}
                           </button>
@@ -527,7 +532,7 @@ export default function PostDetailPage() {
             {session?.user ? (
               <form
                 onSubmit={handleSubmitComment}
-                className="space-y-2 pt-2 border-t border-gray-100"
+                className="space-y-2 pt-3 border-t border-gray-100"
               >
                 <textarea
                   value={commentText}
@@ -535,7 +540,7 @@ export default function PostDetailPage() {
                   maxLength={COMMENT_MAX_LENGTH}
                   placeholder="댓글을 입력해주세요"
                   rows={3}
-                  className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:bg-white focus:outline-none transition-all duration-150"
                 />
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">
@@ -544,7 +549,7 @@ export default function PostDetailPage() {
                   <button
                     type="submit"
                     disabled={isSubmittingComment}
-                    className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] transition-all duration-150"
                   >
                     {isSubmittingComment ? "등록 중..." : "댓글 등록"}
                   </button>
@@ -554,17 +559,16 @@ export default function PostDetailPage() {
                 )}
               </form>
             ) : (
-              <div className="pt-2 border-t border-gray-100 text-center py-4">
-                <p className="text-sm text-gray-500">
-                  댓글을 작성하려면{" "}
-                  <Link
-                    href="/api/auth/signin"
-                    className="text-blue-600 font-medium underline"
-                  >
-                    로그인
-                  </Link>
-                  이 필요합니다.
+              <div className="pt-3 border-t border-gray-100 text-center py-5">
+                <p className="text-sm text-gray-500 mb-3">
+                  댓글을 작성하려면 로그인이 필요합니다.
                 </p>
+                <Link
+                  href="/api/auth/signin"
+                  className="inline-flex items-center rounded-xl bg-[#FEE500] px-5 py-2.5 text-sm font-semibold text-[#191919] hover:opacity-90 active:scale-[0.98] transition-all duration-150"
+                >
+                  카카오 로그인
+                </Link>
               </div>
             )}
           </section>
