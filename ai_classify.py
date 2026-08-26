@@ -17,7 +17,8 @@ from crawler.infrastructure.repository import _get_supabase_client
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-MODEL = 'llama-3.1-8b-instant'  # TPD 500,000 / RPD 14,400 — 대량 분류에 적합
+# llama-3.1-8b-instant는 Groq에서 Enterprise 전용으로 바뀌어 일반 키로는 404가 난다.
+MODEL = os.environ.get('GROQ_MODEL', '').strip() or 'openai/gpt-oss-20b'
 BATCH_SIZE = 45
 SLEEP_BETWEEN_BATCHES = 3   # 분당 20회 (8B TPM 131,072 기준 여유)
 MAX_RETRIES = 3

@@ -262,6 +262,29 @@ UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소�
   - `badge-72x72`: 안드로이드 상태바는 단색 마스크로 렌더링하므로 **배경 투명 + 흰 실루엣**, lucide `bell`
 - 프론트에 `lucide-react` 도입, `PushNotificationBell.tsx`의 수제 SVG 3종을 `Bell` / `BellOff` 로 교체 (차단 상태의 ✕ 오버레이 핵 제거)
 
+### 첫 실측 실행에서 드러난 결함 (run 2026-08-26 06:50, 로그 기준)
+
+CI 복구 후 처음으로 크롤러가 DB까지 도달했고(`기존 상품 8558건 확인` → `149개 upsert`), 그 과정에서 가려져 있던 결함이 드러났다.
+
+- **🔴 `URL component 'query' too long` — CU·이마트24 전멸**
+  `ai_classifier._fetch_existing_categories`가 상품명 전체를 `.in_("name", names)` 한 번에 넣어 GET 쿼리스트링을 만든다. 상품 수가 적은 씨스페이스(150개)는 통과했지만 CU·이마트24는 URL 길이 제한에 걸려 편의점 단위로 실패. 크롤링 자체는 성공했고 분류 단계에서 죽은 것
+  → `NAME_QUERY_CHUNK_SIZE=100` 단위로 나눠 조회 후 병합
+- **🔴 Groq 404 — AI 분류·AI 추천 양쪽 사망**
+  `llama-3.1-8b-instant`가 Groq에서 **Enterprise 전용**으로 바뀌어 일반 키로는 `404 Not Found`
+  → 기본 모델을 `openai/gpt-oss-20b`로 교체하고, 재발에 대비해 **`GROQ_MODEL` 환경변수로 덮어쓸 수 있게** 함 (`ai_classifier.py`, `ai_classify.py`, `llm.ts` 3곳)
+  → 4xx 응답 본문을 로그에 남기도록 보강 (`raise_for_status()`가 사유를 삼키고 있었음)
+- **🟡 세븐일레븐 초기 페이지 타임아웃 — 4개 탭 전부 0개**
+  30초 타임아웃 후 빈 에러 메시지. 로컬에서 같은 요청은 2.1초에 200 → **GitHub Actions 데이터센터 IP 차단/스로틀로 추정**
+  → 초기 페이지 요청에 3회 재시도(5·10초 백오프) 추가, 로그에 예외 클래스명 출력하도록 수정 (`ReadTimeout`인지 `ConnectTimeout`인지 구분되게)
+- **🟡 씨스페이스 일부 페이지 `Server disconnected`** — 간헐적. 150개는 정상 수집되어 우선 관찰만
+
+### 🔴 GS25 사이트 개편 — 크롤러 재작성 필요 (미해결)
+
+- `gs25.gsretail.com/gscvs/...` → `www.gsretail.com` 으로 **301 이전**, 새 사이트는 Vue SPA
+- 옛 AJAX 엔드포인트(`event-goods-search`)는 모든 경로에 SPA 셸 HTML을 반환 — JSON API가 아님
+- 번들에서 확인된 API 프리픽스는 `/api/gsapi/...` 이나 행사상품 엔드포인트는 지연 로딩 청크에 있어 정적 분석으로는 못 찾음
+- **다음 작업**: 브라우저로 실제 행사상품 페이지를 열고 네트워크 탭에서 호출되는 API를 캡처해 `gs25.py` 재작성
+
 ### Railway 잔재 제거
 - 삭제: `railway.toml`, `crawler/Dockerfile`
 - `crawler/main.py`: APScheduler 상주 스케줄러 → **1회 실행 진입점**으로 재작성. 실패한 편의점이 있으면 exit code 1

@@ -13,8 +13,14 @@ from crawler.infrastructure.repository import _get_supabase_client
 logger = logging.getLogger(__name__)
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL = "llama-3.1-8b-instant"
+# llama-3.1-8b-instant는 Groq에서 Enterprise 전용으로 바뀌어 일반 키로는 404가 난다.
+# 모델 교체가 잦으므로 GROQ_MODEL 환경변수로 덮어쓸 수 있게 둔다.
+DEFAULT_MODEL = "openai/gpt-oss-20b"
+MODEL = os.environ.get("GROQ_MODEL", "").strip() or DEFAULT_MODEL
 BATCH_SIZE = 80
+# Supabase는 GET 쿼리스트링으로 필터를 보내므로 이름을 한 번에 다 넣으면
+# URL 길이 제한("URL component 'query' too long")에 걸린다. 나눠서 조회한다.
+NAME_QUERY_CHUNK_SIZE = 100
 SLEEP_BETWEEN_BATCHES = 2.5
 MAX_RETRIES = 5
 
@@ -91,6 +97,12 @@ def _classify_batch(names: list[str], api_key: str) -> dict[int, str]:
             logger.warning("Groq rate limit, %d초 대기", wait)
             time.sleep(wait)
             continue
+        if response.status_code >= 400:
+            # 404는 대개 모델이 계정에서 사용 불가한 경우 — 본문에 사유가 들어 있다
+            logger.error(
+                "Groq 응답 오류 (HTTP %d, model=%s): %s",
+                response.status_code, MODEL, response.text[:300],
+            )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"].strip()
         return _parse_response(content, len(names))
@@ -99,19 +111,28 @@ def _classify_batch(names: list[str], api_key: str) -> dict[int, str]:
 
 
 def _fetch_existing_categories(store: str, names: list[str]) -> dict[str, str]:
-    """DB에서 해당 편의점의 기존 카테고리를 조회해 {상품명: 카테고리} 반환."""
+    """DB에서 해당 편의점의 기존 카테고리를 조회해 {상품명: 카테고리} 반환.
+
+    상품명이 많으면 URL 길이 제한에 걸리므로 NAME_QUERY_CHUNK_SIZE 단위로 나눠 조회한다.
+    """
     if not names:
         return {}
     client = _get_supabase_client()
-    result = (
-        client.table("products")
-        .select("name, category")
-        .eq("store", store)
-        .in_("name", names)
-        .neq("category", "기타")
-        .execute()
-    )
-    return {row["name"]: row["category"] for row in result.data or []}
+    existing: dict[str, str] = {}
+
+    for start in range(0, len(names), NAME_QUERY_CHUNK_SIZE):
+        chunk = names[start: start + NAME_QUERY_CHUNK_SIZE]
+        result = (
+            client.table("products")
+            .select("name, category")
+            .eq("store", store)
+            .in_("name", chunk)
+            .neq("category", "기타")
+            .execute()
+        )
+        existing.update({row["name"]: row["category"] for row in result.data or []})
+
+    return existing
 
 
 def classify_products(products: list[Product]) -> None:

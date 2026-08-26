@@ -1,6 +1,9 @@
 // Groq API를 사용한 AI 텍스트 생성 (초기에는 Gemini를 썼으나 quota 문제로 교체)
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.1-8b-instant"; // TPD 500,000 — 70b-versatile(TPD 1,000)은 상품 목록 1회 요청도 불가
+// llama-3.1-8b-instant는 Groq에서 Enterprise 전용으로 바뀌어 일반 키로는 404가 난다.
+// 모델 교체가 잦으므로 GROQ_MODEL 환경변수로 덮어쓸 수 있게 둔다.
+const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
+const GROQ_MODEL = process.env.GROQ_MODEL?.trim() || DEFAULT_GROQ_MODEL;
 const MAX_RETRIES = 3;
 const RETRY_DELAY_BASE_MS = 1000;
 

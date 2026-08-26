@@ -33,7 +33,8 @@ UI 활성화: `NEXT_PUBLIC_ENABLE_AI_RECOMMEND=true` 환경변수 설정 시 노
 
 ```typescript
 // infrastructure/llm.ts
-const GROQ_MODEL = "llama-3.1-8b-instant"; // 70b-versatile은 TPD 1,000이라 사용 불가
+const GROQ_MODEL = process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-20b";
+// llama-3.1-8b-instant는 Enterprise 전용으로 바뀌어 일반 키로는 404
 ```
 `GROQ_API_KEY` 환경변수 필요 (카테고리 분류와 공용).
 
@@ -45,7 +46,7 @@ export async function generateTextFromPrompt(prompt: string): Promise<string>
 // POST https://api.groq.com/openai/v1/chat/completions
 // system: "You are a Korean convenience store shopping expert..."
 // user: prompt
-// model: llama-3.1-8b-instant
+// model: openai/gpt-oss-20b (GROQ_MODEL 환경변수로 교체 가능)
 // temperature: 0.7, max_tokens: 2048
 // 429 시 선형 백오프 재시도 (RETRY_DELAY_BASE_MS * (attempt+1), 최대 3회)
 ```

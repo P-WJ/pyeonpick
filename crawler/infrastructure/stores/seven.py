@@ -158,16 +158,38 @@ def _extract_list_page(html: str) -> int:
     return 1
 
 
+INITIAL_PAGE_RETRIES = 3
+
+
 async def _fetch_initial_page(client: httpx.AsyncClient, p_tab: str) -> str:
-    """pTab 값으로 초기 상품 목록 페이지를 POST 요청해 반환한다."""
+    """pTab 값으로 초기 상품 목록 페이지를 POST 요청해 반환한다.
+
+    첫 요청이 타임아웃으로 실패하는 일이 잦아(특히 데이터센터 IP) 재시도한다.
+    """
     data = {"pTab": p_tab}
     headers = {
         "Referer": BASE_URL,
         "Content-Type": "application/x-www-form-urlencoded",
     }
-    response = await client.post(BASE_URL, data=data, headers=headers)
-    response.raise_for_status()
-    return response.text
+
+    last_error: httpx.HTTPError | None = None
+    for attempt in range(INITIAL_PAGE_RETRIES):
+        try:
+            response = await client.post(BASE_URL, data=data, headers=headers)
+            response.raise_for_status()
+            return response.text
+        except httpx.HTTPError as error:
+            last_error = error
+            wait = 5 * (attempt + 1)
+            logger.warning(
+                "세븐일레븐 pTab=%s 초기 페이지 %d번째 시도 실패(%s) — %d초 후 재시도",
+                p_tab, attempt + 1, type(error).__name__, wait,
+            )
+            if attempt < INITIAL_PAGE_RETRIES - 1:
+                await asyncio.sleep(wait)
+
+    assert last_error is not None
+    raise last_error
 
 
 async def _fetch_more_items(
@@ -206,7 +228,10 @@ async def _collect_tab_products(
     try:
         initial_html = await _fetch_initial_page(client, p_tab)
     except httpx.HTTPError as error:
-        logger.error("세븐일레븐 pTab=%s 초기 페이지 요청 실패: %s", p_tab, error)
+        logger.error(
+            "세븐일레븐 pTab=%s 초기 페이지 요청 실패: %s: %s",
+            p_tab, type(error).__name__, error,
+        )
         return []
 
     all_products = _parse_items_from_html(initial_html, event_type_label, valid_from, valid_to)

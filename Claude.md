@@ -59,7 +59,7 @@ PyeonPick/
 │   │   ├── ai_classifier.py   # Groq AI 카테고리 분류
 │   │   └── repository.py
 │   └── use_cases/
-├── ai_classify.py             # 기존 상품 일괄 재분류 스크립트 (Groq llama-3.1-8b-instant)
+├── ai_classify.py             # 기존 상품 일괄 재분류 스크립트 (Groq, GROQ_MODEL 환경변수)
 ├── .claude/agents/            # 서브에이전트 정의
 └── docs/                      # 스키마, 크롤링 특성, 진행 현황
 ```
@@ -88,8 +88,8 @@ PyeonPick/
 | 크롤러     | Python 3.11+, Playwright, httpx, pywebpush        |
 | DB         | PostgreSQL (Supabase)                             |
 | 알림       | 웹 푸시 (Web Push API + VAPID) — 카카오·이메일 미사용 |
-| AI 분류    | Groq API (llama-3.1-8b-instant)                   |
-| AI 추천    | Groq API (llama-3.1-8b-instant)                   |
+| AI 분류    | Groq API (`openai/gpt-oss-20b`, GROQ_MODEL로 교체) |
+| AI 추천    | Groq API (`openai/gpt-oss-20b`, GROQ_MODEL로 교체) |
 | 배포       | Vercel (프론트), GitHub Actions (크롤러 스케줄)   |
 
 ## 상품 카테고리 시스템
@@ -120,7 +120,7 @@ PyeonPick/
 | frontend | Next.js UI 컴포넌트·페이지·API Route |
 | db-api | DB 스키마·마이그레이션·API Route |
 | notifier | 알림 발송 로직 (웹 푸시) |
-| ai-recommender | Groq AI 추천 기능 (llama-3.1-8b-instant) |
+| ai-recommender | Groq AI 추천 기능 (`openai/gpt-oss-20b`) |
 | reviewer | 코드 리뷰 (Read-only — Read/Glob/Grep만 부여) |
 | ux-auditor | UX 감사·기능 누락 탐지 (Read-only — Read/Glob/Grep만 부여) |
 | ui-designer | 반응형 UI 디자인 구현 |
@@ -147,6 +147,7 @@ AUTH_KAKAO_ID                      # 카카오 로그인 (알림 아님)
 AUTH_KAKAO_SECRET
 AUTH_SECRET
 GROQ_API_KEY                       # AI 추천 + 카테고리 분류 공용
+GROQ_MODEL                         # (선택) 기본값 openai/gpt-oss-20b
 NEXT_PUBLIC_ENABLE_AI_RECOMMEND    # true 시 AI 추천 배너 노출
 NEXT_PUBLIC_VAPID_PUBLIC_KEY       # 웹 푸시 구독용 VAPID 공개키
 ```
@@ -156,6 +157,7 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY       # 웹 푸시 구독용 VAPID 공개키
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 GROQ_API_KEY
+GROQ_MODEL                         # (선택) 기본값 openai/gpt-oss-20b
 VAPID_PRIVATE_KEY                  # 웹 푸시 발송용 VAPID 비밀키
 VAPID_SUBJECT                      # mailto: 형식 연락처
 ```

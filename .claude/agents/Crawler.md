@@ -55,7 +55,7 @@ class Product:
 유효 카테고리 5개: `음료`, `과자`, `식품`, `아이스크림`, `생활용품`
 
 **신규 상품 분류:** 크롤링 후 `ai_classifier.py`의 `classify_products()` 호출
-- Groq API (`llama-3.1-8b-instant`) 사용
+- Groq API (`openai/gpt-oss-20b`, `GROQ_MODEL` 환경변수로 교체) 사용
 - 크롤링 중 신규 분류(`ai_classifier.py`): 배치 80개, 배치 간 2.5초
 - 기존 상품 일괄 재분류(루트 `ai_classify.py`): 배치 45개, 배치 간 3초 (TPM 여유 확보용)
 
@@ -94,5 +94,5 @@ class Product:
 - Python 3.11+, Playwright (async), httpx, BeautifulSoup4
 - Package manager: `uv`
 - DB: Supabase (supabase-py)
-- AI 분류: Groq API (`llama-3.1-8b-instant`)
+- AI 분류: Groq API (`openai/gpt-oss-20b`)
 - 스케줄: GitHub Actions (매월 1일·15일 09:00 KST — `cron: '0 0 1,15 * *'`)
