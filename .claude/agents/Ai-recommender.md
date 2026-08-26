@@ -15,7 +15,7 @@ You are the AI recommendation specialist for 편픽(PyeonPick).
 | AiRecommendModal.tsx | ✅ 완성 |
 | domain/entities/recommendation.ts | ✅ 완성 |
 | domain/use-cases/recommend.ts | ✅ 완성 |
-| infrastructure/gemini.ts | ✅ 완성 (Groq API 사용, 파일명만 gemini.ts 유지) |
+| infrastructure/llm.ts | ✅ 완성 (Groq API 래퍼, 구 `gemini.ts`) |
 | app/api/ai/recommend/route.ts | ✅ 완성 |
 
 UI 활성화: `NEXT_PUBLIC_ENABLE_AI_RECOMMEND=true` 환경변수 설정 시 노출.
@@ -24,7 +24,7 @@ UI 활성화: `NEXT_PUBLIC_ENABLE_AI_RECOMMEND=true` 환경변수 설정 시 노
 
 - `frontend/app/api/ai/recommend/route.ts` — API Route
 - `frontend/domain/use-cases/recommend.ts` — 프롬프트 빌드 + 결과 파싱
-- `frontend/infrastructure/gemini.ts` — Groq API 래퍼 (함수명: `generateTextFromPrompt`)
+- `frontend/infrastructure/llm.ts` — Groq API 래퍼 (함수명: `generateTextFromPrompt`)
 - `frontend/domain/entities/recommendation.ts` — 타입 정의
 - `frontend/app/components/AiBanner.tsx` — 배너 UI
 - `frontend/app/components/AiRecommendModal.tsx` — 모달 UI
@@ -32,21 +32,22 @@ UI 활성화: `NEXT_PUBLIC_ENABLE_AI_RECOMMEND=true` 환경변수 설정 시 노
 ## AI 모델
 
 ```typescript
-// infrastructure/gemini.ts (내부는 Groq)
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+// infrastructure/llm.ts
+const GROQ_MODEL = "llama-3.1-8b-instant"; // 70b-versatile은 TPD 1,000이라 사용 불가
 ```
 `GROQ_API_KEY` 환경변수 필요 (카테고리 분류와 공용).
 
 ## Groq 클라이언트
 
 ```typescript
-// infrastructure/gemini.ts
+// infrastructure/llm.ts
 export async function generateTextFromPrompt(prompt: string): Promise<string>
 // POST https://api.groq.com/openai/v1/chat/completions
 // system: "You are a Korean convenience store shopping expert..."
 // user: prompt
-// model: llama-3.3-70b-versatile
+// model: llama-3.1-8b-instant
 // temperature: 0.7, max_tokens: 2048
+// 429 시 선형 백오프 재시도 (RETRY_DELAY_BASE_MS * (attempt+1), 최대 3회)
 ```
 
 ## API Route 구조

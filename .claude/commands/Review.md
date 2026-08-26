@@ -9,8 +9,8 @@
 3. `crawler/infrastructure/ai_classifier.py` — Groq AI 분류 로직
 4. `crawler/use_cases/` — 크롤링·알림 오케스트레이션
 5. `frontend/domain/` — 엔티티·순수 함수 (product, cart, post, recommendation)
-6. `frontend/infrastructure/` — Repository, Supabase, Gemini 클라이언트
-7. `frontend/app/api/` — API Route 얇은지 확인 (products, subscriptions, posts, ai/recommend)
+6. `frontend/infrastructure/` — Repository, Supabase, `llm.ts`(Groq 래퍼)
+7. `frontend/app/api/` — API Route 얇은지 확인 (products, push, posts, ai/recommend)
 8. `frontend/app/components/` — 컴포넌트 품질
 9. `frontend/app/board/` — 게시판 페이지·컴포넌트
 10. `frontend/app/products/` — 상품 상세 페이지

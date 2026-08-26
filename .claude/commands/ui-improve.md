@@ -34,4 +34,4 @@
 
 ## 작업 완료 조건
 
-각 작업 완료 후 `pnpm tsc --noEmit` 확인.
+각 작업 완료 후 `npx tsc --noEmit` 확인.

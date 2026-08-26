@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import type { Store } from "@/domain/entities/product";
 import type { RecommendationResult } from "@/domain/entities/recommendation";
 import { buildRecommendationPrompt, parseRecommendationResponse } from "@/domain/use-cases/recommend";
-import { generateTextFromPrompt } from "@/infrastructure/gemini";
+import { generateTextFromPrompt } from "@/infrastructure/llm";
 import { getProducts } from "@/app/use-cases/get-products";
 
 const MAX_PRODUCTS_FOR_AI = 50;

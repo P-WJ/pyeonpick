@@ -1,6 +1,9 @@
 # 진행 현황
 
-## 현재 단계: UX 고도화 3단계 진행 중 (비교 본질 보강) / v1.3 진행 예정
+## 현재 단계: UX 고도화 3단계까지 완료 / v1.3 미착수
+
+- 마지막 기능 개발: **2026-06-03**
+- 마지막 문서·정합성 정리: **2026-08-26** (아래 최하단 항목)
 
 ---
 
@@ -190,8 +193,34 @@ UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소�
 
 ---
 
-## v1.3 — 진행 예정
+## v1.3 — 미착수
 
 - ~~카카오 알림톡 전환~~ / ~~Resend 이메일~~ → **둘 다 취소 (2026-06-03)**: 알림은 **웹 푸시**로 운영
 - 알림 설정 수정 기능 추가 (현재 해제만 가능)
 - 이메일 구독 잔재 제거 — ✅ 완료 (2026-06-03, 위 참조). `subscriptions`/`notifications_sent` 테이블만 수동 드롭 남음(선택)
+
+---
+
+## 문서·코드 정합성 정리 — 완료 (2026-08-26)
+
+기능 변경 없음. 문서가 코드보다 뒤처져 생긴 불일치만 정리.
+
+### 코드
+- `frontend/infrastructure/gemini.ts` → **`llm.ts` 리네임** (내용은 처음부터 Groq 래퍼였음). import 지점은 `api/ai/recommend/route.ts` 1곳뿐
+- `reviewer` / `ux-auditor` 에이전트에서 **`Bash` 도구 제거** — `Read, Glob, Grep`만 부여. Bash가 있으면 `sed` 등으로 파일 수정이 가능해 "읽기 전용" 격리가 실제로는 성립하지 않았음
+- `domain/use-cases/recommend.ts` — `MAX_PRODUCTS_IN_PROMPT`(100)가 실효 상한이 아님을 주석으로 명시 (실제 상한은 route의 `MAX_PRODUCTS_FOR_AI` = 50)
+
+### 문서
+- 모델명 통일: 문서 곳곳의 `llama-3.3-70b-versatile` → 실제 코드값 **`llama-3.1-8b-instant`** (`Claude.md`, `Ai-recommender.md`, `Crawler.md`, `V1.2-start.md`). 단, `progress.md`의 과거 기록은 이력이므로 보존
+- 패키지 매니저 통일: `pnpm tsc` → `npx tsc` (`Frontend.md`, `ui-designer.md`, `ui-improve.md`, `Mvp-start.md`). `Claude.md`의 "pnpm 사용 금지" 규칙과 충돌하던 부분
+- 배치 크기 표기 정정: 크롤링 중 분류 80개/2.5초, 일괄 재분류 스크립트 45개/3초 — 서로 다른 값임을 명시
+- 이메일 구독 잔재 표기 제거: `Frontend.md`, `Db-api.md`, `Notifier.md`, `ui-designer.md`, `V1.1-start.md`, `Review.md` (`SubscribeForm`, `/api/subscriptions`, `subscriptions` 테이블 → 웹 푸시 기준으로 교체)
+- 구현 현황표 갱신: 찜하기·최근 본 상품·프로필·공유링크 자동 불러오기·AI 추천이 `❌ 미구현`으로 남아 있던 것 → `✅`
+- 상태 표기: "진행 중" → 완료일 명시 (`Claude.md`, `progress.md`)
+
+### 파일 정리
+- `.claude/agents/Clawler.md` → `Crawler.md` (오타)
+- `.claude/agents/ui-improve.md`, `ux-audit.md` → `.claude/commands/` 로 이동 (에이전트가 아니라 커맨드였음)
+
+### 검증
+- `npx tsc --noEmit` 통과

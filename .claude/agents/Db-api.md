@@ -23,15 +23,13 @@ products (
   image_url, valid_from, valid_to, created_at, updated_at, description
 )
 
--- 구독
-subscriptions (
-  id, email, keywords[], stores[], created_at, unsubscribe_token
+-- 웹 푸시 구독 (docs/migrations/004_push_subscriptions.sql)
+push_subscriptions (
+  id, endpoint UNIQUE, p256dh, auth, keywords[], stores[], created_at
 )
 
--- 알림 발송 기록 (중복 방지)
-notifications_sent (
-  id, subscription_id, product_id, sent_at
-)
+-- legacy: 이메일 기반 subscriptions / notifications_sent 는 2026-06-03 코드에서 제거됨
+--         (Supabase에 테이블만 남아 있을 수 있음 — 수동 드롭 대상)
 
 -- 게시판
 posts (
@@ -103,8 +101,12 @@ client.table('products').upsert(
 | `/api/products` | GET | 상품 목록 (필터, 페이지네이션) |
 | `/api/products/[id]` | GET | 상품 상세 |
 | `/api/products/suggestions` | GET | 검색 자동완성 |
-| `/api/subscriptions` | POST/GET/DELETE | 알림 구독 |
+| `/api/products/stats` | GET | 진행 중 행사 실시간 집계 |
+| `/api/products/by-ids` | GET | id 목록으로 상품 조회 (공유 링크 복원) |
+| `/api/push/subscribe` | POST | 웹 푸시 구독 등록 |
+| `/api/push/subscription` | GET | 구독 상태 조회 |
+| `/api/push/unsubscribe` | POST | 구독 해제 |
 | `/api/posts` | GET/POST | 게시글 목록/작성 |
 | `/api/posts/[id]` | GET | 게시글 상세 |
 | `/api/posts/[id]/comments` | GET/POST | 댓글 |
-| `/api/ai/recommend` | POST | AI 추천 (백엔드 미완성) |
+| `/api/ai/recommend` | POST | AI 추천 (Groq, 5분 `unstable_cache`) |

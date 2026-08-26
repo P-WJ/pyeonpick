@@ -45,7 +45,7 @@ PyeonPick/
 │   ├── infrastructure/
 │   │   ├── repositories/      # product, push-subscription, post
 │   │   ├── supabase.ts
-│   │   └── gemini.ts          # Groq API 래퍼 (파일명 유지, 내부는 Groq)
+│   │   └── llm.ts             # Groq API 래퍼 (구 gemini.ts, 2026-08-26 리네임)
 │   └── app/
 │       ├── components/        # Header, ProductCard, CartDrawer, FilterBar, StoreComparison, PushNotificationBell, AiBanner 등
 │       ├── products/[id]/     # 상품 상세
@@ -59,14 +59,14 @@ PyeonPick/
 │   │   ├── ai_classifier.py   # Groq AI 카테고리 분류
 │   │   └── repository.py
 │   └── use_cases/
-├── ai_classify.py             # 기존 상품 일괄 재분류 스크립트 (Groq llama-3.3-70b)
+├── ai_classify.py             # 기존 상품 일괄 재분류 스크립트 (Groq llama-3.1-8b-instant)
 ├── .claude/agents/            # 서브에이전트 정의
 └── docs/                      # 스키마, 크롤링 특성, 진행 현황
 ```
 
 ## 개발 단계
 
-**현재 단계: v1.1 완료 / 기능 고도화 진행 중**
+**현재 단계: 고도화 3단계까지 완료 (마지막 작업 2026-06-03) / v1.3 미착수**
 
 | 단계 | 기능 | 상태 |
 | ---- | ---- | ---- |
@@ -75,8 +75,8 @@ PyeonPick/
 | 고도화 1단계 | 공유 링크 자동 불러오기, 찜하기, UI 폴리싱 | ✅ 완료 |
 | 고도화 2단계 | 최근 본 상품, 프로필 페이지, 게시글 수정/삭제 | ✅ 완료 |
 | v1.2 | AI 조합 추천 (Groq API) | ✅ 완료 |
-| 고도화 3단계 | 실통계·개당가·정렬·D-day (비교 본질 보강) | 🔄 진행 중 |
-| v1.3 | 알림 설정 수정 (웹 푸시) | 🔜 진행 예정 |
+| 고도화 3단계 | 실통계·개당가·정렬·D-day + 매장 간 가격 비교 | ✅ 완료 (2026-06-03) |
+| v1.3 | 알림 설정 수정 (웹 푸시) | ⬜ 미착수 |
 
 ## 기술 스택
 
@@ -88,8 +88,8 @@ PyeonPick/
 | 크롤러     | Python 3.11+, Playwright, httpx, APScheduler      |
 | DB         | PostgreSQL (Supabase)                             |
 | 알림       | 웹 푸시 (Web Push API + VAPID) — 카카오·이메일 미사용 |
-| AI 분류    | Groq API (llama-3.3-70b-versatile)                |
-| AI 추천    | Groq API (llama-3.3-70b-versatile)                |
+| AI 분류    | Groq API (llama-3.1-8b-instant)                   |
+| AI 추천    | Groq API (llama-3.1-8b-instant)                   |
 | 배포       | Vercel (프론트), GitHub Actions (크롤러 스케줄)   |
 
 ## 상품 카테고리 시스템
@@ -118,11 +118,14 @@ PyeonPick/
 | -------- | ---- |
 | crawler | 편의점 크롤러 작성·디버깅 |
 | frontend | Next.js UI 컴포넌트·페이지·API Route |
+| db-api | DB 스키마·마이그레이션·API Route |
 | notifier | 알림 발송 로직 (웹 푸시) |
-| ai-recommender | Groq AI 추천 기능 (llama-3.3-70b) |
-| reviewer | 코드 리뷰 (Read-only) |
-| ux-auditor | UX 감사·기능 누락 탐지 (Read-only) |
+| ai-recommender | Groq AI 추천 기능 (llama-3.1-8b-instant) |
+| reviewer | 코드 리뷰 (Read-only — Read/Glob/Grep만 부여) |
+| ux-auditor | UX 감사·기능 누락 탐지 (Read-only — Read/Glob/Grep만 부여) |
 | ui-designer | 반응형 UI 디자인 구현 |
+
+커맨드(`.claude/commands/`): `Mvp-start`, `Review`, `ux-audit`, `ui-improve`, `V1.1-start`, `V1.2-start`
 
 ## 개발 규칙
 
@@ -162,8 +165,8 @@ VAPID_SUBJECT                      # mailto: 형식 연락처
 | 키 | 용도 |
 |----|------|
 | `cvs-cart-v1` | 장바구니 |
-| `cvs-wishlist-v1` | 찜 목록 (예정) |
-| `cvs-recently-viewed-v1` | 최근 본 상품 (예정) |
+| `cvs-wishlist-v1` | 찜 목록 |
+| `cvs-recently-viewed-v1` | 최근 본 상품 |
 
 ## 디자인 시스템
 

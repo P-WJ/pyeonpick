@@ -29,7 +29,8 @@ frontend/app/components/FilterBar.tsx
 frontend/app/components/LoadingSpinner.tsx
 frontend/app/components/SavingsBadge.tsx
 frontend/app/components/EventBadge.tsx
-frontend/app/components/SubscribeForm.tsx
+frontend/app/components/PushNotificationBell.tsx
+frontend/app/components/StoreComparison.tsx
 frontend/app/components/AiBanner.tsx
 frontend/app/components/AiRecommendModal.tsx
 frontend/app/board/components/BoardHeader.tsx
@@ -248,26 +249,17 @@ export const EVENT_COLORS = {
 </div>
 ```
 
-### SubscribeForm.tsx
+### PushNotificationBell.tsx
 ```tsx
-// 2단계 폼 — 진행 상태 표시
-<div className="flex gap-2 mb-6">
-  <div className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-gray-900' : 'bg-gray-200'}`} />
-  <div className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-gray-900' : 'bg-gray-200'}`} />
-</div>
+// 권한 상태 3가지를 모두 시각적으로 구분 — default / granted / denied
+// denied면 버튼을 죽이지 말고 "브라우저 설정에서 허용 필요" 안내를 노출
 ```
 
-### AiBanner.tsx — AI 미완성 시 처리
+### AiBanner.tsx — 미완성 기능 게이팅 원칙
 ```tsx
-// Gemini API quota 문제 등으로 미완성일 때 — 노출하되 비활성화
-<div className="relative bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl p-4 text-white opacity-75">
-  <span className="absolute top-2 right-2 text-xs bg-white/20 px-2 py-0.5 rounded-full">준비 중</span>
-  <p className="font-bold">AI 조합 추천</p>
-  <p className="text-sm text-white/80 mt-1">예산에 맞는 최적의 상품 조합을 추천해드려요</p>
-  <button disabled className="mt-3 px-4 py-2 bg-white/20 rounded-xl text-sm font-medium cursor-not-allowed">
-    곧 오픈 예정
-  </button>
-</div>
+// AI 추천은 v1.2에서 완성됨. 노출 여부는 환경변수 플래그로만 제어한다.
+// NEXT_PUBLIC_ENABLE_AI_RECOMMEND !== "true" 이면 배너 자체를 렌더링하지 않는다.
+// (미완성 기능을 "준비 중" 상태로 노출하지 않는다 — UX 감사 🔴 지적 사항)
 ```
 
 ## 반응형 체크리스트 (작업 완료 후 반드시 확인)
@@ -293,6 +285,6 @@ export const EVENT_COLORS = {
 
 각 컴포넌트 수정 후:
 ```bash
-cd frontend && pnpm tsc --noEmit
+cd frontend && npx tsc --noEmit
 ```
 타입 에러 없으면 완료.

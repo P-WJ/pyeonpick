@@ -1,6 +1,7 @@
 import type { Product } from "@/domain/entities/product";
 import type { RecommendationResult } from "@/domain/entities/recommendation";
 
+// 도메인 레이어의 방어적 상한. 실제 호출량은 API Route의 MAX_PRODUCTS_FOR_AI(=50)가 먼저 제한한다.
 const MAX_PRODUCTS_IN_PROMPT = 100;
 
 export function buildRecommendationPrompt(

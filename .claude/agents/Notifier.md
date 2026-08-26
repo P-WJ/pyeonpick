@@ -36,7 +36,7 @@ You are the notification specialist for 편픽(PyeonPick).
 | keywords | 키워드 필터 (빈 배열이면 전체) |
 | stores | 편의점 필터 (빈 배열이면 전체) |
 
-> 이메일 기반 `subscriptions` 테이블과 별개. 이메일 구독은 legacy(제거 예정).
+> 이메일 기반 `subscriptions` 테이블은 2026-06-03 코드에서 제거됨. 알림은 웹 푸시 전용.
 
 ## 발송 흐름 (web_push_notifier.py)
 
@@ -63,7 +63,9 @@ VAPID 키 생성: `npx web-push generate-vapid-keys`
 - pywebpush 미설치 등 의존성 부재 시 경고 로그 후 graceful 종료 (`{"sent":0,...}` 반환)
 - 발송 트리거: 크롤링 완료 후 `crawl_all.py`에서 자동 호출
 
-## 정리 예정 (legacy 이메일 잔재)
+## legacy 이메일 잔재 — 정리 완료 (2026-06-03)
 
-- 크롤러 `subscription_repository.py` — 고아 파일 (notify_subscribers 삭제로 미사용)
-- 프론트 `SubscribeForm`, `/api/subscriptions`, `/notifications`, `subscriptions` 테이블
+- 삭제 완료: 크롤러 `subscription_repository.py` · `notifier.py`(Resend) · `use_cases/notify_subscribers.py`
+- 삭제 완료: 프론트 `SubscribeForm.tsx` · `/api/subscriptions` · `subscription-repository.ts`
+- `/notifications` 는 웹 푸시 설정 페이지로 유지
+- 남은 것: Supabase `subscriptions` / `notifications_sent` 테이블 수동 드롭(선택)

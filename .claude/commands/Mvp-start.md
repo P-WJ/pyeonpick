@@ -10,7 +10,7 @@ docs/tasks.md 를 읽고 아래 규칙대로 작업을 진행해줘.
    - frontend/domain/, frontend/infrastructure/ → @agent-frontend 또는 @agent-db-api
    - frontend/app/components/ → @agent-frontend
    - 마이그레이션 SQL → @agent-db-api
-5. 작업 완료 후 `pnpm tsc --noEmit` (frontend) 또는 단독 테스트 (crawler) 실행해서 검증
+5. 작업 완료 후 `npx tsc --noEmit` (frontend) 또는 단독 테스트 (crawler) 실행해서 검증
 6. 에러 발생 시 즉시 수정 후 재검증 — 에러 있는 채로 다음 작업 진행 금지
 7. 컨텍스트 한계에 가까워지면 현재까지 체크 저장 후 중단 — 다음 세션에서 이어서 진행
 

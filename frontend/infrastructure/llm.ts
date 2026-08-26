@@ -1,4 +1,4 @@
-// Groq API를 사용한 AI 텍스트 생성 (Gemini 대체)
+// Groq API를 사용한 AI 텍스트 생성 (초기에는 Gemini를 썼으나 quota 문제로 교체)
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.1-8b-instant"; // TPD 500,000 — 70b-versatile(TPD 1,000)은 상품 목록 1회 요청도 불가
 const MAX_RETRIES = 3;

@@ -29,23 +29,25 @@ frontend/
 ├── infrastructure/
 │   ├── repositories/
 │   │   ├── product-repository.ts      # VALID_CATEGORIES 필터링 포함
-│   │   ├── subscription-repository.ts
+│   │   ├── push-subscription-repository.ts
 │   │   └── post-repository.ts
 │   ├── supabase.ts
-│   └── gemini.ts
+│   └── llm.ts
 │
 └── app/
     ├── api/                   # API Routes (얇게 — 비즈니스 로직 금지)
     │   ├── products/
-    │   ├── subscriptions/
+    │   ├── push/
     │   ├── posts/
     │   └── ai/recommend/
     ├── components/            # 공유 UI 컴포넌트
     │   ├── Header.tsx
+    │   ├── GlobalShell.tsx
     │   ├── ProductCard.tsx
     │   ├── CartDrawer.tsx
     │   ├── FilterBar.tsx
-    │   ├── SubscribeForm.tsx
+    │   ├── StoreComparison.tsx
+    │   ├── PushNotificationBell.tsx
     │   ├── AiBanner.tsx       # NEXT_PUBLIC_ENABLE_AI_RECOMMEND 플래그로 제어
     │   ├── AiRecommendModal.tsx
     │   ├── EventBadge.tsx
@@ -101,15 +103,16 @@ export const STORE_COLORS = {
 | 상품 상세 (혜택 카드, 관련 상품) | `products/[id]/` | ✅ |
 | 장바구니 + 절약액 계산 | `components/CartDrawer.tsx` | ✅ |
 | 공유 링크 생성 | `domain/use-cases/cart.ts` | ✅ |
-| 공유 링크 자동 불러오기 | `app/page.tsx` | ❌ 미구현 |
-| 찜하기 (로컬스토리지) | - | ❌ 미구현 |
-| 최근 본 상품 | - | ❌ 미구현 |
-| 알림 구독 폼 | `components/SubscribeForm.tsx` | ✅ |
-| 알림 조회/해제 | `app/notifications/` | ✅ |
+| 공유 링크 자동 불러오기 | `app/page.tsx` | ✅ |
+| 찜하기 (로컬스토리지) | `cvs-wishlist-v1` | ✅ |
+| 최근 본 상품 | `cvs-recently-viewed-v1` | ✅ |
+| 웹 푸시 구독 | `components/PushNotificationBell.tsx` | ✅ |
+| 알림 설정 조회/해제 | `app/notifications/` | ✅ |
+| 매장 간 가격 비교 | `components/StoreComparison.tsx` | ✅ |
 | 카카오 로그인 | NextAuth v5 | ✅ |
 | 커뮤니티 게시판 | `app/board/` | ✅ |
-| AI 추천 UI | `components/AiBanner/Modal` | ✅ (백엔드 미완성) |
-| 프로필 페이지 | `app/profile/` | ❌ 미구현 |
+| AI 추천 UI | `components/AiBanner/Modal` | ✅ |
+| 프로필 페이지 | `app/profile/` | ✅ |
 
 ## 로컬스토리지 키
 
@@ -147,7 +150,7 @@ const RECENTLY_VIEWED_KEY = 'cvs-recently-viewed-v1';   // 최근 본 상품 (�
 ## 작업 완료 조건
 
 ```bash
-cd frontend && pnpm tsc --noEmit
+cd frontend && npx tsc --noEmit
 ```
 
 타입 에러 없으면 완료.
@@ -156,4 +159,4 @@ cd frontend && pnpm tsc --noEmit
 
 - Next.js 15 App Router, TypeScript strict mode
 - Tailwind CSS, NextAuth v5 (카카오 OAuth)
-- Package manager: `pnpm`
+- Package manager: `npm` (`package-lock.json` 기준 — pnpm 사용 금지)
