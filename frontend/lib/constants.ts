@@ -1,6 +1,22 @@
 import type { Store, EventType, Category, ProductSort } from "@/domain/entities/product";
 
+/** 서비스가 다루는 전체 편의점. API 입력 검증·색상 매핑 등 과거 데이터까지 포함하는 곳에서 쓴다. */
 export const STORES: Store[] = ["CU", "GS25", "세븐일레븐", "이마트24", "씨스페이스"];
+
+/**
+ * 현재 데이터 수집이 중단된 편의점.
+ * GS25: 2026-08-26 확인 — 공식 행사상품 페이지(gs25.gsretail.com)가 폐쇄되고
+ * 가맹점주용 페이지로 리다이렉트되어 수집할 출처가 없다.
+ */
+export const SUSPENDED_STORES: Store[] = ["GS25"];
+
+export const SUSPENDED_STORE_NOTICE =
+  "GS25는 공식 행사상품 페이지가 닫혀 현재 정보를 받아오지 못하고 있어요.";
+
+/** 실제로 데이터가 갱신되는 편의점. 필터·구독·추천 등 사용자 선택지에는 이쪽을 쓴다. */
+export const ACTIVE_STORES: Store[] = STORES.filter(
+  (store) => !SUSPENDED_STORES.includes(store)
+);
 export const EVENT_TYPES: EventType[] = ["1+1", "2+1", "3+1", "할인", "증정"];
 export const CATEGORIES: Category[] = ["음료", "과자", "식품", "아이스크림", "생활용품"];
 

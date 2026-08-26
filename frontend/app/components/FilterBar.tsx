@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { STORES, EVENT_TYPES, CATEGORIES, EVENT_TYPE_BADGES, STORE_COLORS } from "@/lib/constants";
+import {
+  ACTIVE_STORES,
+  SUSPENDED_STORE_NOTICE,
+  EVENT_TYPES,
+  CATEGORIES,
+  EVENT_TYPE_BADGES,
+  STORE_COLORS,
+} from "@/lib/constants";
 import type { Store, EventType, Category, ProductSort } from "@/domain/entities/product";
 
 export interface ActiveFilters {
@@ -194,7 +201,7 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
           >
             전체 편의점
           </button>
-          {STORES.map((store) => {
+          {ACTIVE_STORES.map((store) => {
             const isActive = filters.store === store;
             const storeColors = STORE_COLORS[store];
             return (
@@ -216,6 +223,9 @@ export function FilterBar({ filters, onFilterChange, onSearch }: FilterBarProps)
         </div>
         <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 via-gray-50/70 to-transparent z-10" />
       </div>
+
+      {/* 수집 중단된 편의점 안내 */}
+      <p className="text-xs text-gray-400">{SUSPENDED_STORE_NOTICE}</p>
 
       {/* 행사 유형 필터 */}
       <div className="relative -mx-4 px-4">

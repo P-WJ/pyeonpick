@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { STORE_COLORS, STORES } from "@/lib/constants";
+import { STORE_COLORS, ACTIVE_STORES } from "@/lib/constants";
 import { usePushNotification } from "@/app/hooks/usePushNotification";
 import type { PushSubscriptionSettings } from "@/app/hooks/usePushNotification";
 import type { Store } from "@/domain/entities/product";
@@ -246,7 +246,7 @@ function WebPushSection() {
               <span className="font-normal text-gray-400">(미선택 시 전체)</span>
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {STORES.map((store) => (
+              {ACTIVE_STORES.map((store) => (
                 <button
                   key={store}
                   type="button"

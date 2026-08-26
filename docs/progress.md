@@ -283,7 +283,18 @@ CI 복구 후 처음으로 크롤러가 DB까지 도달했고(`기존 상품 855
 - `gs25.gsretail.com/gscvs/...` → `www.gsretail.com` 으로 **301 이전**, 새 사이트는 Vue SPA
 - 옛 AJAX 엔드포인트(`event-goods-search`)는 모든 경로에 SPA 셸 HTML을 반환 — JSON API가 아님
 - 번들에서 확인된 API 프리픽스는 `/api/gsapi/...` 이나 행사상품 엔드포인트는 지연 로딩 청크에 있어 정적 분석으로는 못 찾음
-- **다음 작업**: 브라우저로 실제 행사상품 페이지를 열고 네트워크 탭에서 호출되는 API를 캡처해 `gs25.py` 재작성
+- **브라우저 실측(2026-08-26)**: 네트워크 탭에 잡히는 XHR은 `selectPopup`·`selectMetaTag` 뿐, 상품 API 호출이 없음. SPA 라우트 `/gscvs/ko/products/event-goods`는 "페이지를 표시할 수 없습니다" 에러 화면. `gs25.gsretail.com/products/event-goods`도(데스크탑·모바일 UA 모두) 가맹점주용 `www.gsretail.com/brand/gs25`로 301
+- **결론**: 크롤러 수정으로 해결되는 문제가 아니라 **공개된 데이터 출처가 사라진 것**
+
+### GS25 수집 일시 중단 (2026-08-26)
+
+출처가 없어졌으므로 4개 편의점(CU·세븐일레븐·이마트24·씨스페이스)으로 운영하고, 사용자에게 사실대로 알린다.
+
+- 크롤러 `crawl_all.STORE_MODULES`에서 `gs25` 제외. **`gs25.py`는 보존** — 페이지가 복구되면 목록에 한 줄 되돌리면 된다
+- 프론트 `lib/constants.ts`에 수집 상태를 한 곳으로 모음
+  - `STORES`: 전체 5개 — API 입력 검증·색상 매핑 등 **과거 데이터까지 다루는 곳**에 사용(옛 GS25 상품 링크가 깨지지 않게)
+  - `SUSPENDED_STORES` / `ACTIVE_STORES`: 사용자가 **선택하는 곳**(필터·푸시 구독·AI 추천)은 `ACTIVE_STORES`만 노출
+- `FilterBar`에 안내 문구 1줄: "GS25는 공식 행사상품 페이지가 닫혀 현재 정보를 받아오지 못하고 있어요."
 
 ### Railway 잔재 제거
 - 삭제: `railway.toml`, `crawler/Dockerfile`

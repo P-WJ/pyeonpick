@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Product, Store } from "@/domain/entities/product";
 import type { RecommendationCombination, RecommendationResult } from "@/domain/entities/recommendation";
-import { STORES, STORE_COLORS } from "@/lib/constants";
+import { ACTIVE_STORES, STORE_COLORS } from "@/lib/constants";
 
 const MIN_BUDGET_INPUT = 1000;
 const MAX_BUDGET_INPUT = 10_000_000;
@@ -185,7 +185,7 @@ export function AiRecommendModal({
                 </span>
               </p>
               <div className="flex flex-wrap gap-2">
-                {STORES.map((store) => {
+                {ACTIVE_STORES.map((store) => {
                   const isSelected = selectedStores.includes(store);
                   const storeColors = STORE_COLORS[store];
                   return (

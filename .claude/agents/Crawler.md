@@ -96,3 +96,4 @@ class Product:
 - DB: Supabase (supabase-py)
 - AI 분류: Groq API (`openai/gpt-oss-20b`)
 - 스케줄: GitHub Actions (매월 1일·15일 09:00 KST — `cron: '0 0 1,15 * *'`)
+- ⚠️ GS25는 수집 중단(2026-08-26, 공식 페이지 폐쇄). `crawl_all.STORE_MODULES`에서 빠져 있고 `gs25.py`는 보존 — 복구 시 목록에 다시 추가

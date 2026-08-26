@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { usePushNotification } from "@/app/hooks/usePushNotification";
 import type { PushSubscriptionSettings } from "@/app/hooks/usePushNotification";
-import { STORES } from "@/lib/constants";
+import { ACTIVE_STORES } from "@/lib/constants";
 import type { Store } from "@/domain/entities/product";
 
 const NOTIFICATION_SCHEDULE_LABEL = "매월 1일·15일 새 행사 상품 알림";
@@ -90,7 +90,7 @@ function SubscribeDialog({
           편의점 선택 <span className="font-normal text-gray-400">(미선택 시 전체)</span>
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {STORES.map((store) => (
+          {ACTIVE_STORES.map((store) => (
             <button
               key={store}
               type="button"
