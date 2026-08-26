@@ -14,7 +14,7 @@
 - **Phase 1** 크롤러: CU, GS25, 세븐일레븐, 이마트24, 씨스페이스
 - **Phase 2** 백엔드 API: Supabase 연동, 상품 조회 API
 - **Phase 3** 프론트엔드 UI: 상품 목록, 필터, 장바구니, 공유 링크
-- **Phase 4** 배포: Vercel (프론트), GitHub Actions (크롤러 월 1·2일 자동 실행)
+- **Phase 4** 배포: Vercel (프론트), GitHub Actions (크롤러 자동 실행 — 현재 매월 1일·15일)
 
 ### 수집 행사 유형
 - 1+1, 2+1, 3+1 (이마트24), 할인, 증정
@@ -23,7 +23,7 @@
 | 서비스 | 플랫폼 | 상태 |
 |--------|--------|------|
 | 프론트엔드 | Vercel | ✅ 운영 중 |
-| 크롤러 스케줄 | GitHub Actions | ✅ 운영 중 (매월 1·2일 09:00 KST) |
+| 크롤러 스케줄 | GitHub Actions | ✅ 운영 중 (매월 1일·15일 09:00 KST — `.github/workflows/crawl.yml`) |
 | DB | Supabase | ✅ 운영 중 |
 
 ---
@@ -224,3 +224,46 @@ UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소�
 
 ### 검증
 - `npx tsc --noEmit` 통과
+
+---
+
+## 버그 수정 — 웹 푸시 실동작 복구 (2026-08-26)
+
+프로젝트 점검에서 발견한 실제 결함. 문서상 "운영 중"이던 웹 푸시가 **실제로는 한 번도 발송되지 않는 상태**였다.
+
+### 🔴 웹 푸시가 항상 0건 발송이었음
+- `web_push_notifier.send_web_push_notifications()`는 `from pywebpush import ...` 실패 시 에러 로그만 남기고 `{"sent":0,...}` 을 반환한다
+- 그런데 `pywebpush`가 **`crawler/pyproject.toml` 의존성에도, `.github/workflows/crawl.yml` 설치 목록에도 없었다**
+- 즉 로컬·CI 어디서도 import가 성공한 적이 없어 알림이 나간 적이 없음
+- 수정: 두 곳 모두에 `pywebpush>=1.14.0` 추가
+
+### 🔴 "신규 상품" 알림이 실제로는 전 상품 대상이었음
+- `crawl_all.py`가 `all_products`(이번 회차에 크롤링한 전부, 약 8천 건)를 그대로 발송 대상으로 넘기고 있었음
+- 구독자에게 "새로운 행사 상품 8,558개가 등록됐어요"가 갈 수 있는 구조
+- 수정: `repository.fetch_existing_product_keys()` 추가(Supabase 1,000행 상한 때문에 `range` 페이지네이션) → **upsert 이전** 시점의 `(store, name)` 스냅샷과 대조해 신규 상품만 발송
+- 기존 상품 조회가 실패하면 신규 판별이 불가능하므로 **알림을 건너뛴다**(전체 발송으로 폴백하지 않음 — 오발송이 미발송보다 나쁨)
+
+### 🟡 그 외
+- `crawl.yml`: 사용하지 않는 `RESEND_API_KEY` 환경변수 제거 (이메일 발송은 2026-06-03에 폐기됨)
+- `cart-context.copyShareUrl`: `navigator.clipboard` 부재 검사 + `.catch` 추가 (권한 거부·비보안 컨텍스트에서 unhandled rejection + 무피드백이었음)
+- `web_push_notifier`: 페이로드 `icon` 경로를 `sw.js`가 실제로 쓰는 `/icons/icon-192x192.png` 로 정정
+- 스케줄 문서 정정: 실제 cron은 `0 0 1,15 * *`(매월 **1일·15일**)인데 문서는 "1·2일"로 남아 있었음
+
+### 🔴 CI가 Supabase 키를 빈 값으로 넘기고 있었음
+- `crawl.yml`이 `SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}` 로 매핑
+- 그런데 저장소에 실제 등록된 시크릿은 `SUPABASE_SERVICE_ROLE_KEY` — **`SUPABASE_SERVICE_KEY` 라는 시크릿은 존재하지 않음**
+- 없는 시크릿을 참조하면 GitHub Actions는 오류 없이 **빈 문자열**을 넣으므로, CI 크롤링의 DB 접근이 인증 실패 상태였음
+- 수정: `secrets.SUPABASE_SERVICE_ROLE_KEY` 로 정정 (등록된 시크릿: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`)
+
+### 알림 아이콘 자산 추가 (lucide 기반)
+- `sw.js`가 참조하던 `/icons/icon-192x192.png`, `/icons/badge-72x72.png` 가 실제로 없어 브라우저 기본 아이콘으로 표시되던 문제 해결
+- lucide 글리프로 SVG를 만들고 `sharp`로 PNG 래스터화 (SVG 원본도 함께 보관)
+  - `icon-192x192`: 브랜드 퍼플(`#7C3AED`) 라운드 사각형 + lucide `store` 흰 글리프
+  - `badge-72x72`: 안드로이드 상태바는 단색 마스크로 렌더링하므로 **배경 투명 + 흰 실루엣**, lucide `bell`
+- 프론트에 `lucide-react` 도입, `PushNotificationBell.tsx`의 수제 SVG 3종을 `Bell` / `BellOff` 로 교체 (차단 상태의 ✕ 오버레이 핵 제거)
+
+### Railway 잔재 제거
+- 삭제: `railway.toml`, `crawler/Dockerfile`
+- `crawler/main.py`: APScheduler 상주 스케줄러 → **1회 실행 진입점**으로 재작성. 실패한 편의점이 있으면 exit code 1
+- `crawl.yml`: YAML 안에 인라인 파이썬을 박아 두던 것을 `python -m crawler.main` 한 줄로 교체 (실행 로직 중복 제거)
+- `apscheduler` 의존성 제거 (`pyproject.toml`, `crawl.yml`)

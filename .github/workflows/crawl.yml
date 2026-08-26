@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: 의존성 설치
-        run: pip install httpx "beautifulsoup4>=4.12.0" "apscheduler>=3.10.0" "supabase>=2.3.0" playwright python-dotenv
+        run: pip install httpx "beautifulsoup4>=4.12.0" "supabase>=2.3.0" playwright python-dotenv "pywebpush>=1.14.0"
 
       - name: Playwright Chromium 설치
         run: playwright install chromium --with-deps
@@ -27,24 +27,8 @@ jobs:
       - name: 크롤링 실행
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
-        run: |
-          python -c "
-          import asyncio, logging
-          logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s %(message)s')
-          from crawler.use_cases.crawl_all import crawl_all_stores
-
-          async def main():
-              results = await crawl_all_stores()
-              for r in results:
-                  if r.error:
-                      print(f'[실패] {r.store}: {r.error}')
-                  else:
-                      print(f'[성공] {r.store}: {len(r.products)}개')
-
-          asyncio.run(main())
-          "
+        run: python -m crawler.main

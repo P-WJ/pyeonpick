@@ -30,6 +30,33 @@ def _product_to_row(product: Product) -> dict:
 
 
 UPSERT_BATCH_SIZE = 500
+SELECT_PAGE_SIZE = 1000
+
+
+def fetch_existing_product_keys() -> set[tuple[str, str]]:
+    """DB에 이미 저장된 모든 상품의 (store, name) 키 집합을 반환한다.
+
+    upsert 이전에 호출해야 이번 크롤링의 신규 상품을 가려낼 수 있다.
+    Supabase 기본 응답 상한(1,000행) 때문에 range로 나눠 조회한다.
+    """
+    client = _get_supabase_client()
+    keys: set[tuple[str, str]] = set()
+    offset = 0
+
+    while True:
+        result = (
+            client.table("products")
+            .select("store, name")
+            .range(offset, offset + SELECT_PAGE_SIZE - 1)
+            .execute()
+        )
+        rows = result.data or []
+        keys.update((row["store"], row["name"]) for row in rows)
+        if len(rows) < SELECT_PAGE_SIZE:
+            break
+        offset += SELECT_PAGE_SIZE
+
+    return keys
 
 
 def _deduplicate(products: list[Product]) -> list[Product]:

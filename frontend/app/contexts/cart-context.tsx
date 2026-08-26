@@ -133,9 +133,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function copyShareUrl() {
     const url = buildShareUrl(cartItems);
+    if (!navigator.clipboard) {
+      showToast("이 브라우저에서는 링크 복사를 지원하지 않습니다.");
+      return;
+    }
     navigator.clipboard
       .writeText(url)
-      .then(() => showToast("공유 링크가 복사됐습니다."));
+      .then(() => showToast("공유 링크가 복사됐습니다."))
+      .catch(() => showToast("링크 복사에 실패했습니다. 주소창에서 직접 복사해주세요."));
   }
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);

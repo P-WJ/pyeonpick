@@ -64,7 +64,8 @@ def _build_push_payload(products: list[Product]) -> str:
         "title": "[편픽] 이번 달 행사 상품 알림",
         "body": body,
         "url": target_url,
-        "icon": f"{SITE_URL}/icon-192x192.png",
+        # sw.js가 표시에 쓰는 실제 경로와 맞춘다 (public/icons/)
+        "icon": f"{SITE_URL}/icons/icon-192x192.png",
     })
 
 

@@ -95,4 +95,4 @@ class Product:
 - Package manager: `uv`
 - DB: Supabase (supabase-py)
 - AI 분류: Groq API (`llama-3.1-8b-instant`)
-- 스케줄: GitHub Actions (매월 1·2일 09:00 KST)
+- 스케줄: GitHub Actions (매월 1일·15일 09:00 KST — `cron: '0 0 1,15 * *'`)

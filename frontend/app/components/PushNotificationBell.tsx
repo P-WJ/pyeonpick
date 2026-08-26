@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Bell, BellOff } from "lucide-react";
 import { usePushNotification } from "@/app/hooks/usePushNotification";
 import type { PushSubscriptionSettings } from "@/app/hooks/usePushNotification";
 import { STORES } from "@/lib/constants";
@@ -8,57 +9,20 @@ import type { Store } from "@/domain/entities/product";
 
 const NOTIFICATION_SCHEDULE_LABEL = "매월 1일·15일 새 행사 상품 알림";
 
-// ─── 아이콘 컴포넌트 ──────────────────────────────────────────────────────────
+// ─── 아이콘 컴포넌트 (lucide-react) ───────────────────────────────────────────
+
+const BELL_ICON_SIZE = 18;
 
 function BellOutlineIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
-  );
+  return <Bell size={BELL_ICON_SIZE} className={className} />;
 }
 
 function BellFilledIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeWidth="2" fill="none" />
-    </svg>
-  );
+  return <Bell size={BELL_ICON_SIZE} fill="currentColor" className={className} />;
 }
 
 function BellBlockedIcon({ className }: { className?: string }) {
-  return (
-    <span className={`relative inline-flex ${className ?? ""}`}>
-      <BellOutlineIcon />
-      <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white leading-none">
-        ✕
-      </span>
-    </span>
-  );
+  return <BellOff size={BELL_ICON_SIZE} className={className} />;
 }
 
 // ─── 구독 다이얼로그 ──────────────────────────────────────────────────────────

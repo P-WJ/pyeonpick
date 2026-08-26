@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72">
+  <!-- 안드로이드 상태바 배지 — 단색 마스크로 렌더링되므로 배경 투명 + 흰 실루엣 -->
+  <!-- 글리프는 lucide "bell" (lucide-react v1.34.0, ISC) -->
+  <g transform="translate(12 12) scale(2)"
+     fill="none" stroke="#FFFFFF" stroke-width="2.25"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+    <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
+  </g>
+</svg>

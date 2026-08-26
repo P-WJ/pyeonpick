@@ -82,10 +82,10 @@ PyeonPick/
 
 | 영역       | 기술                                              |
 | ---------- | ------------------------------------------------- |
-| 프론트엔드 | Next.js 15, TypeScript strict, Tailwind CSS       |
+| 프론트엔드 | Next.js 15, TypeScript strict, Tailwind CSS, lucide-react |
 | 인증       | NextAuth v5 (카카오 OAuth)                        |
 | 백엔드 API | Next.js API Routes                                |
-| 크롤러     | Python 3.11+, Playwright, httpx, APScheduler      |
+| 크롤러     | Python 3.11+, Playwright, httpx, pywebpush        |
 | DB         | PostgreSQL (Supabase)                             |
 | 알림       | 웹 푸시 (Web Push API + VAPID) — 카카오·이메일 미사용 |
 | AI 분류    | Groq API (llama-3.1-8b-instant)                   |
