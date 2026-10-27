@@ -4,7 +4,7 @@
 # 가정용 IP인 이 PC에서 매월 1일 00:10 / 1일·15일 09:30 에 돌린다.
 # 환경변수는 crawler/.env 에서 읽는다 (crawler/main.py 의 load_dotenv).
 #
-# 작업 등록:  powershell -ExecutionPolicy Bypass -File scripts\crawl-seven-local.ps1 -Register
+# 작업 등록:  powershell -ExecutionPolicy Bypass -File C:\toy_project\pyeonpick\scripts\crawl-seven-local.ps1 -Register
 # 작업 삭제:  schtasks /Delete /TN "PyeonPick\Seven*" /F   (두 작업 각각)
 # 로그 위치:  %LOCALAPPDATA%\pyeonpick\logs\seven-*.log
 param([switch]$Register)
@@ -14,13 +14,23 @@ $venvPython = Join-Path $repo 'crawler\.venv\Scripts\python.exe'
 $logDir = Join-Path $env:LOCALAPPDATA 'pyeonpick\logs'
 
 if ($Register) {
-    $action = "powershell -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
-    schtasks /Create /F /TN 'PyeonPick\SevenMonthStart' /SC MONTHLY /D 1 /ST 00:10 /TR $action | Out-Null
-    schtasks /Create /F /TN 'PyeonPick\SevenRegular' /SC MONTHLY /D 1,15 /ST 09:30 /TR $action | Out-Null
+    # 월간 트리거는 New-ScheduledTaskTrigger가 지원하지 않아 schtasks로 만든다.
+    # 단 PowerShell 5.1은 네이티브 인자 속 큰따옴표를 깨뜨리므로 /TR엔 따옴표 없는 실행 파일만 넣고,
+    # 실제 실행 인자는 Set-ScheduledTask로 덮어쓴다.
+    $taskNames = @('SevenMonthStart', 'SevenRegular')
+    schtasks /Create /F /TN 'PyeonPick\SevenMonthStart' /SC MONTHLY /D 1 /ST 00:10 /TR powershell.exe
+    if ($LASTEXITCODE -ne 0) { Write-Error 'SevenMonthStart 작업 생성 실패'; exit 1 }
+    schtasks /Create /F /TN 'PyeonPick\SevenRegular' /SC MONTHLY /D '1,15' /ST 09:30 /TR powershell.exe
+    if ($LASTEXITCODE -ne 0) { Write-Error 'SevenRegular 작업 생성 실패'; exit 1 }
+
+    $action = New-ScheduledTaskAction -Execute 'powershell.exe' `
+        -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" `
+        -WorkingDirectory $repo
     # PC가 꺼져 있어 놓친 실행은 켜진 직후 실행한다
     $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
-    Set-ScheduledTask -TaskPath '\PyeonPick\' -TaskName 'SevenMonthStart' -Settings $settings | Out-Null
-    Set-ScheduledTask -TaskPath '\PyeonPick\' -TaskName 'SevenRegular' -Settings $settings | Out-Null
+    foreach ($name in $taskNames) {
+        Set-ScheduledTask -TaskPath '\PyeonPick\' -TaskName $name -Action $action -Settings $settings | Out-Null
+    }
     Write-Output '작업 스케줄러 등록 완료: PyeonPick\SevenMonthStart, PyeonPick\SevenRegular'
     exit 0
 }
