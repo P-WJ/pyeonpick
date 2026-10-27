@@ -23,6 +23,16 @@ logger = logging.getLogger(__name__)
 # 페이지가 복구되면 gs25를 이 목록에 다시 넣기만 하면 된다 (gs25.py는 보존).
 STORE_MODULES: list[ModuleType] = [cu, seven, emart24, cspace]
 
+# 실행 환경별로 매장을 나눠 돌릴 때 쓰는 키 (`python -m crawler.main --stores cu,emart24`).
+# 세븐일레븐은 GitHub Actions(데이터센터 IP)에서 ConnectTimeout으로 차단되어
+# 셀프호스티드 러너(가정용 IP)에서만 수집한다.
+STORE_MODULES_BY_KEY: dict[str, ModuleType] = {
+    "cu": cu,
+    "seven": seven,
+    "emart24": emart24,
+    "cspace": cspace,
+}
+
 # 이번 수집량이 기존 진행 중 상품의 이 비율보다 적으면 부분 실패로 보고 만료 처리를 건너뛴다.
 # (씨스페이스처럼 일부 페이지만 끊기는 경우 멀쩡한 상품까지 내리지 않도록)
 MIN_COLLECTED_RATIO_FOR_EXPIRE = 0.5
@@ -49,8 +59,8 @@ def expire_unseen_products(store_name: str, products: list[Product]) -> None:
     logger.info("%s: 이번 수집에 없는 진행 중 상품 %d개 만료 처리", store_name, len(unseen_ids))
 
 
-async def crawl_all_stores() -> list[CrawlResult]:
-    """모든 편의점을 순차 크롤링하고 AI로 카테고리 분류 후 DB에 저장한다.
+async def crawl_all_stores(store_modules: list[ModuleType] = STORE_MODULES) -> list[CrawlResult]:
+    """지정한 편의점(기본: 전체)을 순차 크롤링하고 AI로 카테고리 분류 후 DB에 저장한다.
 
     크롤링·저장 완료 후 웹 푸시 구독자에게 신규 상품 알림을 발송한다.
     """
@@ -64,15 +74,17 @@ async def crawl_all_stores() -> list[CrawlResult]:
         logger.error("기존 상품 조회 실패 — 이번 회차 알림을 건너뜁니다: %s", error)
         existing_keys = None
 
-    for store_module in STORE_MODULES:
+    for store_module in store_modules:
         store_name: str = store_module.STORE_NAME
         try:
             logger.info("%s 크롤링 시작", store_name)
             products = await store_module.fetch_products()
+            if not products:
+                # 매장 모듈은 요청 실패를 로그만 남기고 빈 목록을 돌려준다. 0개는 실패로 드러낸다.
+                raise RuntimeError("수집된 상품이 0개 — 접속 차단 또는 페이지 구조 변경 의심")
             classify_products(products)
             await upsert_products(products)
-            if products:
-                expire_unseen_products(store_name, products)
+            expire_unseen_products(store_name, products)
             results.append(CrawlResult(store=store_name, products=products))
             logger.info("%s 크롤링 완료: %d개", store_name, len(products))
         except Exception as error:

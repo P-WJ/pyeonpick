@@ -55,4 +55,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
-        run: python -m crawler.main
+        # 세븐일레븐은 데이터센터 IP 차단으로 여기서 수집되지 않는다 — 로컬 작업 스케줄러가 담당
+        # (scripts/crawl-seven-local.ps1)
+        run: python -m crawler.main --stores cu,emart24,cspace
+
