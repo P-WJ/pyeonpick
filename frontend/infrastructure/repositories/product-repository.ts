@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/infrastructure/supabase";
 import type { Product, Store, EventType, Category, ProductSort } from "@/domain/entities/product";
 import { normalizeProductName, extractSearchCore } from "@/domain/use-cases/product-matching";
-import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT, EVENT_TYPES } from "@/lib/constants";
+import { PRODUCTS_PAGE_LIMIT, RELATED_PRODUCTS_LIMIT, EVENT_TYPES, CATEGORIES } from "@/lib/constants";
 
 const CROSS_STORE_CANDIDATE_LIMIT = 300;
 const MIN_SEARCH_CORE_LENGTH = 2;
@@ -60,7 +60,9 @@ export async function getProducts(
     .from("products")
     .select("*")
     .gte("valid_to", todayDateString())
-    .in("event_type", EVENT_TYPES);
+    .in("event_type", EVENT_TYPES)
+    // 미분류('기타') 상품은 parseProductRow에서 버려지므로 DB 단계에서 빼야 페이지가 limit만큼 찬다
+    .in("category", CATEGORIES);
 
   if (filters.store) query = query.eq("store", filters.store);
   if (filters.eventType) query = query.eq("event_type", filters.eventType);
@@ -106,7 +108,8 @@ export async function getProductStats(): Promise<ProductStats> {
       .from("products")
       .select("*", { count: "exact", head: true })
       .gte("valid_to", today)
-      .in("event_type", EVENT_TYPES);
+      .in("event_type", EVENT_TYPES)
+      .in("category", CATEGORIES); // 목록에 노출되지 않는 미분류 상품은 집계에서도 제외
     if (eventType) query = query.eq("event_type", eventType);
 
     const { count, error } = await query;
