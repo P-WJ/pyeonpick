@@ -1,173 +1,71 @@
-"""Groq AI로 상품 카테고리 일괄 분류 스크립트.
+"""Groq AI로 전체 상품 카테고리를 일괄 재분류하는 스크립트.
 
-처리 우선순위: 기타 → 간편식사 → 아이스크림 → 음료 → 과자 → 식품 → 생활용품
-체크포인트: classify_progress.json에 진행 상황 저장 (중단 후 이어서 실행 가능)
+분류 프롬프트·모델은 크롤러(crawler/infrastructure/ai_classifier.py)와 공유한다.
+미분류('기타') 상품을 먼저, 나머지는 id 순으로 처리하고 바뀐 카테고리만 DB에 반영한다.
+체크포인트: classify_progress.json에 처리한 id 저장 (중단·일일 한도 초과 후 이어서 실행 가능)
 """
 import sys
 import json
-import re
+import os
 import time
+from collections import defaultdict
+
 sys.path.insert(0, '.')
 from dotenv import load_dotenv
 load_dotenv('crawler/.env')
 
-import os
-import httpx
+from crawler.infrastructure.ai_classifier import (
+    BATCH_SIZE,
+    MODEL,
+    SLEEP_BETWEEN_BATCHES,
+    DailyLimitExceeded,
+    classify_names,
+)
 from crawler.infrastructure.repository import _get_supabase_client
 
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
-GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-# llama-3.1-8b-instant는 Groq에서 Enterprise 전용으로 바뀌어 일반 키로는 404가 난다.
-MODEL = os.environ.get('GROQ_MODEL', '').strip() or 'openai/gpt-oss-20b'
-BATCH_SIZE = 45
-SLEEP_BETWEEN_BATCHES = 3   # 분당 20회 (8B TPM 131,072 기준 여유)
-MAX_RETRIES = 3
 CHECKPOINT_FILE = 'classify_progress.json'
-
-CATEGORIES = ['음료', '과자', '식품', '아이스크림', '생활용품']
-
-# 확실히 틀린 카테고리부터 처리
-CATEGORY_PRIORITY = ['기타', '간편식사', '아이스크림', '음료', '과자', '식품', '생활용품']
-
-SYSTEM_PROMPT = """You classify Korean convenience store products into exactly one of 5 categories.
-Categories: 음료, 과자, 식품, 아이스크림, 생활용품
-
-Rules:
-- 음료: ALL drinks (water, coffee, juice, milk, soda, tea, beer, soju, wine, energy drink, kombucha, health drinks)
-- 과자: snacks (chips, chocolate, jelly, candy, cookies, bread, cake, granola bar, nuts)
-- 식품: ALL other edible items (ready meals, kimbap, ramen, rice, dumpling, sausage, hotdog, chicken, health supplements, vitamins, hangover products, protein, frozen fruit, tofu, eggs, seaweed, jerky, tuna, spam, seasonings, ingredients)
-- 아이스크림: ice cream and popsicles only (NOT iced tea - that is 음료)
-- 생활용품: household & personal care (shampoo, toothpaste, toothbrush, detergent, sanitary pads, lotion, skincare, stationery, mask, tissue, cleaning products)
-
-Every product MUST be assigned one of these 5 categories. No other values allowed.
-
-Respond ONLY with JSON like: {"0":"음료","1":"식품","2":"생활용품"}
-No explanation. No other text. Just the JSON object."""
+FETCH_PAGE_SIZE = 1000  # Supabase 1회 조회 상한
+UNCLASSIFIED_CATEGORY = '기타'
 
 
-def load_checkpoint() -> dict:
-    if os.path.exists(CHECKPOINT_FILE):
-        with open(CHECKPOINT_FILE, encoding='utf-8') as f:
-            return json.load(f)
-    return {'completed_categories': [], 'current_category': None, 'current_batch': 0}
+def load_done_ids() -> set[int]:
+    if not os.path.exists(CHECKPOINT_FILE):
+        return set()
+    with open(CHECKPOINT_FILE, encoding='utf-8') as f:
+        return set(json.load(f).get('done_ids', []))
 
 
-def save_checkpoint(completed_categories: list, current_category: str | None, current_batch: int) -> None:
+def save_done_ids(done_ids: set[int]) -> None:
     with open(CHECKPOINT_FILE, 'w', encoding='utf-8') as f:
-        json.dump({
-            'completed_categories': completed_categories,
-            'current_category': current_category,
-            'current_batch': current_batch,
-        }, f, ensure_ascii=False)
+        json.dump({'done_ids': sorted(done_ids)}, f)
 
 
-def fetch_products_by_category(client, category: str) -> list[dict]:
+def fetch_all_products(client) -> list[dict]:
     products = []
-    page = 0
+    cursor = 0
     while True:
-        result = (
+        rows = (
             client.table('products')
             .select('id, name, category')
-            .eq('category', category)
-            .range(page * 1000, page * 1000 + 999)
+            .gt('id', cursor)
+            .order('id')
+            .limit(FETCH_PAGE_SIZE)
             .execute()
-        )
-        rows = result.data or []
+        ).data or []
         products.extend(rows)
-        if len(rows) < 1000:
-            break
-        page += 1
-    return products
+        if len(rows) < FETCH_PAGE_SIZE:
+            return products
+        cursor = rows[-1]['id']
 
 
-def _parse_response(content: str, products: list[dict]) -> dict[int, str]:
-    if '```' in content:
-        content = content.split('```')[1]
-        if content.startswith('json'):
-            content = content[4:]
-
-    fixed = re.sub(r'(\w+)\s*:\s*([^\s,}]+)', r'"\1":"\2"', content.strip())
-    try:
-        result_raw = json.loads(fixed)
-    except json.JSONDecodeError:
-        result_raw = {}
-        for m in re.finditer(r'["\']?(\d+)["\']?\s*:\s*["\']?([^,"}\s]+)["\']?', content):
-            result_raw[m.group(1)] = m.group(2)
-
-    return {
-        products[int(k)]['id']: v
-        for k, v in result_raw.items()
-        if int(k) < len(products) and v in CATEGORIES
-    }
-
-
-def classify_batch(products: list[dict]) -> dict[int, str]:
-    lines = [f'{i}: {p["name"]}' for i, p in enumerate(products)]
-    user_msg = '\n'.join(lines)
-
-    for attempt in range(MAX_RETRIES):
-        response = httpx.post(
-            GROQ_URL,
-            headers={
-                'Authorization': f'Bearer {GROQ_API_KEY}',
-                'Content-Type': 'application/json',
-            },
-            json={
-                'model': MODEL,
-                'messages': [
-                    {'role': 'system', 'content': SYSTEM_PROMPT},
-                    {'role': 'user', 'content': user_msg},
-                ],
-                'temperature': 0,
-                'max_tokens': 1024,
-            },
-            timeout=30,
-        )
-        if response.status_code == 429:
-            retry_after = int(response.headers.get('retry-after', 15 * (attempt + 1)))
-            wait = max(retry_after, 15 * (attempt + 1))
-            print(f'  Rate limit, {wait}초 대기...')
-            time.sleep(wait)
-            continue
-        response.raise_for_status()
-        content = response.json()['choices'][0]['message']['content'].strip()
-        return _parse_response(content, products)
-
-    raise Exception('최대 재시도 초과')
-
-
-def process_category(client, category: str, start_batch: int, total_updated: int) -> int:
-    products = fetch_products_by_category(client, category)
-    total_batches = (len(products) + BATCH_SIZE - 1) // BATCH_SIZE
-
-    print(f'\n[{category}] {len(products)}개 상품 / {total_batches}배치 (배치 {start_batch + 1}부터 시작)')
-
-    if not products:
-        return total_updated
-
-    for batch_num in range(start_batch, total_batches):
-        batch = products[batch_num * BATCH_SIZE:(batch_num + 1) * BATCH_SIZE]
-        try:
-            result = classify_batch(batch)
-            changed = [
-                (product_id, new_cat)
-                for product_id, new_cat in result.items()
-                if next(p for p in batch if p['id'] == product_id)['category'] != new_cat
-            ]
-            for product_id, new_cat in changed:
-                client.table('products').update({'category': new_cat}).eq('id', product_id).execute()
-            total_updated += len(changed)
-            print(f'  배치 {batch_num + 1}/{total_batches} 완료 (변경: {len(changed)}개 / 누적: {total_updated}개)')
-        except Exception as e:
-            print(f'  배치 {batch_num + 1} 실패: {e}')
-
-        # 체크포인트 저장 (배치 완료마다)
-        save_checkpoint([], category, batch_num + 1)
-
-        if batch_num < total_batches - 1:
-            time.sleep(SLEEP_BETWEEN_BATCHES)
-
-    return total_updated
+def update_categories(client, changed: dict[int, str]) -> None:
+    """바뀐 상품을 카테고리별로 묶어 한 번씩 update한다."""
+    ids_by_category: dict[str, list[int]] = defaultdict(list)
+    for product_id, category in changed.items():
+        ids_by_category[category].append(product_id)
+    for category, ids in ids_by_category.items():
+        client.table('products').update({'category': category}).in_('id', ids).execute()
 
 
 def main():
@@ -176,32 +74,49 @@ def main():
         sys.exit(1)
 
     client = _get_supabase_client()
-    checkpoint = load_checkpoint()
-    completed = set(checkpoint['completed_categories'])
-    total_updated = 0
+    done_ids = load_done_ids()
+    products = [p for p in fetch_all_products(client) if p['id'] not in done_ids]
+    products.sort(key=lambda p: (p['category'] != UNCLASSIFIED_CATEGORY, p['id']))
+    total_batches = (len(products) + BATCH_SIZE - 1) // BATCH_SIZE
 
-    print(f'처리 순서: {" → ".join(CATEGORY_PRIORITY)}')
-    if completed:
-        print(f'이미 완료된 카테고리: {", ".join(completed)}')
+    print(f'모델: {MODEL}')
+    print(f'대상: {len(products)}개 / {total_batches}배치 (이미 처리 {len(done_ids)}개)')
 
-    for category in CATEGORY_PRIORITY:
-        if category in completed:
-            print(f'[{category}] 완료됨, 건너뜀')
-            continue
+    total_changed = 0
+    total_missing = 0
+    for batch_num in range(total_batches):
+        batch = products[batch_num * BATCH_SIZE:(batch_num + 1) * BATCH_SIZE]
+        try:
+            result = classify_names([p['name'] for p in batch], GROQ_API_KEY)
+        except DailyLimitExceeded as e:
+            print(f'\n{e}')
+            print(f'진행 상황 저장됨 ({len(done_ids)}개 처리). 한도가 풀린 뒤 다시 실행하면 이어서 처리합니다.')
+            sys.exit(2)
+        except Exception as e:
+            # 이 배치는 체크포인트에 넣지 않으므로 재실행 시 다시 처리된다
+            print(f'  배치 {batch_num + 1} 실패: {e} — 중단합니다')
+            sys.exit(1)
 
-        start_batch = 0
-        if checkpoint['current_category'] == category:
-            start_batch = checkpoint['current_batch']
-            if start_batch > 0:
-                print(f'[{category}] 배치 {start_batch + 1}부터 이어서 시작')
+        changed = {
+            batch[index]['id']: category
+            for index, category in result.items()
+            if batch[index]['category'] != category
+        }
+        update_categories(client, changed)
 
-        total_updated = process_category(client, category, start_batch, total_updated)
+        total_changed += len(changed)
+        total_missing += len(batch) - len(result)
+        done_ids.update(p['id'] for p in batch)
+        save_done_ids(done_ids)
+        print(
+            f'  배치 {batch_num + 1}/{total_batches} 완료 '
+            f'(변경 {len(changed)} / 응답 누락 {len(batch) - len(result)} / 누적 변경 {total_changed})'
+        )
 
-        completed.add(category)
-        save_checkpoint(list(completed), None, 0)
-        print(f'[{category}] 완료')
+        if batch_num < total_batches - 1:
+            time.sleep(SLEEP_BETWEEN_BATCHES)
 
-    print(f'\n전체 완료: 총 {total_updated}개 상품 카테고리 업데이트')
+    print(f'\n전체 완료: {total_changed}개 카테고리 변경, 응답 누락 {total_missing}개(기존 값 유지)')
     if os.path.exists(CHECKPOINT_FILE):
         os.remove(CHECKPOINT_FILE)
         print('체크포인트 파일 삭제 완료')

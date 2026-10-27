@@ -15,31 +15,39 @@ logger = logging.getLogger(__name__)
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 # llama-3.1-8b-instant는 Groq에서 Enterprise 전용으로 바뀌어 일반 키로는 404가 난다.
 # 모델 교체가 잦으므로 GROQ_MODEL 환경변수로 덮어쓸 수 있게 둔다.
-DEFAULT_MODEL = "openai/gpt-oss-20b"
+# 분류는 브랜드명만 보고 맞혀야 하는 경우가 많아 20b보다 120b가 정확하다.
+DEFAULT_MODEL = "openai/gpt-oss-120b"
 MODEL = os.environ.get("GROQ_MODEL", "").strip() or DEFAULT_MODEL
-BATCH_SIZE = 80
+# 50개·추론 low로는 응답 인덱스가 밀려 이웃 상품의 카테고리가 붙는 오류가 잦았다.
+# 25개·추론 medium이 정확도가 가장 좋았다 (상품당 약 100토큰, 무료 키 TPM 8,000 이내).
+BATCH_SIZE = 25
+REASONING_EFFORT = "medium"
+# gpt-oss는 추론 토큰도 출력 한도에 포함된다. 한도가 작으면 JSON이 잘려 상품이 '기타'로 남는다.
+MAX_COMPLETION_TOKENS = 8192
 # Supabase는 GET 쿼리스트링으로 필터를 보내므로 이름을 한 번에 다 넣으면
 # URL 길이 제한("URL component 'query' too long")에 걸린다. 나눠서 조회한다.
 NAME_QUERY_CHUNK_SIZE = 100
 SLEEP_BETWEEN_BATCHES = 2.5
 MAX_RETRIES = 5
+# retry-after가 이보다 길면 분당 한도가 아니라 일일 한도(TPD/RPD)에 걸린 것이다.
+DAILY_LIMIT_RETRY_AFTER_SECONDS = 120
+DEFAULT_RATE_LIMIT_WAIT_SECONDS = 10
 
 VALID_CATEGORIES = {"음료", "과자", "식품", "아이스크림", "생활용품"}
 
-SYSTEM_PROMPT = """You classify Korean convenience store products into exactly one of 5 categories.
-Categories: 음료, 과자, 식품, 아이스크림, 생활용품
+SYSTEM_PROMPT = """You classify Korean convenience-store (편의점) products by name into exactly one category.
 
-Rules:
-- 음료: ALL drinks (water, coffee, juice, milk, soda, tea, beer, soju, wine, energy drink, kombucha, health drinks)
-- 과자: snacks (chips, chocolate, jelly, candy, cookies, bread, cake, granola bar, nuts)
-- 식품: ALL other edible items (ready meals, kimbap, ramen, rice, dumpling, sausage, hotdog, chicken, health supplements, vitamins, hangover products, protein, frozen fruit, tofu, eggs, seaweed, jerky, tuna, spam, seasonings, ingredients)
-- 아이스크림: ice cream and popsicles only (NOT iced tea - that is 음료)
-- 생활용품: household & personal care (shampoo, toothpaste, toothbrush, detergent, sanitary pads, lotion, skincare, stationery, mask, tissue, cleaning products)
+음료 — anything you drink: water, soda, coffee, tea, juice, milk & flavored milk (바나나우유, 배스킨라빈스 딸기우유), drinkable yogurt, soy milk (베지밀), protein shakes, energy/vitamin/hangover drinks and shots (컨디션 병, 여명, 비타500, 부스터샷), beer, soju, wine, whisky, highball, makgeolli, tea bags/sticks (보리차 티백, 메밀차).
+과자 — snacks and sweets: chips, crackers, cookies, biscuits, chocolate & choco bars, candy, gum, jelly & gummies (incl. 곤약젤리), marshmallow, nuts, popcorn, cereal bars, hot-choco mix, bread, cake, castella, roll cake, pie, rice cake desserts (찰떡, 모찌 not frozen).
+아이스크림 — frozen desserts: ice cream, popsicles, ice bars, cones, sorbet, frozen mochi, 빙수. Many are named only by brand, e.g. 빠삐코, 비비빅, 메로나, 붕어싸만코, 월드콘, 구구콘, 투게더, 설레임, 폴라포, 죠스바, 수박바, 돼지바, 찰떡아이스, 와일드바디, 빵빠레, 슈퍼콘, 하겐다즈, 나뚜루, 라라스윗 바. A volume in ml does NOT make it a drink if it is ice cream (e.g. "제로바70ML" is an ice bar).
+식품 — all other food for humans: lunch boxes, kimbap, sandwiches, burgers, ramen & cup noodles, instant rice (햇반), porridge (죽), dumplings, frozen meals, chicken, sausages & hot dogs (프랑크, 후랑크, 소시지, 천하장사, 맥스봉), fish cake (어묵), crab stick, tuna, spam, kimchi, seaweed (김), tofu, eggs, spoonable yogurt (요거트 cups), cheese, jerky (육포), dried squid, sauces, seasonings, health supplements, vitamins in tablet/jelly-stick form, hangover jelly sticks (컨디션스틱 ...g).
+생활용품 — anything not eaten by people: shampoo, rinse, soap, body wash, toothpaste, toothbrush, mouthwash, skincare & cosmetics (리들샷, 앰플, 마스크팩), sanitary pads & liners (생리대, 라이너, 좋은느낌, 바디피트, 화이트), diapers, tissues, wet wipes, masks, detergent, fabric softener, cleaning products, batteries, stationery, toys (레고), stockings, socks, condoms, contact-lens solution, pet food and pet treats (시저, 펫, 강아지, 고양이).
 
-Every product MUST be assigned one of these 5 categories. No other values allowed.
+Respond with one JSON object mapping every input index to its category, e.g. {"0":"음료","1":"식품"}. Use only these 5 Korean category names. Include every index."""
 
-Respond ONLY with JSON like: {"0":"음료","1":"식품","2":"생활용품"}
-No explanation. No other text. Just the JSON object."""
+
+class DailyLimitExceeded(RuntimeError):
+    """Groq 일일 한도(TPD/RPD) 초과 — 같은 날 재시도해도 소용없다."""
 
 
 def _strip_code_block(content: str) -> str:
@@ -73,8 +81,19 @@ def _parse_response(content: str, count: int) -> dict[int, str]:
     return result
 
 
-def _classify_batch(names: list[str], api_key: str) -> dict[int, str]:
-    """상품명 배치를 Groq API로 분류한다."""
+def _rate_limit_wait_seconds(response: httpx.Response, attempt: int) -> float:
+    """429 응답의 retry-after(초)를 읽는다. 없으면 시도 횟수에 비례해 기다린다."""
+    try:
+        return float(response.headers["retry-after"])
+    except (KeyError, ValueError):
+        return DEFAULT_RATE_LIMIT_WAIT_SECONDS * (attempt + 1)
+
+
+def classify_names(names: list[str], api_key: str) -> dict[int, str]:
+    """상품명 배치를 Groq API로 분류해 {입력 인덱스: 카테고리}를 반환한다.
+
+    응답에서 빠진 인덱스는 결과에 없다. 일일 한도에 걸리면 DailyLimitExceeded.
+    """
     user_msg = "\n".join(f"{i}: {name}" for i, name in enumerate(names))
 
     for attempt in range(MAX_RETRIES):
@@ -88,13 +107,19 @@ def _classify_batch(names: list[str], api_key: str) -> dict[int, str]:
                     {"role": "user", "content": user_msg},
                 ],
                 "temperature": 0,
-                "max_tokens": 1024,
+                "max_completion_tokens": MAX_COMPLETION_TOKENS,
+                "reasoning_effort": REASONING_EFFORT,
+                "response_format": {"type": "json_object"},
             },
-            timeout=30,
+            timeout=60,
         )
         if response.status_code == 429:
-            wait = 10 * (attempt + 1)
-            logger.warning("Groq rate limit, %d초 대기", wait)
+            wait = _rate_limit_wait_seconds(response, attempt)
+            if wait > DAILY_LIMIT_RETRY_AFTER_SECONDS:
+                raise DailyLimitExceeded(
+                    f"Groq 일일 한도 초과 (model={MODEL}, {wait:.0f}초 후 재시도 가능): {response.text[:200]}"
+                )
+            logger.warning("Groq rate limit, %.0f초 대기", wait)
             time.sleep(wait)
             continue
         if response.status_code >= 400:
@@ -179,10 +204,13 @@ def classify_products(products: list[Product]) -> None:
         batch_products = new_products[start: start + BATCH_SIZE]
 
         try:
-            result = _classify_batch(batch_names, api_key)
+            result = classify_names(batch_names, api_key)
             for idx, category in result.items():
                 batch_products[idx].category = category
             logger.info("AI 분류 배치 %d/%d 완료", batch_num + 1, total_batches)
+        except DailyLimitExceeded as e:
+            logger.error("%s — 남은 %d개 분류 건너뜀", e, len(names) - start)
+            return
         except Exception as e:
             logger.error("AI 분류 배치 %d 실패: %s", batch_num + 1, e)
 
