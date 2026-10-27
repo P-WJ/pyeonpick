@@ -17,10 +17,12 @@ import {
   calculateTotalPrice,
 } from "@/app/use-cases/cart-manager";
 import { calculateSavings, buildShareUrl } from "@/domain/use-cases/cart";
+import { useWishlist } from "@/app/hooks/useWishlist";
+import { shareToKakao } from "@/infrastructure/kakao-share";
 
 const CART_STORAGE_KEY = "cvs-cart-v1";
-const WISHLIST_STORAGE_KEY = "cvs-wishlist-v1";
 const TOAST_DURATION_MS = 2500;
+const SHARE_FALLBACK_IMAGE_PATH = "/icons/icon-192x192.png";
 
 interface CartContextValue {
   cartItems: CartItem[];
@@ -40,6 +42,7 @@ interface CartContextValue {
   handleToggleWishlist: (product: Product) => void;
   clearCart: () => void;
   copyShareUrl: () => void;
+  shareCartToKakao: () => void;
   showToast: (message: string) => void;
 }
 
@@ -47,14 +50,15 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [wishlistIds, setWishlistIds] = useState<number[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [cartBounceTrigger, setCartBounceTrigger] = useState(false);
 
   // 첫 번째 save 실행을 건너뛰기 위한 플래그 (복원 전 초기 [] 로 덮어쓰기 방지)
   const isFirstCartSave = useRef(true);
-  const isFirstWishlistSave = useRef(true);
+
+  // 찜: localStorage + 로그인 시 계정 동기화
+  const { wishlistIds, toggleWishlist } = useWishlist(showToast);
 
   // 복원
   useEffect(() => {
@@ -64,23 +68,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(WISHLIST_STORAGE_KEY);
-      if (stored) setWishlistIds(JSON.parse(stored) as number[]);
-    } catch {}
-  }, []);
-
   // 저장 (첫 렌더의 빈 초기값은 저장 건너뜀)
   useEffect(() => {
     if (isFirstCartSave.current) { isFirstCartSave.current = false; return; }
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
   }, [cartItems]);
-
-  useEffect(() => {
-    if (isFirstWishlistSave.current) { isFirstWishlistSave.current = false; return; }
-    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(wishlistIds));
-  }, [wishlistIds]);
 
   function triggerBounce() {
     setCartBounceTrigger(true);
@@ -120,11 +112,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   function handleToggleWishlist(product: Product) {
-    setWishlistIds((prev) =>
-      prev.includes(product.id)
-        ? prev.filter((id) => id !== product.id)
-        : [...prev, product.id]
-    );
+    toggleWishlist(product.id);
   }
 
   function clearCart() {
@@ -141,6 +129,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .writeText(url)
       .then(() => showToast("공유 링크가 복사됐습니다."))
       .catch(() => showToast("링크 복사에 실패했습니다. 주소창에서 직접 복사해주세요."));
+  }
+
+  function shareCartToKakao() {
+    const firstImage = cartItems.find((item) => item.product.imageUrl)?.product.imageUrl;
+    const isShared = shareToKakao({
+      title: `편픽 장바구니 — ${cartItems.length}개 상품`,
+      description:
+        totalSavings > 0
+          ? `총 ${totalPrice.toLocaleString("ko-KR")}원 · 행사로 ${totalSavings.toLocaleString("ko-KR")}원 절약`
+          : `총 ${totalPrice.toLocaleString("ko-KR")}원`,
+      imageUrl: firstImage || `${window.location.origin}${SHARE_FALLBACK_IMAGE_PATH}`,
+      url: buildShareUrl(cartItems),
+      buttonTitle: "장바구니 보기",
+    });
+    // SDK가 아직 로드되지 않았거나 키가 없으면 링크 복사로 대신한다
+    if (!isShared) copyShareUrl();
   }
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -167,6 +171,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         handleToggleWishlist,
         clearCart,
         copyShareUrl,
+        shareCartToKakao,
         showToast,
       }}
     >

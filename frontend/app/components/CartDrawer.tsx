@@ -7,6 +7,8 @@ import { SavingsBadge } from "./SavingsBadge";
 import { EventBadge } from "./EventBadge";
 
 const HIGHLIGHT_DURATION_MS = 500;
+// 빌드 시점에 인라인된다 — 키가 없으면 카카오톡 공유 버튼을 숨긴다
+const IS_KAKAO_SHARE_ENABLED = Boolean(process.env.NEXT_PUBLIC_KAKAO_JS_KEY);
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -18,6 +20,7 @@ interface CartDrawerProps {
   onRemoveItem: (productId: number) => void;
   onClearCart: () => void;
   onShare: () => void;
+  onShareKakao: () => void;
 }
 
 export function CartDrawer({
@@ -30,6 +33,7 @@ export function CartDrawer({
   onRemoveItem,
   onClearCart,
   onShare,
+  onShareKakao,
 }: CartDrawerProps) {
   const [changedItemId, setChangedItemId] = useState<number | null>(null);
   const [deletedItemToast, setDeletedItemToast] = useState<string | null>(null);
@@ -217,14 +221,26 @@ export function CartDrawer({
               <SavingsBadge savings={totalSavings} />
             </div>
           )}
-          <button
-            type="button"
-            onClick={onShare}
-            disabled={items.length === 0}
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
-          >
-            공유하기
-          </button>
+          <div className="flex gap-2">
+            {IS_KAKAO_SHARE_ENABLED && (
+              <button
+                type="button"
+                onClick={onShareKakao}
+                disabled={items.length === 0}
+                className="flex-1 rounded-xl bg-[#FEE500] py-2.5 text-sm font-semibold text-gray-900 hover:opacity-90 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
+              >
+                카카오톡 공유
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onShare}
+              disabled={items.length === 0}
+              className="flex-1 rounded-xl border border-gray-200 bg-white py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-150"
+            >
+              {IS_KAKAO_SHARE_ENABLED ? "링크 복사" : "공유하기"}
+            </button>
+          </div>
         </div>
       </aside>
     </>

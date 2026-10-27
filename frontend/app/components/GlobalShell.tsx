@@ -17,6 +17,7 @@ export function GlobalShell({ children }: { children: ReactNode }) {
     handleRemoveItem,
     clearCart,
     copyShareUrl,
+    shareCartToKakao,
   } = useCart();
 
   return (
@@ -34,6 +35,7 @@ export function GlobalShell({ children }: { children: ReactNode }) {
         onRemoveItem={handleRemoveItem}
         onClearCart={clearCart}
         onShare={copyShareUrl}
+        onShareKakao={shareCartToKakao}
       />
 
       {toastMessage && (
