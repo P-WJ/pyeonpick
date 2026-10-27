@@ -1,9 +1,9 @@
 # 진행 현황
 
-## 현재 단계: UX 고도화 3단계까지 완료 / v1.3 미착수
+## 현재 단계: v1.3까지 완료 / 운영 안정화
 
 - 마지막 기능 개발: **2026-06-03**
-- 마지막 문서·정합성 정리: **2026-08-26** (아래 최하단 항목)
+- 마지막 운영 복구·정리: **2026-10-28** (아래 최하단 항목)
 
 ---
 
@@ -23,7 +23,9 @@
 | 서비스 | 플랫폼 | 상태 |
 |--------|--------|------|
 | 프론트엔드 | Vercel | ✅ 운영 중 |
-| 크롤러 스케줄 | GitHub Actions | ✅ 운영 중 (매월 1일·15일 09:00 KST — `.github/workflows/crawl.yml`) |
+| 크롤러 스케줄 | GitHub Actions | ✅ 운영 중 (매월 1일 00:05 + 1일·15일 09:17 KST — `.github/workflows/crawl.yml`) |
+| 세븐일레븐 수집 | 로컬 작업 스케줄러 | CI IP 차단 — `scripts/crawl-seven-local.ps1` |
+| DB keep-alive | GitHub Actions | 매주 월·목 — 무료 플랜 일시정지 방지 |
 | DB | Supabase | ✅ 운영 중 |
 
 ---
@@ -187,16 +189,15 @@ UX 감사에서 도출한 "비교 서비스인데 정작 비교·신뢰 요소�
 - 검증: `tsc` 통과 + 크롤러 import 정상
 - DB(수동): `subscriptions`, `notifications_sent` 테이블은 Supabase에서 수동 드롭 가능(남겨둬도 무해)
 
-### 3단계 — 남은 확장 (🔜 예정)
-- **카카오톡 공유**: 카카오 SDK 연동 (현재 공유 = 클립보드 복사뿐, `copyShareUrl`에 `.catch` 없음 → 함께 보완)
-- **로그인 후 찜 목록 서버 동기화**: 현재 localStorage 전용이라 기기 종속
+### 3단계 — 남은 확장 (✅ 2026-10-28 완료, 아래 참조)
+- **카카오톡 공유** / **로그인 후 찜 목록 서버 동기화**
 
 ---
 
-## v1.3 — 미착수
+## v1.3 — 완료
 
 - ~~카카오 알림톡 전환~~ / ~~Resend 이메일~~ → **둘 다 취소 (2026-06-03)**: 알림은 **웹 푸시**로 운영
-- 알림 설정 수정 기능 추가 (현재 해제만 가능)
+- 알림 설정 수정 — ✅ `/notifications`의 `handleSaveSettings`가 새 설정으로 재구독, repository가 `endpoint` 기준 upsert라 덮어쓰기로 동작 (PATCH API는 없음). 2026-10-28 점검 때 확인
 - 이메일 구독 잔재 제거 — ✅ 완료 (2026-06-03, 위 참조). `subscriptions`/`notifications_sent` 테이블만 수동 드롭 남음(선택)
 
 ---
@@ -301,3 +302,57 @@ CI 복구 후 처음으로 크롤러가 DB까지 도달했고(`기존 상품 855
 - `crawler/main.py`: APScheduler 상주 스케줄러 → **1회 실행 진입점**으로 재작성. 실패한 편의점이 있으면 exit code 1
 - `crawl.yml`: YAML 안에 인라인 파이썬을 박아 두던 것을 `python -m crawler.main` 한 줄로 교체 (실행 로직 중복 제거)
 - `apscheduler` 의존성 제거 (`pyproject.toml`, `crawl.yml`)
+
+---
+
+## 운영 복구 — 크롤링 7주 중단 해소 (2026-10-28)
+
+### 🔴 9/15·10/1·10/15 크롤링 전부 실패 → 10/1부터 사이트 상품 0건
+- 로그: `[Errno -2] Name or service not known` — 수집은 성공, **DB 저장 단계에서 Supabase 도메인 DNS 조회 실패**
+- 원인(추정): Supabase 무료 플랜 **비활성 일시정지**. 정지되면 프로젝트 도메인 DNS가 사라진다. secrets는 5/31 이후 변경 없음, 9/1은 성공
+- 복구: 수동 실행으로 CU 1,514 / 이마트24 2,307 / 씨스페이스 105 재적재
+- 재발 방지: `.github/workflows/keepalive.yml` — 주 2회 REST 조회
+
+### 🔴 CI의 `GROQ_API_KEY` secret 무효 (HTTP 401)
+- CI에서 들어온 신규 상품이 전부 '기타'로 쌓이던 원인 중 하나. secret 교체로 해결
+
+### 🔴 AI 분류 정확도 — '기타' 1,636개 + 오분류 다수
+- `max_tokens: 1024` — gpt-oss는 **추론 토큰도 출력 한도에 포함**돼 JSON이 잘림 → `max_completion_tokens` 8192 + `response_format: json_object`
+- 프롬프트에 헷갈리는 사례 명시 (브랜드명만 있는 아이스크림, 후랑크, 두유, 생리대·사료 등)
+- 모델·배치 비교: 50개·low는 응답 인덱스가 밀려 이웃 상품 카테고리가 붙음 → **120b · 25개 · medium** 채택
+- 크롤링 분류는 120b 일일 한도 시 20b로 대체 (어려운 상품 25개 기준 20b 20~22개 정답)
+- `json_validate_failed`(400)는 일시적이라 재시도
+- 전체 재분류 진행 중: TPD 20만 = 하루 약 2,000개 → 5일가량. `ai_classify.py` 재실행하면 이어서 처리
+
+### 🔴 월초 공백 — 매월 1일 낮 시간 상품 0건
+- GitHub 정각 예약이 실제로는 **약 4시간 지연**(03:43~04:48 UTC 시작). 1일 09시(KST)~13시경 진행 중 상품 없음
+- 크롤러·프론트 모두 "오늘"을 UTC로 계산 → **KST 기준으로 변경** (`common.today_kst`, `todayDateString`)
+- 예약: 1일 00:05 KST(말일 15:05 UTC, gate 잡이 KST 1일인지 확인) + 1일·15일 09:17 KST
+- 수집 후 이번 목록에 없는 진행 중 상품은 어제 날짜로 **만료** — 월 중간에 끝난 행사, 월초 1차가 가져온 지난달 목록 정리. 수집량이 기존의 50% 미만이면 부분 실패로 보고 건너뜀
+- 수집 0개는 실패로 처리 (접속 차단이 성공으로 묻히던 문제)
+
+### 🟡 세븐일레븐 — 6월 이후 CI에서 한 번도 수집 못 함
+- 매 실행 4개 탭 모두 `ConnectTimeout`. 로컬(가정용 IP)에서는 1.3초 200 → **데이터센터 IP 차단** 확정
+- CI는 `--stores cu,emart24,cspace`로 분리, 세븐일레븐은 `scripts/crawl-seven-local.ps1` (작업 스케줄러 등록 `-Register`)
+- 셀프호스티드 러너는 공개 저장소의 포크 PR 실행 위험 때문에 보류
+- 10/28 로컬 수집으로 2,317개 적재
+
+### GS25 재조사 — 중단 유지
+- `gs25.gsretail.com` 전 경로 → `www.gsretail.com/brand/gs25`. GS리테일 홈페이지 번들 125개에 상품·행사 API 없음 (매장 검색·GIS뿐)
+- 우리동네GS 웹(`woodongs.com`) 번들 204개에도 행사 목록 없음 — 기능은 Flutter 네이티브 앱에만
+- 앱 검색 API(`b2c-apigw.woodongs.com/search/v3/totalSearch`)의 `woodel_gs` 컬렉션에 `prmByQty`/`prmGtQty`(1/1=1+1, 2/1=2+1)가 있음을 확인. 단 **비공식·키워드 검색 전용**이고 앱이 요청 암호화·인증서 고정을 쓰는 등 외부 사용을 의도하지 않음 → 약관 위험으로 미사용
+- 대안: GS리테일 공식 제휴 문의, 데이터 보유 집계 사이트와 제휴
+
+### 그 외
+- 목록 API: 미분류('기타')를 DB 조회 단계에서 제외 — limit 이후 걸러져 24개 요청에 19개만 오던 문제
+- CI: actions v7(Node 24), 러너 `ubuntu-24.04` 고정, 미사용 Playwright·Chromium 설치 제거
+- `crawler/main.py`: `--stores` 인자, `crawler/.env` 자동 로드(로컬 실행용)
+
+### 기능 — 찜 서버 동기화 + 카카오톡 공유
+- 찜: `wishlists` 테이블(`docs/migrations/006_wishlists.sql`, **Supabase에서 수동 실행 필요**), `/api/wishlist`, `useWishlist` 훅
+  - 비로그인은 기존대로 localStorage. 로그인 시 로컬·서버 **합집합** 병합 후 토글을 서버에 반영
+  - 동기화 실패 시 토스트 안내, 기기에는 그대로 저장
+- 카카오톡 공유: Kakao JS SDK 2.8.3(SRI 고정), `NEXT_PUBLIC_KAKAO_JS_KEY` 있을 때만 로드·노출
+  - Kakao Developers 앱 [플랫폼 > Web]에 `https://pyeonpick.vercel.app`, `http://localhost:3000` 등록 필요
+  - 장바구니 하단: 카카오톡 공유(카카오 공식 노란색) + 링크 복사. SDK 미로드 시 링크 복사로 대체
+- 검증: `tsc` 통과, dev 서버에서 `/api/wishlist` 비로그인 401 확인. 로그인 동기화·실제 카톡 공유는 테이블 생성·키 등록 후 확인 필요

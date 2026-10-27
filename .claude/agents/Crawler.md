@@ -1,6 +1,6 @@
 ---
 name: crawler
-description: 편의점 크롤러 작업 전담. Python/Playwright 코드 작성, 크롤러 디버깅, 새 편의점 추가, 데이터 파싱 로직 구현, AI 카테고리 분류 요청 시 사용. "CU 크롤러", "세븐일레븐 파싱", "크롤링 에러", "카테고리 분류" 관련 작업에 자동 호출.
+description: 편의점 크롤러 작업 전담. Python 크롤러 코드 작성, 크롤러 디버깅, 새 편의점 추가, 데이터 파싱 로직 구현, AI 카테고리 분류 요청 시 사용. "CU 크롤러", "세븐일레븐 파싱", "크롤링 에러", "카테고리 분류" 관련 작업에 자동 호출.
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
 ---
@@ -55,9 +55,11 @@ class Product:
 유효 카테고리 5개: `음료`, `과자`, `식품`, `아이스크림`, `생활용품`
 
 **신규 상품 분류:** 크롤링 후 `ai_classifier.py`의 `classify_products()` 호출
-- Groq API (`openai/gpt-oss-20b`, `GROQ_MODEL` 환경변수로 교체) 사용
-- 크롤링 중 신규 분류(`ai_classifier.py`): 배치 80개, 배치 간 2.5초
-- 기존 상품 일괄 재분류(루트 `ai_classify.py`): 배치 45개, 배치 간 3초 (TPM 여유 확보용)
+- Groq API (`openai/gpt-oss-120b`, 일일 한도 시 `gpt-oss-20b`로 대체, `GROQ_MODEL` 환경변수로 주 모델 교체)
+- 배치 25개, `reasoning_effort: medium`, `response_format: json_object`, `max_completion_tokens` 8192
+  (gpt-oss는 추론 토큰도 출력 한도에 포함 — 한도가 작으면 JSON이 잘려 '기타'로 남음)
+- 기존 상품 일괄 재분류(루트 `ai_classify.py`)는 같은 `classify_names`를 120b로만 사용
+- 무료 키 한도: 모델별 TPM 8,000 / TPD 200,000 (하루 약 2,000개 분류)
 
 **기존 상품 일괄 재분류:** 루트의 `ai_classify.py` 실행
 - 우선순위 순: 기타 → 간편식사 → 아이스크림 → 음료 → 과자 → 식품 → 생활용품
@@ -91,9 +93,11 @@ class Product:
 
 ## 스택
 
-- Python 3.11+, Playwright (async), httpx, BeautifulSoup4
+- Python 3.11+, httpx, BeautifulSoup4 (Playwright는 의존성에만 남아 있고 미사용)
 - Package manager: `uv`
 - DB: Supabase (supabase-py)
-- AI 분류: Groq API (`openai/gpt-oss-20b`)
-- 스케줄: GitHub Actions (매월 1일·15일 09:00 KST — `cron: '0 0 1,15 * *'`)
+- AI 분류: Groq API (`openai/gpt-oss-120b` → 대체 `gpt-oss-20b`)
+- 스케줄: GitHub Actions — 매월 1일 00:05 KST + 1일·15일 09:17 KST (`--stores cu,emart24,cspace`)
+- 세븐일레븐: 데이터센터 IP 차단으로 CI 불가 → 로컬 작업 스케줄러 (`scripts/crawl-seven-local.ps1`)
+- 날짜는 KST 기준 (`common.today_kst`). 수집 후 목록에서 사라진 진행 중 상품은 어제 날짜로 만료
 - ⚠️ GS25는 수집 중단(2026-08-26, 공식 페이지 폐쇄). `crawl_all.STORE_MODULES`에서 빠져 있고 `gs25.py`는 보존 — 복구 시 목록에 다시 추가

@@ -4,7 +4,9 @@
 
 CU, GS25, 세븐일레븐, 이마트24, 씨스페이스의 1+1·2+1·3+1·할인·증정 행사상품을 한눈에 비교하는 웹 서비스.
 > ⚠️ **GS25는 2026-08-26부터 수집 중단** — 공식 행사상품 페이지가 폐쇄됨. 현재 수집 대상은 4곳.
+> 2026-10-28 재조사: 공식 웹·우리동네GS 웹에 행사 API 없음. 앱 내부 검색 API에만 행사 정보가 있으나 비공식(약관 위험)이라 **중단 유지**로 결정.
 > 사용자 선택지는 `lib/constants.ts`의 `ACTIVE_STORES`, 과거 데이터까지 다루는 검증·색상은 `STORES` 사용.
+> ⚠️ **세븐일레븐은 CI에서 수집 불가** — 데이터센터 IP 차단. 로컬 PC의 작업 스케줄러(`scripts/crawl-seven-local.ps1`)로 수집.
 차별점: 장바구니·절약액 계산·개당가 비교·찜하기·알림(웹 푸시)·AI 조합 추천·커뮤니티 게시판.
 
 ## 아키텍처 원칙 (전체 공통)
@@ -54,7 +56,7 @@ PyeonPick/
 │       ├── notifications/     # 알림 구독 조회
 │       ├── board/             # 커뮤니티 게시판
 │       └── api/               # API Routes
-├── crawler/                   # Python + Playwright/httpx
+├── crawler/                   # Python + httpx/BeautifulSoup (Playwright 미사용)
 │   ├── domain/
 │   ├── infrastructure/
 │   │   ├── stores/            # CU, GS25, 세븐일레븐, 이마트24, 씨스페이스
@@ -68,7 +70,7 @@ PyeonPick/
 
 ## 개발 단계
 
-**현재 단계: 고도화 3단계까지 완료 (마지막 작업 2026-06-03) / v1.3 미착수**
+**현재 단계: v1.3까지 완료 / 운영 안정화 (2026-10-28)**
 
 | 단계 | 기능 | 상태 |
 | ---- | ---- | ---- |
@@ -78,7 +80,7 @@ PyeonPick/
 | 고도화 2단계 | 최근 본 상품, 프로필 페이지, 게시글 수정/삭제 | ✅ 완료 |
 | v1.2 | AI 조합 추천 (Groq API) | ✅ 완료 |
 | 고도화 3단계 | 실통계·개당가·정렬·D-day + 매장 간 가격 비교 | ✅ 완료 (2026-06-03) |
-| v1.3 | 알림 설정 수정 (웹 푸시) | ⬜ 미착수 |
+| v1.3 | 알림 설정 수정 (웹 푸시) | ✅ 완료 (재구독 방식 — endpoint 기준 upsert) |
 
 ## 기술 스택
 
@@ -87,10 +89,10 @@ PyeonPick/
 | 프론트엔드 | Next.js 15, TypeScript strict, Tailwind CSS, lucide-react |
 | 인증       | NextAuth v5 (카카오 OAuth)                        |
 | 백엔드 API | Next.js API Routes                                |
-| 크롤러     | Python 3.11+, Playwright, httpx, pywebpush        |
+| 크롤러     | Python 3.11+, httpx, BeautifulSoup4, pywebpush    |
 | DB         | PostgreSQL (Supabase)                             |
 | 알림       | 웹 푸시 (Web Push API + VAPID) — 카카오·이메일 미사용 |
-| AI 분류    | Groq API (`openai/gpt-oss-20b`, GROQ_MODEL로 교체) |
+| AI 분류    | Groq API (`openai/gpt-oss-120b`, 일일 한도 시 `gpt-oss-20b` 대체, GROQ_MODEL로 교체) |
 | AI 추천    | Groq API (`openai/gpt-oss-20b`, GROQ_MODEL로 교체) |
 | 배포       | Vercel (프론트), GitHub Actions (크롤러 스케줄)   |
 
@@ -98,10 +100,11 @@ PyeonPick/
 
 5개 카테고리: `음료`, `과자`, `식품`, `아이스크림`, `생활용품`
 
-- 크롤링 시 신규 상품은 `ai_classifier.py`로 자동 분류 (Groq API)
-- 기존 상품 일괄 재분류: 루트의 `ai_classify.py` 실행
-  - 우선순위: 기타 → 간편식사 → 아이스크림 → 음료 → 과자 → 식품 → 생활용품
-  - 체크포인트(`classify_progress.json`)로 중단 후 이어서 실행 가능
+- 크롤링 시 신규 상품은 `ai_classifier.py`로 자동 분류 (Groq API — 배치 25개, reasoning medium)
+- 기존 상품 일괄 재분류: 루트의 `ai_classify.py` 실행 (분류기 `classify_names` 공유, 120b만 사용)
+  - '기타' 먼저, 나머지 id 순. 바뀐 카테고리만 DB 반영
+  - 체크포인트(`classify_progress.json`, 처리한 id)로 중단·일일 한도 초과 후 이어서 실행 가능
+  - 무료 키 TPD 20만 = 하루 약 2,000개. 전체(1만여 개) 재분류는 5일가량 걸림
 - `product-repository.ts`의 `VALID_CATEGORIES`에 없는 카테고리는 프론트에서 필터링됨
 
 ## 편의점 브랜드 컬러
@@ -142,16 +145,16 @@ PyeonPick/
 
 **frontend `.env.local`**
 ```
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_URL                       # 서버 전용 (NEXT_PUBLIC_ 아님)
 SUPABASE_SERVICE_ROLE_KEY
-AUTH_KAKAO_ID                      # 카카오 로그인 (알림 아님)
-AUTH_KAKAO_SECRET
-AUTH_SECRET
+KAKAO_CLIENT_ID                    # 카카오 로그인 REST API 키 (알림 아님) — auth.ts
+KAKAO_CLIENT_SECRET
+AUTH_SECRET                        # NextAuth v5가 자동으로 읽음
 GROQ_API_KEY                       # AI 추천 + 카테고리 분류 공용
-GROQ_MODEL                         # (선택) 기본값 openai/gpt-oss-20b
+GROQ_MODEL                         # (선택) AI 추천 모델, 기본값 openai/gpt-oss-20b
 NEXT_PUBLIC_ENABLE_AI_RECOMMEND    # true 시 AI 추천 배너 노출
 NEXT_PUBLIC_VAPID_PUBLIC_KEY       # 웹 푸시 구독용 VAPID 공개키
+NEXT_PUBLIC_KAKAO_JS_KEY           # (선택) 카카오톡 공유용 JavaScript 키. 없으면 공유 버튼 숨김
 ```
 
 **crawler `.env`**
@@ -159,7 +162,7 @@ NEXT_PUBLIC_VAPID_PUBLIC_KEY       # 웹 푸시 구독용 VAPID 공개키
 SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 GROQ_API_KEY
-GROQ_MODEL                         # (선택) 기본값 openai/gpt-oss-20b
+GROQ_MODEL                         # (선택) 분류 주 모델, 기본값 openai/gpt-oss-120b
 VAPID_PRIVATE_KEY                  # 웹 푸시 발송용 VAPID 비밀키
 VAPID_SUBJECT                      # mailto: 형식 연락처
 ```
@@ -169,7 +172,7 @@ VAPID_SUBJECT                      # mailto: 형식 연락처
 | 키 | 용도 |
 |----|------|
 | `cvs-cart-v1` | 장바구니 |
-| `cvs-wishlist-v1` | 찜 목록 |
+| `cvs-wishlist-v1` | 찜 목록 (로그인 시 `wishlists` 테이블과 합집합 동기화) |
 | `cvs-recently-viewed-v1` | 최근 본 상품 |
 
 ## 디자인 시스템
