@@ -93,7 +93,7 @@ class Product:
 
 ## 스택
 
-- Python 3.11+, httpx, BeautifulSoup4 (Playwright는 의존성에만 남아 있고 미사용)
+- Python 3.11+, httpx, BeautifulSoup4 (Playwright 미사용 — 2026-10-28 의존성 제거)
 - Package manager: `uv`
 - DB: Supabase (supabase-py)
 - AI 분류: Groq API (`openai/gpt-oss-120b` → 대체 `gpt-oss-20b`)

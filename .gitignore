@@ -49,3 +49,6 @@ reclassify.py
 remaining_etc.txt
 cu_detail_test.html
 ai_classify_*.txt
+
+.vercel
+.env*

@@ -25,7 +25,7 @@ STORE_MODULES: list[ModuleType] = [cu, seven, emart24, cspace]
 
 # 실행 환경별로 매장을 나눠 돌릴 때 쓰는 키 (`python -m crawler.main --stores cu,emart24`).
 # 세븐일레븐은 GitHub Actions(데이터센터 IP)에서 ConnectTimeout으로 차단되어
-# 셀프호스티드 러너(가정용 IP)에서만 수집한다.
+# 로컬 PC(가정용 IP)의 작업 스케줄러에서 수집한다 (scripts/crawl-seven-local.ps1).
 STORE_MODULES_BY_KEY: dict[str, ModuleType] = {
     "cu": cu,
     "seven": seven,
