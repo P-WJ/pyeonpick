@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   gate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       run: ${{ steps.check.outputs.run }}
     steps:
@@ -32,21 +32,19 @@ jobs:
   crawl:
     needs: gate
     if: needs.gate.outputs.run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
+      # 매장 모듈은 모두 httpx + BeautifulSoup만 쓴다 (Playwright 미사용)
       - name: 의존성 설치
-        run: pip install httpx "beautifulsoup4>=4.12.0" "supabase>=2.3.0" playwright python-dotenv "pywebpush>=1.14.0"
-
-      - name: Playwright Chromium 설치
-        run: playwright install chromium --with-deps
+        run: pip install httpx "beautifulsoup4>=4.12.0" "supabase>=2.3.0" python-dotenv "pywebpush>=1.14.0"
 
       - name: 크롤링 실행
         env:
