@@ -333,7 +333,7 @@ CI 복구 후 처음으로 크롤러가 DB까지 도달했고(`기존 상품 855
 
 ### 🟡 세븐일레븐 — 6월 이후 CI에서 한 번도 수집 못 함
 - 매 실행 4개 탭 모두 `ConnectTimeout`. 로컬(가정용 IP)에서는 1.3초 200 → **데이터센터 IP 차단** 확정
-- CI는 `--stores cu,emart24,cspace`로 분리, 세븐일레븐은 `scripts/crawl-seven-local.ps1` (작업 스케줄러 등록 `-Register`)
+- CI는 `--stores cu,emart24,cspace`로 분리, 세븐일레븐은 `scripts/crawl-seven-local.ps1` (작업 스케줄러 등록 `-Register` — 1일 00:10, 1일 09:30, 15일 09:30 세 작업)
 - 셀프호스티드 러너는 공개 저장소의 포크 PR 실행 위험 때문에 보류
 - 10/28 로컬 수집으로 2,317개 적재
 
