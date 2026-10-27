@@ -18,6 +18,10 @@ GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 # 분류는 브랜드명만 보고 맞혀야 하는 경우가 많아 20b보다 120b가 정확하다.
 DEFAULT_MODEL = "openai/gpt-oss-120b"
 MODEL = os.environ.get("GROQ_MODEL", "").strip() or DEFAULT_MODEL
+# 무료 키는 모델별 일일 한도(TPD 20만)가 따로라, 크롤링 중 주 모델 한도가 차면 이 모델로 넘어간다.
+# 어려운 상품 25개 기준 120b 대비 2~5개 더 틀리지만 '기타'로 남기는 것보다 낫다.
+# 일괄 재분류(ai_classify.py)는 정확도를 위해 주 모델만 쓴다.
+FALLBACK_MODEL = "openai/gpt-oss-20b"
 # 50개·추론 low로는 응답 인덱스가 밀려 이웃 상품의 카테고리가 붙는 오류가 잦았다.
 # 25개·추론 medium이 정확도가 가장 좋았다 (상품당 약 100토큰, 무료 키 TPM 8,000 이내).
 BATCH_SIZE = 25
@@ -89,7 +93,12 @@ def _rate_limit_wait_seconds(response: httpx.Response, attempt: int) -> float:
         return DEFAULT_RATE_LIMIT_WAIT_SECONDS * (attempt + 1)
 
 
-def classify_names(names: list[str], api_key: str) -> dict[int, str]:
+def _is_json_generation_failure(response: httpx.Response) -> bool:
+    """json_object 모드에서 모델이 유효한 JSON을 못 만든 경우(일시적 — 재시도하면 대개 성공)."""
+    return response.status_code == 400 and "json_validate_failed" in response.text
+
+
+def classify_names(names: list[str], api_key: str, model: str = MODEL) -> dict[int, str]:
     """상품명 배치를 Groq API로 분류해 {입력 인덱스: 카테고리}를 반환한다.
 
     응답에서 빠진 인덱스는 결과에 없다. 일일 한도에 걸리면 DailyLimitExceeded.
@@ -101,7 +110,7 @@ def classify_names(names: list[str], api_key: str) -> dict[int, str]:
             GROQ_URL,
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
             json={
-                "model": MODEL,
+                "model": model,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_msg},
@@ -117,22 +126,44 @@ def classify_names(names: list[str], api_key: str) -> dict[int, str]:
             wait = _rate_limit_wait_seconds(response, attempt)
             if wait > DAILY_LIMIT_RETRY_AFTER_SECONDS:
                 raise DailyLimitExceeded(
-                    f"Groq 일일 한도 초과 (model={MODEL}, {wait:.0f}초 후 재시도 가능): {response.text[:200]}"
+                    f"Groq 일일 한도 초과 (model={model}, {wait:.0f}초 후 재시도 가능): {response.text[:200]}"
                 )
             logger.warning("Groq rate limit, %.0f초 대기", wait)
             time.sleep(wait)
+            continue
+        if _is_json_generation_failure(response):
+            logger.warning("Groq JSON 생성 실패(model=%s) — 재시도 %d/%d", model, attempt + 1, MAX_RETRIES)
             continue
         if response.status_code >= 400:
             # 404는 대개 모델이 계정에서 사용 불가한 경우 — 본문에 사유가 들어 있다
             logger.error(
                 "Groq 응답 오류 (HTTP %d, model=%s): %s",
-                response.status_code, MODEL, response.text[:300],
+                response.status_code, model, response.text[:300],
             )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"].strip()
         return _parse_response(content, len(names))
 
     raise RuntimeError("Groq API 최대 재시도 초과")
+
+
+# 이번 실행에서 일일 한도가 찬 모델 — 이후 배치·편의점에서 다시 시도하지 않는다
+_exhausted_models: set[str] = set()
+
+
+def _classify_with_fallback(names: list[str], api_key: str) -> dict[int, str]:
+    """주 모델로 분류하고, 일일 한도가 차면 대체 모델로 넘어간다. 둘 다 차면 DailyLimitExceeded."""
+    last_error: DailyLimitExceeded | None = None
+    for model in dict.fromkeys([MODEL, FALLBACK_MODEL]):
+        if model in _exhausted_models:
+            continue
+        try:
+            return classify_names(names, api_key, model=model)
+        except DailyLimitExceeded as error:
+            logger.warning("%s — 대체 모델로 전환", error)
+            _exhausted_models.add(model)
+            last_error = error
+    raise last_error or DailyLimitExceeded("모든 분류 모델의 일일 한도 초과")
 
 
 def _fetch_existing_categories(store: str, names: list[str]) -> dict[str, str]:
@@ -204,7 +235,7 @@ def classify_products(products: list[Product]) -> None:
         batch_products = new_products[start: start + BATCH_SIZE]
 
         try:
-            result = classify_names(batch_names, api_key)
+            result = _classify_with_fallback(batch_names, api_key)
             for idx, category in result.items():
                 batch_products[idx].category = category
             logger.info("AI 분류 배치 %d/%d 완료", batch_num + 1, total_batches)
