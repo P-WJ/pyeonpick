@@ -42,8 +42,11 @@ export interface PaginatedProducts {
   hasMore: boolean;
 }
 
+// 행사는 한국 시각 자정에 바뀐다. 서버(Vercel)는 UTC라 그대로 쓰면 하루가 9시간 늦게 넘어간다.
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
 function todayDateString(): string {
-  return new Date().toISOString().split("T")[0];
+  return new Date(Date.now() + KST_OFFSET_MS).toISOString().split("T")[0];
 }
 
 export async function getProducts(

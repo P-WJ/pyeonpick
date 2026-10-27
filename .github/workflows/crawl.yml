@@ -2,12 +2,36 @@ name: 편의점 크롤링
 
 on:
   schedule:
-    # 매월 1일·15일 09:00 KST (= 00:00 UTC) 실행
-    - cron: '0 0 1,15 * *'
+    # 월초 1차: 매월 1일 00:05 KST. cron은 UTC라 "말일 15:05 UTC"로 표현해야 하는데
+    # 말일을 직접 지정할 수 없어 28~31일에 모두 걸고 gate 잡에서 KST 1일인지 확인한다.
+    - cron: '5 15 28-31 * *'
+    # 월초 2차·월중: 매월 1일·15일 09:17 KST. 1차가 지난달 목록을 가져왔으면 여기서 정리된다.
+    # GitHub 예약 실행은 정각에 몰려 수 시간씩 밀리므로 정각을 피한다.
+    - cron: '17 0 1,15 * *'
   workflow_dispatch: # 수동 실행 버튼
 
+concurrency:
+  group: crawl
+  cancel-in-progress: false
+
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event.schedule }}" = "5 15 28-31 * *" ] && [ "$(TZ=Asia/Seoul date +%d)" != "01" ]; then
+            echo "KST 기준 1일이 아니므로 건너뜁니다"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   crawl:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
 

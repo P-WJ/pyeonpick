@@ -1,11 +1,20 @@
 """크롤러 공통 유틸리티."""
 import calendar
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
+
+# 행사는 한국 시각 자정에 바뀐다. CI 러너는 UTC라 date.today()를 쓰면
+# 1일 00:00~09:00 KST 사이 실행이 지난달로 계산된다.
+KST = timezone(timedelta(hours=9))
+
+
+def today_kst() -> date:
+    """한국 시각 기준 오늘 날짜를 반환한다."""
+    return datetime.now(KST).date()
 
 
 def current_month_range() -> tuple[date, date]:
-    """이번 달 1일과 말일을 반환한다."""
-    today = date.today()
+    """이번 달(한국 시각 기준) 1일과 말일을 반환한다."""
+    today = today_kst()
     first = today.replace(day=1)
     last_day = calendar.monthrange(today.year, today.month)[1]
     last = today.replace(day=last_day)

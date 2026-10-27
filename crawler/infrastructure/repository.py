@@ -1,5 +1,6 @@
 import logging
 import os
+from datetime import date
 
 from supabase import create_client, Client
 
@@ -66,6 +67,40 @@ def _deduplicate(products: list[Product]) -> list[Product]:
         key = (product.store, product.name)
         seen[key] = product
     return list(seen.values())
+
+
+EXPIRE_UPDATE_CHUNK_SIZE = 200  # in_ 필터도 GET 쿼리스트링이라 URL 길이 제한을 피한다
+
+
+def fetch_active_products(store: str, today: date) -> dict[str, int]:
+    """해당 편의점의 진행 중(valid_to >= today) 상품을 {상품명: id}로 반환한다."""
+    client = _get_supabase_client()
+    active: dict[str, int] = {}
+    offset = 0
+
+    while True:
+        rows = (
+            client.table("products")
+            .select("id, name")
+            .eq("store", store)
+            .gte("valid_to", today.isoformat())
+            .order("id")
+            .range(offset, offset + SELECT_PAGE_SIZE - 1)
+            .execute()
+        ).data or []
+        active.update({row["name"]: row["id"] for row in rows})
+        if len(rows) < SELECT_PAGE_SIZE:
+            return active
+        offset += SELECT_PAGE_SIZE
+
+
+def expire_products(product_ids: list[int], valid_to: date) -> int:
+    """지정한 상품들의 행사 종료일을 valid_to로 당겨 진행 중 목록에서 내린다."""
+    client = _get_supabase_client()
+    for start in range(0, len(product_ids), EXPIRE_UPDATE_CHUNK_SIZE):
+        chunk = product_ids[start : start + EXPIRE_UPDATE_CHUNK_SIZE]
+        client.table("products").update({"valid_to": valid_to.isoformat()}).in_("id", chunk).execute()
+    return len(product_ids)
 
 
 async def upsert_products(products: list[Product]) -> int:

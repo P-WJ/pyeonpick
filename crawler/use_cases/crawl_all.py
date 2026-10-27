@@ -1,8 +1,16 @@
 import logging
 from types import ModuleType
 
+from datetime import timedelta
+
 from crawler.domain.entities import CrawlResult, Product
-from crawler.infrastructure.repository import fetch_existing_product_keys, upsert_products
+from crawler.infrastructure.common import today_kst
+from crawler.infrastructure.repository import (
+    expire_products,
+    fetch_active_products,
+    fetch_existing_product_keys,
+    upsert_products,
+)
 from crawler.infrastructure.ai_classifier import classify_products
 from crawler.infrastructure.stores import cu, cspace, emart24, seven
 from crawler.infrastructure.web_push_notifier import send_web_push_notifications
@@ -14,6 +22,31 @@ logger = logging.getLogger(__name__)
 # 가맹점주용 www.gsretail.com/brand/gs25 로 301 리다이렉트되어 가져올 출처가 없다.
 # 페이지가 복구되면 gs25를 이 목록에 다시 넣기만 하면 된다 (gs25.py는 보존).
 STORE_MODULES: list[ModuleType] = [cu, seven, emart24, cspace]
+
+# 이번 수집량이 기존 진행 중 상품의 이 비율보다 적으면 부분 실패로 보고 만료 처리를 건너뛴다.
+# (씨스페이스처럼 일부 페이지만 끊기는 경우 멀쩡한 상품까지 내리지 않도록)
+MIN_COLLECTED_RATIO_FOR_EXPIRE = 0.5
+
+
+def expire_unseen_products(store_name: str, products: list[Product]) -> None:
+    """이번 수집에 없는 진행 중 상품을 어제 날짜로 만료시킨다.
+
+    행사가 월 중간에 끝났거나, 월초 수집이 지난달 목록을 가져온 경우를 정리한다.
+    """
+    today = today_kst()
+    active = fetch_active_products(store_name, today)
+    if len(products) < len(active) * MIN_COLLECTED_RATIO_FOR_EXPIRE:
+        logger.warning(
+            "%s: 수집 %d개가 진행 중 %d개의 %d%% 미만 — 부분 실패로 보고 만료 처리를 건너뜁니다",
+            store_name, len(products), len(active), int(MIN_COLLECTED_RATIO_FOR_EXPIRE * 100),
+        )
+        return
+
+    collected_names = {product.name for product in products}
+    unseen_ids = [product_id for name, product_id in active.items() if name not in collected_names]
+    if unseen_ids:
+        expire_products(unseen_ids, today - timedelta(days=1))
+    logger.info("%s: 이번 수집에 없는 진행 중 상품 %d개 만료 처리", store_name, len(unseen_ids))
 
 
 async def crawl_all_stores() -> list[CrawlResult]:
@@ -38,6 +71,8 @@ async def crawl_all_stores() -> list[CrawlResult]:
             products = await store_module.fetch_products()
             classify_products(products)
             await upsert_products(products)
+            if products:
+                expire_unseen_products(store_name, products)
             results.append(CrawlResult(store=store_name, products=products))
             logger.info("%s 크롤링 완료: %d개", store_name, len(products))
         except Exception as error:
