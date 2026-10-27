@@ -47,7 +47,8 @@ PyeonPick/
 │   │   ├── entities/          # product, cart, post, recommendation
 │   │   └── use-cases/         # cart, price, recommend
 │   ├── infrastructure/
-│   │   ├── repositories/      # product, push-subscription, post
+│   │   ├── repositories/      # product, push-subscription, post, wishlist
+│   │   ├── kakao-share.ts     # 카카오톡 공유 SDK 래퍼
 │   │   ├── supabase.ts
 │   │   └── llm.ts             # Groq API 래퍼 (구 gemini.ts, 2026-08-26 리네임)
 │   └── app/
@@ -72,6 +73,9 @@ PyeonPick/
 
 **현재 단계: v1.3까지 완료 / 운영 안정화 (2026-10-28)**
 
+> 새 세션은 `docs/progress.md`의 **"다음 세션 인계"**(확인 대기·선택 작업·하지 않기로 한 것)부터 확인.
+> DB 구조는 `docs/schema.md`, 수집·분류·스케줄·장애 이력은 `docs/crawling-notes.md`.
+
 | 단계 | 기능 | 상태 |
 | ---- | ---- | ---- |
 | MVP  | 크롤링 + UI + 장바구니 + 배포 | ✅ 완료 |
@@ -80,6 +84,7 @@ PyeonPick/
 | 고도화 2단계 | 최근 본 상품, 프로필 페이지, 게시글 수정/삭제 | ✅ 완료 |
 | v1.2 | AI 조합 추천 (Groq API) | ✅ 완료 |
 | 고도화 3단계 | 실통계·개당가·정렬·D-day + 매장 간 가격 비교 | ✅ 완료 (2026-06-03) |
+| 확장 | 로그인 찜 서버 동기화 + 카카오톡 공유 | ✅ 완료 (2026-10-28) |
 | v1.3 | 알림 설정 수정 (웹 푸시) | ✅ 완료 (재구독 방식 — endpoint 기준 upsert) |
 
 ## 기술 스택

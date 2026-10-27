@@ -2,8 +2,32 @@
 
 ## 현재 단계: v1.3까지 완료 / 운영 안정화
 
-- 마지막 기능 개발: **2026-06-03**
+- 마지막 기능 개발: **2026-10-28** (찜 서버 동기화 + 카카오톡 공유)
 - 마지막 운영 복구·정리: **2026-10-28** (아래 최하단 항목)
+- 관련 문서: DB 구조 `docs/schema.md`, 수집·분류·스케줄·장애 이력 `docs/crawling-notes.md`
+
+## 다음 세션 인계 (2026-10-28 기준)
+
+### 확인 대기
+- [ ] **11/1 00:05 KST 첫 월초 CI 실행** (GitHub Actions `편의점 크롤링`) — 확인할 것:
+  - gate 잡이 10/31 15:05 UTC 예약을 KST 1일로 판정해 통과하는지 (다른 28~30일 예약은 건너뛰어야 정상)
+  - 새 `GROQ_API_KEY`로 신규 상품이 '기타'가 아닌 카테고리로 들어오는지
+  - `이번 수집에 없는 진행 중 상품 N개 만료 처리` 로그 — 10월 상품 정리
+  - 09:17 2차 실행도 성공하는지
+- [ ] **11/1 00:10 세븐일레븐 로컬 수집** — 로그 `%LOCALAPPDATA%\pyeonpick\logs\seven-20261101-*.log`, `Get-ScheduledTaskInfo -TaskPath '\PyeonPick\' -TaskName SevenMonthStart`의 LastTaskResult 0
+- [ ] **전체 재분류(`ai_classify.py`) 완료** — 2,075개까지 처리, 하루 약 2,000개. 끝나면 `classify_progress.json` 자동 삭제. 중단됐으면 `uv run python ai_classify.py`로 재개
+- [ ] 로그인 찜 동기화 실사용 확인 — 로그인 후 하트 → 다른 브라우저에서 같은 계정으로 보이는지 (`wishlists` 행 생기는지)
+
+### 선택 작업 (급하지 않음)
+- Supabase에서 잔재 정리: `subscriptions` 테이블 드롭, `products.nutrition` 컬럼 드롭 (`docs/schema.md` 참고)
+- `crawler/infrastructure/common.py`의 `infer_category`(미사용 키워드 분류) 제거
+- 매장 간 비교의 구성 차이 변형(`(3입)` 등) 정밀 매칭
+
+### 하지 않기로 한 것 (재논의 전엔 손대지 않음)
+- GS25 수집 재개 — 공개 출처 없음, 앱 API는 약관 위험 (`docs/crawling-notes.md`)
+- 세븐일레븐 셀프호스티드 러너 — 공개 저장소 포크 PR 실행 위험
+- 웹 푸시 실발송 테스트, 테스트 코드·ESLint 도입 — 사용자 요청으로 보류
+- 커밋·PR에 `Co-Authored-By: Claude` 줄 넣지 않음
 
 ---
 
@@ -355,4 +379,12 @@ CI 복구 후 처음으로 크롤러가 DB까지 도달했고(`기존 상품 855
 - 카카오톡 공유: Kakao JS SDK 2.8.3(SRI 고정), `NEXT_PUBLIC_KAKAO_JS_KEY` 있을 때만 로드·노출
   - Kakao Developers 앱 [플랫폼 > Web]에 `https://pyeonpick.vercel.app`, `http://localhost:3000` 등록 필요
   - 장바구니 하단: 카카오톡 공유(카카오 공식 노란색) + 링크 복사. SDK 미로드 시 링크 복사로 대체
-- 검증: `tsc` 통과, dev 서버에서 `/api/wishlist` 비로그인 401 확인. 로그인 동기화·실제 카톡 공유는 테이블 생성·키 등록 후 확인 필요
+- 검증: `tsc` 통과, dev 서버에서 `/api/wishlist` 비로그인 401 확인
+- 운영 반영(2026-10-28): `006_wishlists.sql` 실행 완료, Vercel Production에 `NEXT_PUBLIC_KAKAO_JS_KEY` 추가·재배포, Kakao 앱 [제품 링크 관리] 웹 도메인 등록 → **운영 사이트에서 카톡 공유 성공 확인**
+  - 도메인 미등록 시 카카오 에러 **4019** ("잘못된 요청으로 인증에 실패") — 프리뷰 URL(`pyeonpick-xxxx.vercel.app`)에서도 같은 에러
+  - `NEXT_PUBLIC_*`는 빌드 시 박히므로 Vercel 변수 추가 후 **재배포 필수**
+
+### 정리 (2026-10-28)
+- 문서 신설: `docs/schema.md`(실DB 기준 스키마·마이그레이션 적용 현황), `docs/crawling-notes.md`(매장별 수집 방식·스케줄·분류기·장애 이력) — CLAUDE.md가 참조하던 파일이 없었음
+- 크롤러 Playwright 의존성 + 미사용 `crawler/infrastructure/browser.py` 제거
+- `.gitignore`에 `.vercel`, `.env*` 추가
